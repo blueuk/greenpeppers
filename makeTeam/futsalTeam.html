@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Futsal Instant v3.5 (Auto Load)</title>
+    <title>Futsal Instant v3.5 (Security Enhanced)</title>
     <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -12,7 +12,7 @@
             --pos-gol: #f6ad55; --pos-ala: #4fd1c5; --pos-fix: #f687b3; --pos-piv: #63b3ed;
             --hover-bg: #3d455d;
         }
-        body { font-family: 'Pretendard', sans-serif; background-color: var(--bg-dark); color: var(--text-main); margin: 0; padding: 10px; }
+        body { font-family: 'Pretendard', sans-serif; background-color: var(--bg-dark); color: var(--text-main); margin: 0; padding: 10px; -webkit-user-select:none; -moz-user-select:none; -ms-user-select:none; user-select:none; }
         .container { width: 100%; max-width: 900px; margin: 0 auto; }
         
         .header-panel { background: var(--card-bg); padding: 15px; border-radius: 20px; margin-bottom: 15px; border: 1px solid #333; }
@@ -33,13 +33,12 @@
         .player-item { 
             background: #2d3446; padding: 12px 6px; border-radius: 12px; text-align: center; 
             font-size: 0.85rem; border: 1px solid #3d455d; cursor: pointer;
-            transition: all 0.2s ease; user-select: none;
+            transition: all 0.2s ease;
         }
         .player-item:hover { 
             background: var(--hover-bg); transform: translateY(-3px); 
             border-color: var(--secondary); box-shadow: 0 5px 15px rgba(0,0,0,0.3);
         }
-        .player-item:active { transform: scale(0.95); }
 
         .btn-generate { 
             background: linear-gradient(45deg, var(--secondary), var(--primary)); 
@@ -59,7 +58,7 @@
         #statusMsg { font-size: 0.75rem; text-align: center; color: var(--primary); margin-top: 5px; }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false" onselectstart="return false" ondragstart="return false">
 
 <div class="container">
     <div class="header-panel">
@@ -82,13 +81,13 @@
     </div>
 
     <div style="font-size: 0.8rem; color: var(--secondary); margin: 10px 0 5px; font-weight: 600;">👥 대기 명단 (<span id="pCount">0</span>)</div>
-    <div id="poolZone" class="drop-zone" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+    <div id="poolZone" class="drop-zone"></div>
 
     <div style="display: flex; justify-content: space-between; align-items: center; margin: 15px 0 5px;">
         <div style="font-size: 0.8rem; color: var(--primary); font-weight: 600;">✅ 확정 명단 (<span id="aCount">0</span>)</div>
         <button onclick="resetList()" style="background:none; border:none; color:#666; cursor:pointer; font-size:0.7rem;">전체 초기화 🔄</button>
     </div>
-    <div id="activeZone" class="drop-zone" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+    <div id="activeZone" class="drop-zone"></div>
 
     <button class="btn-generate" onclick="generateInstant()">팀 생성 시작</button>
     <button id="copyBtn" onclick="copy()" style="display:none; width:100%; margin-top:10px; padding:15px; background:#28a745; border:none; border-radius:12px; color:white; font-weight:600; cursor:pointer;">카톡 명단 복사 📋</button>
@@ -97,61 +96,44 @@
 </div>
 
 <script>
+    /* 🔒 보안 로직: F12, 우클릭, 단축키 차단 */
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.onkeydown = function(e) {
+        if (e.keyCode === 123) return false; // F12
+        if (e.ctrlKey && e.shiftKey && e.keyCode === 73) return false; // Ctrl+Shift+I
+        if (e.ctrlKey && e.shiftKey && e.keyCode === 74) return false; // Ctrl+Shift+J
+        if (e.ctrlKey && e.keyCode === 85) return false; // Ctrl+U
+    };
+    (function() {
+        setInterval(function() { debugger; }, 1000);
+    })();
+
+    /* ⚽ 데이터 및 팀 생성 로직 */
     let players = [];
     let currentTeams = [];
 
-    const shuffle = (arr) => arr.sort(() => Math.random() - 0.5);
-
-    // 💡 GitHub URL에서 데이터 가져오기
     async function loadData() {
         const url = 'https://blueuk.github.io/greenpeppers/makeTeam/players.txt';
         const msg = document.getElementById('statusMsg');
-        
         try {
             const response = await fetch(url);
-            if (!response.ok) throw new Error("데이터를 가져올 수 없습니다.");
+            if (!response.ok) throw new Error("로드 실패");
             const text = await response.text();
-            
             players = text.trim().split('\n').filter(l => l.includes('|')).map((l, i) => {
                 const [n, g, a, f, p] = l.split('|');
                 return { 
-                    id: 'p'+i, 
-                    name: n.trim(), 
-                    gol: parseFloat(g), 
-                    ala: parseFloat(a), 
-                    fix: parseFloat(f), 
-                    piv: parseFloat(p), 
+                    id: 'p'+i, name: n.trim(), 
+                    gol: parseFloat(g), ala: parseFloat(a), fix: parseFloat(f), piv: parseFloat(p), 
                     avg: (parseFloat(g)+parseFloat(a)+parseFloat(f)+parseFloat(p))/4, 
                     status: 'pool' 
                 };
             });
-            
             msg.innerText = "데이터 로드 완료 (" + players.length + "명)";
             render();
         } catch (err) {
-            msg.innerText = "로드 실패: " + err.message;
+            msg.innerText = "데이터 로드에 실패했습니다.";
             msg.style.color = "#ff007b";
         }
-    }
-
-    // 페이지 로드 시 실행
-    window.onload = loadData;
-
-    function toggleStatus(id) {
-        const p = players.find(x => x.id === id);
-        if (p) {
-            p.status = (p.status === 'pool') ? 'active' : 'pool';
-            render();
-        }
-    }
-
-    function allowDrop(e) { e.preventDefault(); }
-    function drag(e) { e.dataTransfer.setData("text", e.target.id); }
-    function drop(e) {
-        e.preventDefault();
-        const id = e.dataTransfer.getData("text");
-        const p = players.find(x => x.id === id);
-        if (p) { p.status = e.currentTarget.id === 'activeZone' ? 'active' : 'pool'; render(); }
     }
 
     function render() {
@@ -162,12 +144,8 @@
         [...players].sort((a,b)=>a.name.localeCompare(b.name, 'ko')).forEach(p => {
             const d = document.createElement('div');
             d.className = 'player-item';
-            d.id = p.id;
-            d.draggable = true;
-            d.ondragstart = drag;
-            d.onclick = () => toggleStatus(p.id);
+            d.onclick = () => { p.status = (p.status === 'pool' ? 'active' : 'pool'); render(); };
             d.innerHTML = `<b>${p.name}</b>`;
-            
             if (p.status === 'active') { az.appendChild(d); ac++; } 
             else { pz.appendChild(d); pc++; }
         });
@@ -184,31 +162,23 @@
         let activePool = players.filter(p => p.status === 'active').map(p => ({...p, assigned: false}));
         
         if (mercCnt > 0) {
-            const avgVal = activePool.length > 0 ? activePool.reduce((a,c)=>a+c.avg,0) / activePool.length : 80.0;
+            const avgVal = activePool.length > 0 ? activePool.reduce((a,c)=>a+c.avg,0) / activePool.length : 8.0;
             for(let i=1; i<=mercCnt; i++) {
                 activePool.push({ id: 'm'+i, name: '용병'+i, gol: avgVal, ala: avgVal, fix: avgVal, piv: avgVal, avg: avgVal, assigned: false, isMercenary: true });
             }
         }
-
         if (activePool.length < teamCnt) return alert("인원이 부족합니다.");
 
         let teams = Array.from({length: teamCnt}, (_, i) => ({ id: i+1, members: [], totalScore: 0 }));
+        const shuffle = (arr) => arr.sort(() => Math.random() - 0.5);
         const getWeakest = () => [...teams].sort((a,b) => a.totalScore - b.totalScore || a.members.length - b.members.length)[0];
 
-        // 특정 선수 로직 (필요 시 수정/삭제 가능)
-        const ds = activePool.find(x => x.name === "김동섭"), jh = activePool.find(x => x.name === "임정현");
-        if(ds && jh && teamCnt >= 2) {
-            ds.assigned = jh.assigned = true;
-            teams[0].members.push(ds); teams[0].totalScore += ds.avg;
-            teams[1].members.push(jh); teams[1].totalScore += jh.avg;
-        }
-
+        // 밸런스 알고리즘
         const steps = [{key:'fix',cnt:teamCnt*2},{key:'ala',cnt:teamCnt*(mode==6?2:1)},{key:'piv',cnt:teamCnt}];
         steps.forEach(s => {
             let cans = activePool.filter(p => !p.assigned).sort((a,b) => b[s.key] - a[s.key]).slice(0, s.cnt);
             shuffle(cans).forEach(p => { let t = getWeakest(); p.assigned = true; t.members.push(p); t.totalScore += p.avg; });
         });
-
         activePool.filter(p => !p.assigned).sort((a,b) => b.avg - a.avg).forEach(p => {
             let t = getWeakest(); p.assigned = true; t.members.push(p); t.totalScore += p.avg;
         });
@@ -225,17 +195,21 @@
                 const b = [{n:'GOL',v:m.gol,c:'f6ad55'},{n:'ALA',v:m.ala,c:'4fd1c5'},{n:'FIX',v:m.fix,c:'f687b3'},{n:'PIV',v:m.piv,c:'63b3ed'}].sort((a,b)=>b.v-a.v)[0];
                 return `<div class="member-row"><span style="${m.isMercenary?'color:var(--primary)':''}">${m.name}</span><span class="pos-badge" style="background:#${b.c}">${b.n} ${b.v.toFixed(1)}</span></div>`;
             }).join('');
-            card.innerHTML = `<div style="display:flex; justify-content:space-between; border-bottom:1px solid #444; padding-bottom:8px;"><strong>TEAM ${t.id}</strong><small>평균: ${(t.totalScore/t.members.length).toFixed(1)}</small></div>${mHtml}`;
+            card.innerHTML = `<div style="display:flex; justify-content:space-between; border-bottom:1px solid #444; padding-bottom:8px;"><strong>TEAM ${t.id}</strong><small>합계: ${t.totalScore.toFixed(1)}</small></div>${mHtml}`;
             area.appendChild(card);
         });
         document.getElementById('copyBtn').style.display = 'block';
-        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
     }
 
     function copy() {
         const txt = currentTeams.map(t => `[${t.id}팀] ${t.members.map(m => m.name).join(', ')}`).join('\n');
-        navigator.clipboard.writeText(txt).then(() => alert("명단 복사 완료!"));
+        const tArea = document.createElement("textarea");
+        document.body.appendChild(tArea); tArea.value = txt; tArea.select();
+        document.execCommand("copy"); document.body.removeChild(tArea);
+        alert("명단이 복사되었습니다.");
     }
+
+    window.onload = loadData;
 </script>
 </body>
 </html>
