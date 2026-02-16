@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Futsal Scout - Data Sync PRO</title>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00f2fe; --secondary: #4facfe; --bg-dark: #0f111a;
+            --card-bg: #1e2130; --input-bg: #0b0d14; --text-main: #ffffff;
+            --text-dim: #a0aec0; --success: #28a745;
+        }
+        body { font-family: 'Pretendard', sans-serif; background-color: var(--bg-dark); color: var(--text-main); margin: 0; padding: 20px; scroll-behavior: smooth; }
+        .container { max-width: 800px; margin: 0 auto; padding-bottom: 50px; }
+        
+        /* 업로드 섹션 */
+        .upload-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px; }
+        .file-box { 
+            background: var(--card-bg); border: 2px dashed #444; border-radius: 15px; padding: 25px; 
+            text-align: center; cursor: pointer; transition: 0.3s; 
+        }
+        .file-box:hover { border-color: var(--primary); background: rgba(0, 242, 254, 0.05); }
+        .file-box.loaded { border-color: var(--success); background: rgba(40, 167, 69, 0.1); }
+        input[type="file"] { display: none; }
+        .file-label { display: block; font-size: 0.75rem; color: var(--text-dim); margin-bottom: 8px; text-transform: uppercase; }
+
+        /* 에디터 UI */
+        .status-panel { 
+            background: #1e2130; padding: 25px; border-radius: 20px; margin-bottom: 25px; 
+            border-left: 6px solid var(--primary); box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .current-name { font-size: 1.8rem; font-weight: 800; color: var(--primary); margin-top: 5px; }
+        .badge-existing { font-size: 0.7rem; background: var(--success); color: white; padding: 3px 10px; border-radius: 12px; margin-left: 12px; vertical-align: middle; font-weight: 600; }
+
+        .form-card { background: var(--card-bg); border-radius: 24px; padding: 30px; border: 1px solid #333; }
+        .stat-group { margin-bottom: 40px; }
+        .group-title { font-size: 1.1rem; font-weight: 800; margin-bottom: 20px; color: var(--secondary); border-bottom: 2px solid #333; padding-bottom: 10px; }
+        .stat-row { margin-bottom: 22px; }
+        .stat-info { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.95rem; }
+        .stat-value { color: var(--primary); font-weight: 800; }
+        
+        input[type="range"] { -webkit-appearance: none; width: 100%; height: 7px; background: #333; border-radius: 10px; outline: none; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; background: var(--primary); border-radius: 50%; cursor: pointer; box-shadow: 0 0 10px rgba(0,242,254,0.4); }
+
+        /* 하단 액션 버튼 배치 수정 */
+        .action-box { 
+            display: grid; 
+            grid-template-columns: 1fr 1.5fr 1.5fr; /* 이전 | 다음 | 저장 비율 */
+            gap: 12px; 
+            margin-top: 35px; 
+        }
+        button { padding: 18px 10px; border-radius: 15px; border: none; font-weight: 800; cursor: pointer; font-size: 0.95rem; transition: 0.2s; }
+        .btn-prev { background: #2d3446; color: white; }
+        .btn-next { background: #3d455d; color: var(--primary); border: 1px solid var(--primary); }
+        .btn-save { background: linear-gradient(45deg, var(--secondary), var(--primary)); color: #000; }
+        button:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.3); opacity: 0.9; }
+        button:active { transform: translateY(0); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="setupView">
+        <header style="text-align: center; margin-bottom: 40px;">
+            <h1 style="color: var(--primary); font-size: 2.2rem; margin-bottom: 10px;">PLAYER DATA SYNC</h1>
+            <p style="color:var(--text-dim);">명단(list.txt)을 불러오고 기존 데이터(player.txt)를 업데이트하세요.</p>
+        </header>
+
+        <div class="upload-grid">
+            <label class="file-box" id="boxList">
+                <span class="file-label">Step 1</span>
+                <strong>📄 list.txt (명단)</strong>
+                <input type="file" id="inputList" accept=".txt">
+            </label>
+            <label class="file-box" id="boxData">
+                <span class="file-label">Step 2 (선택)</span>
+                <strong>💾 player.txt (기존)</strong>
+                <input type="file" id="inputData" accept=".txt">
+            </label>
+        </div>
+        <button id="startBtn" onclick="initEditor()" style="width:100%; background:var(--primary); color:#000; display:none; padding: 20px; font-size: 1.1rem; border-radius: 15px;">에디터 시작하기 ➔</button>
+    </div>
+
+    <div id="editorView" style="display: none;">
+        <div class="status-panel">
+            <div>
+                <div style="font-size:0.85rem; color:var(--text-dim); font-weight: 600;" id="progressText">0 / 0 명</div>
+                <div class="current-name" id="nowTarget">선수 이름</div>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <div id="fields"></div>
+            
+            <div class="action-box">
+                <button class="btn-prev" onclick="move(-1)">이전</button>
+                <button class="btn-next" onclick="move(1)">다음 선수</button>
+                <button class="btn-save" onclick="saveAll()">최종 저장 및 종료</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const scoreMap = [5, 10, 13, 16, 18];
+    const scoreLabels = ["하(5)", "중하(10)", "중(13)", "중상(16)", "상(18)"];
+    const stats = {
+        "🏃 PHYSICAL": ["몸싸움", "균형감", "체력", "스피드"],
+        "🧠 MENTAL": ["리더십", "의사소통", "집중력", "대담성", "침착성"],
+        "🛡️ DEFENSE": ["일대일수비", "수비지원", "수비위치선정", "대인마크", "가로채기", "반사신경", "공중볼처리(키퍼)"],
+        "🎯 ATTACK": ["일대일돌파", "연계플레이", "공격위치선정", "슛파워", "슛정확도", "패스", "롱패스", "드리블"]
+    };
+
+    let targetNames = []; 
+    let existingData = {}; 
+    let currentIdx = 0;
+    let finalResults = {}; 
+
+    document.getElementById('inputList').addEventListener('change', e => {
+        const reader = new FileReader();
+        reader.onload = ev => {
+            targetNames = ev.target.result.split('\n').map(v => v.trim()).filter(v => v);
+            document.getElementById('boxList').classList.add('loaded');
+            if(targetNames.length > 0) document.getElementById('startBtn').style.display = 'block';
+        };
+        reader.readAsText(e.target.files[0]);
+    });
+
+    document.getElementById('inputData').addEventListener('change', e => {
+        const reader = new FileReader();
+        reader.onload = ev => {
+            const cleanText = "[" + ev.target.result.trim().replace(/,\s*$/, "") + "]";
+            try {
+                JSON.parse(cleanText).forEach(p => existingData[p.name] = p);
+                document.getElementById('boxData').classList.add('loaded');
+            } catch(err) { alert("기존 데이터 형식이 올바르지 않습니다."); }
+        };
+        reader.readAsText(e.target.files[0]);
+    });
+
+    function initEditor() {
+        document.getElementById('setupView').style.display = 'none';
+        document.getElementById('editorView').style.display = 'block';
+        const container = document.getElementById('fields');
+        for (const [group, list] of Object.entries(stats)) {
+            const gDiv = document.createElement('div');
+            gDiv.className = 'stat-group';
+            gDiv.innerHTML = `<div class="group-title">${group}</div>`;
+            list.forEach(s => {
+                gDiv.innerHTML += `
+                    <div class="stat-row">
+                        <div class="stat-info"><span>${s}</span><span class="stat-value" id="val-${s}">-</span></div>
+                        <input type="range" min="0" max="4" value="2" data-stat="${s}" oninput="sync(this, '${s}')">
+                    </div>`;
+            });
+            container.appendChild(gDiv);
+        }
+        showPlayer();
+    }
+
+    function sync(el, stat) {
+        document.getElementById(`val-${stat}`).innerText = scoreLabels[el.value];
+    }
+
+    function showPlayer() {
+        const name = targetNames[currentIdx];
+        const data = finalResults[name] || existingData[name];
+        
+        document.getElementById('nowTarget').innerHTML = name + (existingData[name] ? `<span class="badge-existing">기존데이터</span>` : "");
+        document.getElementById('progressText').innerText = `${currentIdx + 1} / ${targetNames.length} 명`;
+
+        document.querySelectorAll('input[type="range"]').forEach(input => {
+            const stat = input.dataset.stat;
+            if (data && data[stat] !== undefined) {
+                const valIdx = scoreMap.indexOf(data[stat]);
+                input.value = valIdx !== -1 ? valIdx : 2;
+            } else { input.value = 2; }
+            sync(input, stat);
+        });
+
+        // 💡 페이지 최상단으로 스크롤 이동
+        window.scrollTo(0, 0);
+    }
+
+    function move(dir) {
+        saveCurrent();
+        const nextIdx = currentIdx + dir;
+        if (nextIdx >= 0 && nextIdx < targetNames.length) {
+            currentIdx = nextIdx;
+            showPlayer();
+        } else if (nextIdx >= targetNames.length) {
+            alert("마지막 선수입니다. '최종 저장'을 눌러 완료하세요.");
+        }
+    }
+
+    function saveCurrent() {
+        const name = targetNames[currentIdx];
+        const pData = { name: name };
+        document.querySelectorAll('input[type="range"]').forEach(i => {
+            pData[i.dataset.stat] = scoreMap[i.value];
+        });
+        finalResults[name] = pData;
+    }
+
+    function saveAll() {
+        saveCurrent();
+        const output = targetNames.map(n => finalResults[n] || existingData[n]).filter(d => d);
+        const finalStr = output.map(obj => JSON.stringify(obj)).join(",\n") + ",\n";
+        
+        const blob = new Blob([finalStr], { type: 'text/plain' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = "player.txt";
+        a.click();
+        
+        alert("모든 데이터가 저장되었습니다.");
+        location.reload();
+    }
+</script>
+
+</body>
+</html>

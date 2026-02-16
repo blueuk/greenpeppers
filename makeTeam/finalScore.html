@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Futsal Scout - Weight Calculator v2.0</title>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00f2fe; --secondary: #4facfe; --bg-dark: #0f111a;
+            --card-bg: #1e2130; --text-main: #ffffff; --text-dim: #a0aec0;
+        }
+        body { font-family: 'Pretendard', sans-serif; background-color: var(--bg-dark); color: var(--text-main); margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .header-box { text-align: center; margin-bottom: 30px; padding: 20px; background: var(--card-bg); border-radius: 20px; border: 1px solid #333; }
+        h1 { color: var(--primary); margin: 0; font-size: 1.5rem; }
+        .file-input-wrapper { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-bottom: 20px; }
+        input[type="file"] { background: #0b0d14; padding: 15px; border-radius: 12px; border: 1px solid #444; color: white; width: 100%; max-width: 400px; }
+        .btn-calc { background: linear-gradient(45deg, var(--secondary), var(--primary)); border: none; padding: 20px; border-radius: 15px; font-weight: 800; cursor: pointer; width: 100%; font-size: 1.1rem; color: #000; transition: 0.2s; }
+        .btn-calc:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0, 242, 254, 0.3); }
+        .result-panel { margin-top: 30px; display: none; }
+        .output-box { background: #000; color: #0f0; padding: 20px; border-radius: 15px; font-family: 'Courier New', monospace; font-size: 0.85rem; white-space: pre-wrap; border: 1px solid #222; max-height: 400px; overflow-y: auto; }
+        .formula-info { font-size: 0.75rem; color: var(--text-dim); text-align: center; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-box">
+        <h1>POSITION SCORE CALCULATOR</h1>
+        <p style="color:var(--text-dim); font-size:0.9rem;">계산법: (가중치 합산 / 20) × 100</p>
+    </div>
+
+    <div class="file-input-wrapper">
+        <label style="font-size:0.8rem; color:var(--secondary);">Step 1: player.txt (JSON) 파일 선택</label>
+        <input type="file" id="jsonInput" accept=".txt">
+    </div>
+
+    <button class="btn-calc" onclick="processData()">계산 시작 및 players.txt 생성 ➔</button>
+    <div class="formula-info">※ 모든 포지션 점수는 100점 만점 기준으로 환산됩니다.</div>
+
+    <div class="result-panel" id="resultPanel">
+        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+            <span style="font-size:0.8rem; color:var(--primary);">최종 결과 (이름|골|아|픽|피)</span>
+        </div>
+        <div class="output-box" id="outputBox"></div>
+    </div>
+</div>
+
+<script>
+    const weights = {
+        gol: { "몸싸움": 0.04, "균형감": 0.04, "스피드": 0.04, "리더십": 0.03, "의사소통": 0.04, "집중력": 0.05, "대담성": 0.1, "침착성": 0.04, "일대일수비": 0.08, "수비지원": 0.04, "수비위치선정": 0.1, "반사신경": 0.12, "공중볼처리(키퍼)": 0.16, "패스": 0.07, "롱패스": 0.05 },
+        ala: { "몸싸움": 0.03, "균형감": 0.04, "체력": 0.08, "스피드": 0.07, "의사소통": 0.03, "집중력": 0.01, "일대일수비": 0.06, "수비지원": 0.07, "대인마크": 0.03, "가로채기": 0.03, "일대일돌파": 0.08, "연계플레이": 0.08, "공격위치선정": 0.06, "슛파워": 0.07, "슛정확도": 0.07, "패스": 0.06, "롱패스": 0.05, "드리블": 0.08 },
+        fix: { "몸싸움": 0.06, "균형감": 0.04, "체력": 0.04, "스피드": 0.01, "리더십": 0.04, "의사소통": 0.02, "집중력": 0.01, "침착성": 0.01, "일대일수비": 0.1, "수비지원": 0.08, "수비위치선정": 0.1, "대인마크": 0.1, "가로채기": 0.11, "반사신경": 0.08, "공격위치선정": 0.02, "슛파워": 0.02, "슛정확도": 0.01, "패스": 0.09, "롱패스": 0.06 },
+        piv: { "몸싸움": 0.08, "균형감": 0.04, "체력": 0.04, "스피드": 0.05, "리더십": 0.01, "의사소통": 0.01, "집중력": 0.02, "대담성": 0.03, "침착성": 0.02, "일대일수비": 0.03, "수비지원": 0.04, "가로채기": 0.03, "일대일돌파": 0.05, "연계플레이": 0.11, "공격위치선정": 0.1, "슛파워": 0.12, "슛정확도": 0.13, "패스": 0.05, "드리블": 0.04 }
+    };
+
+    function processData() {
+        const fileInput = document.getElementById('jsonInput');
+        if (!fileInput.files[0]) return alert("파일을 선택해주세요.");
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const rawText = e.target.result.trim();
+                const jsonArrayText = "[" + rawText.replace(/,\s*$/, "") + "]";
+                const players = JSON.parse(jsonArrayText);
+
+                let finalLines = players.map(p => {
+                    const g = calculateScore(p, weights.gol);
+                    const a = calculateScore(p, weights.ala);
+                    const f = calculateScore(p, weights.fix);
+                    const v = calculateScore(p, weights.piv);
+                    return `${p.name}|${g}|${a}|${f}|${v}`;
+                });
+
+                const resultText = finalLines.join('\n');
+                document.getElementById('outputBox').innerText = resultText;
+                document.getElementById('resultPanel').style.display = 'block';
+                downloadFile(resultText);
+
+            } catch (err) {
+                alert("파일 형식 오류입니다.");
+            }
+        };
+        reader.readAsText(fileInput.files[0]);
+    }
+
+    function calculateScore(player, weightMap) {
+        let weightedSum = 0;
+        for (const [stat, weight] of Object.entries(weightMap)) {
+            const val = player[stat] || 10;
+            weightedSum += val * weight;
+        }
+
+        // 💡 핵심 로직 변경: (가중치 합산 점수 / 20) * 100
+        const finalScore = (weightedSum / 20) * 100;
+        return finalScore.toFixed(1);
+    }
+
+    function downloadFile(text) {
+        const blob = new Blob([text], { type: 'text/plain' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = "players.txt";
+        a.click();
+    }
+</script>
+
+</body>
+</html>
