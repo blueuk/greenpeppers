@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Futsal Instant v3.2 (Click & Hover)</title>
+    <title>Futsal Instant v3.5 (Auto Load)</title>
     <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -20,7 +20,7 @@
         .input-group { display: flex; flex-direction: column; gap: 4px; }
         .input-label { font-size: 0.7rem; color: var(--text-dim); padding-left: 4px; }
         
-        input[type="file"], select, input[type="number"] { 
+        select, input[type="number"] { 
             background: #0b0d14; border: 1px solid #444; color: white; padding: 10px; border-radius: 10px; 
             width: 100%; box-sizing: border-box; outline: none; font-size: 0.85rem; 
         }
@@ -30,7 +30,6 @@
             min-height: 120px; display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 10px; 
         }
 
-        /* 💡 선수 아이템 호버 및 클릭 스타일 */
         .player-item { 
             background: #2d3446; padding: 12px 6px; border-radius: 12px; text-align: center; 
             font-size: 0.85rem; border: 1px solid #3d455d; cursor: pointer;
@@ -57,16 +56,15 @@
             margin-top: 8px; border: 1px solid #333; font-size: 0.85rem; 
         }
         .pos-badge { font-size: 0.65rem; padding: 3px 6px; border-radius: 5px; font-weight: 800; color: #000; }
+        #statusMsg { font-size: 0.75rem; text-align: center; color: var(--primary); margin-top: 5px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="header-panel">
-        <div class="input-group">
-            <span class="input-label">데이터 업로드 (.txt)</span>
-            <input type="file" id="fileInput" accept=".txt">
-        </div>
+        <div style="text-align: center; font-weight: 800; color: var(--primary); margin-bottom: 10px;">FUTSAL TEAM GENERATOR PRO</div>
+        <div id="statusMsg">데이터 로딩 중...</div>
         <div class="config-row">
             <div class="input-group">
                 <span class="input-label">매치 모드</span>
@@ -104,19 +102,41 @@
 
     const shuffle = (arr) => arr.sort(() => Math.random() - 0.5);
 
-    document.getElementById('fileInput').addEventListener('change', e => {
-        const reader = new FileReader();
-        reader.onload = ev => {
-            players = ev.target.result.split('\n').filter(l => l.includes('|')).map((l, i) => {
+    // 💡 GitHub URL에서 데이터 가져오기
+    async function loadData() {
+        const url = 'https://blueuk.github.io/greenpeppers/makeTeam/players.txt';
+        const msg = document.getElementById('statusMsg');
+        
+        try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error("데이터를 가져올 수 없습니다.");
+            const text = await response.text();
+            
+            players = text.trim().split('\n').filter(l => l.includes('|')).map((l, i) => {
                 const [n, g, a, f, p] = l.split('|');
-                return { id: 'p'+i, name: n.trim(), gol: +g, ala: +a, fix: +f, piv: +p, avg: (+g+ +a+ +f+ +p)/4, status: 'pool' };
+                return { 
+                    id: 'p'+i, 
+                    name: n.trim(), 
+                    gol: parseFloat(g), 
+                    ala: parseFloat(a), 
+                    fix: parseFloat(f), 
+                    piv: parseFloat(p), 
+                    avg: (parseFloat(g)+parseFloat(a)+parseFloat(f)+parseFloat(p))/4, 
+                    status: 'pool' 
+                };
             });
+            
+            msg.innerText = "데이터 로드 완료 (" + players.length + "명)";
             render();
-        };
-        reader.readAsText(e.target.files[0]);
-    });
+        } catch (err) {
+            msg.innerText = "로드 실패: " + err.message;
+            msg.style.color = "#ff007b";
+        }
+    }
 
-    // 💡 클릭 시 상태 토글 함수
+    // 페이지 로드 시 실행
+    window.onload = loadData;
+
     function toggleStatus(id) {
         const p = players.find(x => x.id === id);
         if (p) {
@@ -125,7 +145,6 @@
         }
     }
 
-    // 드래그 앤 드롭 로직 유지
     function allowDrop(e) { e.preventDefault(); }
     function drag(e) { e.dataTransfer.setData("text", e.target.id); }
     function drop(e) {
@@ -140,13 +159,13 @@
         pz.innerHTML = az.innerHTML = "";
         let ac = 0, pc = 0;
         
-        [...players].sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => {
+        [...players].sort((a,b)=>a.name.localeCompare(b.name, 'ko')).forEach(p => {
             const d = document.createElement('div');
             d.className = 'player-item';
             d.id = p.id;
             d.draggable = true;
             d.ondragstart = drag;
-            d.onclick = () => toggleStatus(p.id); // 클릭 이벤트 추가
+            d.onclick = () => toggleStatus(p.id);
             d.innerHTML = `<b>${p.name}</b>`;
             
             if (p.status === 'active') { az.appendChild(d); ac++; } 
@@ -165,7 +184,7 @@
         let activePool = players.filter(p => p.status === 'active').map(p => ({...p, assigned: false}));
         
         if (mercCnt > 0) {
-            const avgVal = activePool.length > 0 ? activePool.reduce((a,c)=>a+c.avg,0) / activePool.length : 3.0;
+            const avgVal = activePool.length > 0 ? activePool.reduce((a,c)=>a+c.avg,0) / activePool.length : 80.0;
             for(let i=1; i<=mercCnt; i++) {
                 activePool.push({ id: 'm'+i, name: '용병'+i, gol: avgVal, ala: avgVal, fix: avgVal, piv: avgVal, avg: avgVal, assigned: false, isMercenary: true });
             }
@@ -176,8 +195,9 @@
         let teams = Array.from({length: teamCnt}, (_, i) => ({ id: i+1, members: [], totalScore: 0 }));
         const getWeakest = () => [...teams].sort((a,b) => a.totalScore - b.totalScore || a.members.length - b.members.length)[0];
 
+        // 특정 선수 로직 (필요 시 수정/삭제 가능)
         const ds = activePool.find(x => x.name === "김동섭"), jh = activePool.find(x => x.name === "임정현");
-        if(ds && jh) {
+        if(ds && jh && teamCnt >= 2) {
             ds.assigned = jh.assigned = true;
             teams[0].members.push(ds); teams[0].totalScore += ds.avg;
             teams[1].members.push(jh); teams[1].totalScore += jh.avg;
@@ -187,11 +207,6 @@
         steps.forEach(s => {
             let cans = activePool.filter(p => !p.assigned).sort((a,b) => b[s.key] - a[s.key]).slice(0, s.cnt);
             shuffle(cans).forEach(p => { let t = getWeakest(); p.assigned = true; t.members.push(p); t.totalScore += p.avg; });
-        });
-
-        activePool.filter(p => (p.name === "김현웅" || p.name === "임정현") && !p.assigned).forEach(p => {
-            let t = [...teams].sort((a,b) => a.members.length - b.members.length)[0];
-            p.assigned = true; t.members.push(p); t.totalScore += p.avg;
         });
 
         activePool.filter(p => !p.assigned).sort((a,b) => b.avg - a.avg).forEach(p => {
@@ -210,7 +225,7 @@
                 const b = [{n:'GOL',v:m.gol,c:'f6ad55'},{n:'ALA',v:m.ala,c:'4fd1c5'},{n:'FIX',v:m.fix,c:'f687b3'},{n:'PIV',v:m.piv,c:'63b3ed'}].sort((a,b)=>b.v-a.v)[0];
                 return `<div class="member-row"><span style="${m.isMercenary?'color:var(--primary)':''}">${m.name}</span><span class="pos-badge" style="background:#${b.c}">${b.n} ${b.v.toFixed(1)}</span></div>`;
             }).join('');
-            card.innerHTML = `<div style="display:flex; justify-content:space-between; border-bottom:1px solid #444; padding-bottom:8px;"><strong>TEAM ${t.id}</strong><small>합계: ${t.totalScore.toFixed(1)}</small></div>${mHtml}`;
+            card.innerHTML = `<div style="display:flex; justify-content:space-between; border-bottom:1px solid #444; padding-bottom:8px;"><strong>TEAM ${t.id}</strong><small>평균: ${(t.totalScore/t.members.length).toFixed(1)}</small></div>${mHtml}`;
             area.appendChild(card);
         });
         document.getElementById('copyBtn').style.display = 'block';
