@@ -2,8 +2,8 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Futsal Scout - Data Sync PRO</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Futsal Scout - Data Sync PRO (Auto)</title>
     <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -11,24 +11,27 @@
             --card-bg: #1e2130; --input-bg: #0b0d14; --text-main: #ffffff;
             --text-dim: #a0aec0; --success: #28a745;
         }
-        body { font-family: 'Pretendard', sans-serif; background-color: var(--bg-dark); color: var(--text-main); margin: 0; padding: 20px; scroll-behavior: smooth; }
+        body { 
+            font-family: 'Pretendard', sans-serif; background-color: var(--bg-dark); color: var(--text-main); 
+            margin: 0; padding: 20px; scroll-behavior: smooth;
+            -webkit-user-select:none; -moz-user-select:none; -ms-user-select:none; user-select:none;
+        }
         .container { max-width: 800px; margin: 0 auto; padding-bottom: 50px; }
         
-        /* 업로드 섹션 */
-        .upload-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px; }
-        .file-box { 
-            background: var(--card-bg); border: 2px dashed #444; border-radius: 15px; padding: 25px; 
-            text-align: center; cursor: pointer; transition: 0.3s; 
+        /* 초기 로딩 화면 */
+        #setupView { text-align: center; padding: 50px 20px; }
+        .loader { 
+            border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); 
+            border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; 
+            margin: 20px auto; 
         }
-        .file-box:hover { border-color: var(--primary); background: rgba(0, 242, 254, 0.05); }
-        .file-box.loaded { border-color: var(--success); background: rgba(40, 167, 69, 0.1); }
-        input[type="file"] { display: none; }
-        .file-label { display: block; font-size: 0.75rem; color: var(--text-dim); margin-bottom: 8px; text-transform: uppercase; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         /* 에디터 UI */
         .status-panel { 
             background: #1e2130; padding: 25px; border-radius: 20px; margin-bottom: 25px; 
             border-left: 6px solid var(--primary); box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            position: sticky; top: 10px; z-index: 100;
         }
         .current-name { font-size: 1.8rem; font-weight: 800; color: var(--primary); margin-top: 5px; }
         .badge-existing { font-size: 0.7rem; background: var(--success); color: white; padding: 3px 10px; border-radius: 12px; margin-left: 12px; vertical-align: middle; font-weight: 600; }
@@ -43,50 +46,33 @@
         input[type="range"] { -webkit-appearance: none; width: 100%; height: 7px; background: #333; border-radius: 10px; outline: none; }
         input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; background: var(--primary); border-radius: 50%; cursor: pointer; box-shadow: 0 0 10px rgba(0,242,254,0.4); }
 
-        /* 하단 액션 버튼 배치 수정 */
         .action-box { 
-            display: grid; 
-            grid-template-columns: 1fr 1.5fr 1.5fr; /* 이전 | 다음 | 저장 비율 */
-            gap: 12px; 
-            margin-top: 35px; 
+            display: grid; grid-template-columns: 1fr 1.5fr 1.5fr; gap: 12px; margin-top: 35px; 
         }
         button { padding: 18px 10px; border-radius: 15px; border: none; font-weight: 800; cursor: pointer; font-size: 0.95rem; transition: 0.2s; }
         .btn-prev { background: #2d3446; color: white; }
         .btn-next { background: #3d455d; color: var(--primary); border: 1px solid var(--primary); }
         .btn-save { background: linear-gradient(45deg, var(--secondary), var(--primary)); color: #000; }
         button:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.3); opacity: 0.9; }
-        button:active { transform: translateY(0); }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false" onselectstart="return false">
 
 <div class="container">
     <div id="setupView">
-        <header style="text-align: center; margin-bottom: 40px;">
-            <h1 style="color: var(--primary); font-size: 2.2rem; margin-bottom: 10px;">PLAYER DATA SYNC</h1>
-            <p style="color:var(--text-dim);">명단(list.txt)을 불러오고 기존 데이터(player.txt)를 업데이트하세요.</p>
-        </header>
-
-        <div class="upload-grid">
-            <label class="file-box" id="boxList">
-                <span class="file-label">Step 1</span>
-                <strong>📄 list.txt (명단)</strong>
-                <input type="file" id="inputList" accept=".txt">
-            </label>
-            <label class="file-box" id="boxData">
-                <span class="file-label">Step 2 (선택)</span>
-                <strong>💾 player.txt (기존)</strong>
-                <input type="file" id="inputData" accept=".txt">
-            </label>
+        <h1 style="color: var(--primary); font-size: 1.8rem;">DATA SYNC SYSTEM</h1>
+        <div id="loadingUI">
+            <div class="loader"></div>
+            <p id="statusTxt" style="color:var(--text-dim);">GitHub 데이터베이스 연결 중...</p>
         </div>
-        <button id="startBtn" onclick="initEditor()" style="width:100%; background:var(--primary); color:#000; display:none; padding: 20px; font-size: 1.1rem; border-radius: 15px;">에디터 시작하기 ➔</button>
+        <button id="startBtn" onclick="initEditor()" style="display:none; width:100%; background:var(--primary); color:#000; padding: 20px; font-size: 1.1rem; border-radius: 15px; margin-top:20px;">에디터 시작하기 ➔</button>
     </div>
 
     <div id="editorView" style="display: none;">
         <div class="status-panel">
             <div>
                 <div style="font-size:0.85rem; color:var(--text-dim); font-weight: 600;" id="progressText">0 / 0 명</div>
-                <div class="current-name" id="nowTarget">선수 이름</div>
+                <div class="current-name" id="nowTarget">불러오는 중...</div>
             </div>
         </div>
 
@@ -103,6 +89,14 @@
 </div>
 
 <script>
+    /* 🔒 보안 로직 */
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.onkeydown = function(e) {
+        if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && e.keyCode === 85)) return false;
+    };
+    setInterval(() => { debugger; }, 1000);
+
+    /* ⚙️ 설정 데이터 */
     const scoreMap = [5, 10, 13, 16, 18];
     const scoreLabels = ["하(5)", "중하(10)", "중(13)", "중상(16)", "상(18)"];
     const stats = {
@@ -117,27 +111,35 @@
     let currentIdx = 0;
     let finalResults = {}; 
 
-    document.getElementById('inputList').addEventListener('change', e => {
-        const reader = new FileReader();
-        reader.onload = ev => {
-            targetNames = ev.target.result.split('\n').map(v => v.trim()).filter(v => v);
-            document.getElementById('boxList').classList.add('loaded');
-            if(targetNames.length > 0) document.getElementById('startBtn').style.display = 'block';
-        };
-        reader.readAsText(e.target.files[0]);
-    });
+    /* 🚀 자동 데이터 로드 */
+    async function autoFetch() {
+        const listUrl = 'https://blueuk.github.io/greenpeppers/makeTeam/list.txt';
+        const playerUrl = 'https://blueuk.github.io/greenpeppers/makeTeam/player.txt';
+        const statusTxt = document.getElementById('statusTxt');
 
-    document.getElementById('inputData').addEventListener('change', e => {
-        const reader = new FileReader();
-        reader.onload = ev => {
-            const cleanText = "[" + ev.target.result.trim().replace(/,\s*$/, "") + "]";
+        try {
+            // 1. 명단 로드
+            const resList = await fetch(listUrl);
+            const textList = await resList.text();
+            targetNames = textList.split('\n').map(v => v.trim()).filter(v => v);
+
+            // 2. 기존 데이터 로드
+            const resData = await fetch(playerUrl);
+            const textData = await resData.text();
+            const cleanText = "[" + textData.trim().replace(/,\s*$/, "") + "]";
             try {
                 JSON.parse(cleanText).forEach(p => existingData[p.name] = p);
-                document.getElementById('boxData').classList.add('loaded');
-            } catch(err) { alert("기존 데이터 형식이 올바르지 않습니다."); }
-        };
-        reader.readAsText(e.target.files[0]);
-    });
+            } catch(e) { console.log("기존 데이터가 비어있거나 형식이 다릅니다."); }
+
+            statusTxt.innerText = `로드 완료: 명단 ${targetNames.length}명 / 기존 데이터 ${Object.keys(existingData).length}건`;
+            document.getElementById('loadingUI').style.display = 'none';
+            document.getElementById('startBtn').style.display = 'block';
+
+        } catch (err) {
+            statusTxt.innerText = "데이터 로드 실패. URL을 확인하세요.";
+            statusTxt.style.color = "#ff007b";
+        }
+    }
 
     function initEditor() {
         document.getElementById('setupView').style.display = 'none';
@@ -178,8 +180,6 @@
             } else { input.value = 2; }
             sync(input, stat);
         });
-
-        // 💡 페이지 최상단으로 스크롤 이동
         window.scrollTo(0, 0);
     }
 
@@ -206,6 +206,7 @@
     function saveAll() {
         saveCurrent();
         const output = targetNames.map(n => finalResults[n] || existingData[n]).filter(d => d);
+        // JSON 객체들을 줄바꿈과 쉼표로 연결하여 player.txt 형식 생성
         const finalStr = output.map(obj => JSON.stringify(obj)).join(",\n") + ",\n";
         
         const blob = new Blob([finalStr], { type: 'text/plain' });
@@ -214,9 +215,11 @@
         a.download = "player.txt";
         a.click();
         
-        alert("모든 데이터가 저장되었습니다.");
+        alert("모든 데이터가 처리되었습니다. 다운로드된 파일을 확인하세요.");
         location.reload();
     }
+
+    window.onload = autoFetch;
 </script>
 
 </body>
