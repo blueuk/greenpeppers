@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Futsal Scout PRO v4.0</title>
+    <title>Futsal Scout PRO v4.5</title>
     <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -11,28 +11,29 @@
             --card-bg: #1e2130; --text-main: #ffffff; --text-dim: #a0aec0;
             --pos-gol: #f6ad55; --pos-ala: #4fd1c5; --pos-fix: #f687b3; --pos-piv: #63b3ed;
         }
-        body { font-family: 'Pretendard', sans-serif; background-color: var(--bg-dark); color: var(--text-main); margin: 0; padding: 10px; }
+        body { font-family: 'Pretendard', sans-serif; background-color: var(--bg-dark); color: var(--text-main); margin: 0; padding: 10px; -webkit-user-select:none; user-select:none; }
         .container { width: 100%; max-width: 900px; margin: 0 auto; }
         .header-panel { background: var(--card-bg); padding: 15px; border-radius: 20px; margin-bottom: 15px; border: 1px solid #333; }
         .config-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
         .input-group { display: flex; flex-direction: column; gap: 4px; }
         .input-label { font-size: 0.7rem; color: var(--text-dim); padding-left: 4px; }
-        select, input { background: #0b0d14; border: 1px solid #444; color: white; padding: 10px; border-radius: 10px; font-size: 0.85rem; }
+        select, input { background: #0b0d14; border: 1px solid #444; color: white; padding: 10px; border-radius: 10px; font-size: 0.85rem; outline: none; }
         .drop-zone { background: rgba(255,255,255,0.02); border: 2px dashed #444; border-radius: 15px; padding: 12px; min-height: 80px; display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 8px; }
-        .player-item { background: #2d3446; padding: 10px 5px; border-radius: 10px; text-align: center; font-size: 0.8rem; border: 1px solid #3d455d; cursor: pointer; }
-        .player-item.active { border-color: var(--primary); background: rgba(0, 242, 254, 0.1); }
-        .btn-generate { background: linear-gradient(45deg, var(--secondary), var(--primary)); border: none; padding: 16px; border-radius: 14px; font-weight: 800; width: 100%; margin-top: 15px; cursor: pointer; }
+        .player-item { background: #2d3446; padding: 10px 5px; border-radius: 10px; text-align: center; font-size: 0.8rem; border: 1px solid #3d455d; cursor: pointer; transition: 0.2s; }
+        .player-item:hover { border-color: var(--primary); background: #3d455d; }
+        .btn-generate { background: linear-gradient(45deg, var(--secondary), var(--primary)); border: none; padding: 18px; border-radius: 14px; font-weight: 800; width: 100%; margin-top: 15px; cursor: pointer; color: #000; font-size: 1rem; }
         .team-card { background: var(--card-bg); border-radius: 20px; padding: 15px; margin-top: 15px; border-top: 4px solid var(--secondary); }
-        .member-row { display: flex; justify-content: space-between; padding: 8px; background: rgba(255,255,255,0.03); border-radius: 8px; margin-top: 5px; font-size: 0.85rem; }
-        .pos-badge { font-size: 0.6rem; padding: 2px 5px; border-radius: 4px; font-weight: 800; color: #000; }
+        .member-row { display: flex; justify-content: space-between; align-items: center; padding: 8px; background: rgba(255,255,255,0.03); border-radius: 8px; margin-top: 5px; font-size: 0.85rem; }
+        .pos-badge { font-size: 0.6rem; padding: 2px 5px; border-radius: 4px; font-weight: 800; color: #000; text-transform: uppercase; }
+        #statusMsg { text-align: center; font-size: 0.75rem; color: var(--primary); margin-bottom: 5px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="header-panel">
-        <div style="text-align: center; font-weight: 800; color: var(--primary);">FUTSAL TEAM GENERATOR v4.0</div>
-        <div id="statusMsg" style="text-align:center; font-size:0.7rem; margin:5px 0;">데이터 로딩 중...</div>
+        <div style="text-align: center; font-weight: 800; color: var(--primary); letter-spacing: 1px;">FUTSAL GENERATOR PRO v4.5</div>
+        <div id="statusMsg">데이터 로드 대기 중...</div>
         <div class="config-row">
             <div class="input-group">
                 <span class="input-label">매치 모드</span>
@@ -43,22 +44,27 @@
                 <input type="number" id="mercCount" value="0" min="0" onchange="calcTeams()">
             </div>
         </div>
-        <div id="teamCalcInfo" style="font-size: 0.75rem; color: var(--text-dim); margin-top: 8px; text-align: center;"></div>
+        <div id="teamCalcInfo" style="font-size: 0.7rem; color: var(--text-dim); margin-top: 10px; text-align: center; border-top: 1px solid #333; padding-top: 8px;"></div>
     </div>
 
-    <div style="font-size: 0.8rem; color: var(--secondary); margin: 10px 0 5px;">👥 미참여 (<span id="pCount">0</span>)</div>
+    <div style="font-size: 0.8rem; color: var(--secondary); margin: 10px 0 5px; font-weight: 600;">👥 미참여 명단 (<span id="pCount">0</span>)</div>
     <div id="poolZone" class="drop-zone"></div>
 
-    <div style="font-size: 0.8rem; color: var(--primary); margin: 15px 0 5px;">✅ 오늘 참여 (<span id="aCount">0</span>)</div>
+    <div style="font-size: 0.8rem; color: var(--primary); margin: 15px 0 5px; font-weight: 600;">✅ 오늘 참여 확정 (<span id="aCount">0</span>)</div>
     <div id="activeZone" class="drop-zone"></div>
 
-    <button class="btn-generate" onclick="generateTeams()">전략적 팀 배정 시작</button>
+    <button class="btn-generate" onclick="generateTeams()">전략적 팀 배정 및 밸런싱 시작</button>
     <div id="resultArea"></div>
 </div>
 
 <script>
     let players = [];
-    const RIVALS = ["김동섭", "임정현"];
+    // [최우선 제약] 숙적 관계 및 고정 포지션 설정
+    const RIVALS_MAP = {
+        "임정현": ["김동섭", "김현웅"],
+        "김동섭": ["임정현"],
+        "김현웅": ["임정현"]
+    };
     const FIXED_GOL = ["임정현", "김현웅"];
 
     async function loadData() {
@@ -73,9 +79,12 @@
                     avg: (+g + +a + +f + +p) / 4, status: 'pool'
                 };
             });
-            document.getElementById('statusMsg').innerText = `데이터 로드 완료: ${players.length}명`;
+            document.getElementById('statusMsg').innerText = `✅ 데이터 로드 완료 (${players.length}명)`;
             render();
-        } catch (e) { document.getElementById('statusMsg').innerText = "데이터 로드 실패"; }
+        } catch (e) { 
+            document.getElementById('statusMsg').innerText = "❌ 데이터 로드 실패";
+            document.getElementById('statusMsg').style.color = "#ff4d4d";
+        }
     }
 
     function render() {
@@ -84,7 +93,7 @@
         players.sort((a,b)=>a.name.localeCompare(b.name, 'ko')).forEach(p => {
             const d = document.createElement('div');
             d.className = 'player-item';
-            d.onclick = () => { p.status = (p.status === 'pool' ? 'active' : 'pool'); render(); calcTeams(); };
+            d.onclick = () => { p.status = (p.status === 'pool' ? 'active' : 'pool'); render(); };
             d.innerHTML = `<b>${p.name}</b>`;
             if (p.status === 'active') az.appendChild(d); else pz.appendChild(d);
         });
@@ -98,70 +107,73 @@
         const perTeam = +document.getElementById('matchMode').value;
         const teams = Math.floor(activeCount / perTeam);
         const rem = activeCount % perTeam;
-        document.getElementById('teamCalcInfo').innerText = `총 ${activeCount}명 참여 -> ${teams}개 팀 생성 가능 (잉여: ${rem}명)`;
+        document.getElementById('teamCalcInfo').innerText = `현재 ${activeCount}명 참여 중 → ${teams}팀 구성 가능 (잉여 인원: ${rem}명)`;
         return { teams, perTeam, rem };
     }
 
     function generateTeams() {
         const info = calcTeams();
-        if (info.teams < 2) return alert("최소 2팀 이상 구성 가능한 인원이 필요합니다.");
+        if (info.teams < 2) return alert("최소 2개 팀을 구성할 인원이 필요합니다.");
 
         let activePool = players.filter(p => p.status === 'active').map(p => ({...p, assigned: false}));
         const mercCount = +document.getElementById('mercCount').value;
+        
+        // 용병 추가
         if (mercCount > 0) {
-            const avgVal = activePool.reduce((a,c)=>a+c.avg,0)/activePool.length;
+            const avgVal = activePool.length > 0 ? activePool.reduce((a,c)=>a+c.avg,0)/activePool.length : 50;
             for(let i=1; i<=mercCount; i++) activePool.push({ name: `용병${i}`, gol:avgVal, ala:avgVal, fix:avgVal, piv:avgVal, avg:avgVal, assigned:false, isMerc:true });
         }
 
         let teams = Array.from({length: info.teams}, (_, i) => ({ id: i+1, members: [], totalScore: 0 }));
 
+        // [핵심] 숙적 배제 로직을 포함한 팀 선택 함수
         const getTargetTeam = (player) => {
-            // [제약 1] 김동섭/임정현 분리
             let availableTeams = [...teams].sort((a,b) => a.totalScore - b.totalScore);
-            if (RIVALS.includes(player.name)) {
-                const rivalName = RIVALS.find(n => n !== player.name);
-                availableTeams = availableTeams.filter(t => !t.members.some(m => m.name === rivalName));
+            
+            if (RIVALS_MAP[player.name]) {
+                const myRivals = RIVALS_MAP[player.name];
+                availableTeams = availableTeams.filter(t => !t.members.some(m => myRivals.includes(m.name)));
             }
-            return availableTeams[0];
+            
+            // 숙적이 모든 팀에 차 있는 경우 등 예외상황 시 점수 낮은 팀 강제 배정
+            return availableTeams.length > 0 ? availableTeams[0] : [...teams].sort((a,b) => a.totalScore - b.totalScore)[0];
         };
 
         const assignStep = (sortKey, countPerTeam) => {
             let candidates = activePool.filter(p => !p.assigned && !FIXED_GOL.includes(p.name))
                                        .sort((a,b) => b[sortKey] - a[sortKey])
                                        .slice(0, info.teams * countPerTeam);
-            // 셔플하여 교차 분배
+            
             candidates.sort(() => Math.random() - 0.5).forEach(p => {
                 let t = getTargetTeam(p);
-                if(!t) t = [...teams].sort((a,b) => a.totalScore - b.totalScore)[0]; // 강제 배정
                 p.assigned = true; t.members.push(p); t.totalScore += p.avg;
             });
         };
 
-        // 1. 픽소 (팀당 2)
+        // 1. 픽소(팀당 2) → 2. 아라(모드별 1~2) → 3. 피보(팀당 1) 배정
         assignStep('fix', 2);
-        // 2. 아라 (6:6은 2명, 5:5는 1명)
         assignStep('ala', info.perTeam === 6 ? 2 : 1);
-        // 3. 피보 (팀당 1)
         assignStep('piv', 1);
 
-        // 4. 골레이 (고정 인원 처리 포함)
+        // 4. 골레이 배정 (고정 인원 임정현/김현웅 우선 분리 배정)
         let fixedGols = activePool.filter(p => FIXED_GOL.includes(p.name));
         fixedGols.forEach(p => {
             let t = getTargetTeam(p);
             p.assigned = true; t.members.push(p); t.totalScore += p.avg;
         });
 
-        // 남은 골레이 후보
-        let remainGols = activePool.filter(p => !p.assigned).sort((a,b) => b.gol - a.gol).slice(0, Math.max(0, info.teams - fixedGols.length));
+        // 일반 골레이 후보군 추가 배정
+        let neededGols = Math.max(0, info.teams - fixedGols.length);
+        let remainGols = activePool.filter(p => !p.assigned).sort((a,b) => b.gol - a.gol).slice(0, neededGols);
         remainGols.forEach(p => {
             let t = getTargetTeam(p);
             p.assigned = true; t.members.push(p); t.totalScore += p.avg;
         });
 
-        // 5. 잉여 인원 배정 (자리 남은 팀 + 점수 낮은 팀 순)
+        // 5. 잉여 인원 배정 (자리 남은 팀 중 능력치 낮은 팀 순)
         activePool.filter(p => !p.assigned).sort((a,b) => b.avg - a.avg).forEach(p => {
             let t = [...teams].filter(v => v.members.length < info.perTeam).sort((a,b) => a.totalScore - b.totalScore)[0];
-            if (!t) t = [...teams].sort((a,b) => a.totalScore - b.totalScore)[0]; // 완전 잉여
+            if (!t) t = [...teams].sort((a,b) => a.totalScore - b.totalScore)[0];
             p.assigned = true; t.members.push(p); t.totalScore += p.avg;
         });
 
@@ -173,10 +185,21 @@
         teams.forEach(t => {
             const card = document.createElement('div'); card.className = 'team-card';
             const mHtml = t.members.map(m => {
-                const b = [{n:'GOL',v:m.gol,c:'f6ad55'},{n:'ALA',v:m.ala,c:'4fd1c5'},{n:'FIX',v:m.fix,c:'f687b3'},{n:'PIV',v:m.piv,c:'63b3ed'}].sort((a,b)=>b.v-a.v)[0];
-                return `<div class="member-row"><span>${m.name}</span><span class="pos-badge" style="background:#${b.c}">${b.n} ${b.v.toFixed(1)}</span></div>`;
+                const stats = [{n:'GOL',v:m.gol,c:'f6ad55'},{n:'ALA',v:m.ala,c:'4fd1c5'},{n:'FIX',v:m.fix,c:'f687b3'},{n:'PIV',v:m.piv,c:'63b3ed'}];
+                const best = stats.sort((a,b)=>b.v-a.v)[0];
+                return `
+                    <div class="member-row">
+                        <span style="${m.isMerc?'color:var(--primary);':''}">${m.name}</span>
+                        <span class="pos-badge" style="background:#${best.c}">${best.n} ${best.v.toFixed(1)}</span>
+                    </div>`;
             }).join('');
-            card.innerHTML = `<div style="display:flex; justify-content:space-between; border-bottom:1px solid #444; padding-bottom:5px; font-weight:800;"><span>TEAM ${t.id}</span><span style="color:var(--primary)">${t.totalScore.toFixed(1)}</span></div>${mHtml}`;
+            card.innerHTML = `
+                <div style="display:flex; justify-content:space-between; border-bottom:1px solid #444; padding-bottom:8px; font-weight:800;">
+                    <span>TEAM ${t.id}</span>
+                    <span style="color:var(--primary); font-size:0.8rem;">평균합: ${t.totalScore.toFixed(1)}</span>
+                </div>
+                ${mHtml}
+            `;
             area.appendChild(card);
         });
     }
