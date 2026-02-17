@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>내 친구의 이름은? - 초성 퀴즈</title>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        :root { --primary: #6c5ce7; --accent: #ff7675; --bg: #f9f9fb; --yellow: #fdcb6e; --start-grad: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%); }
+        body { font-family: 'Pretendard', sans-serif; background: var(--bg); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; overflow: hidden; }
+        
+        .container { width: 95%; max-width: 800px; background: white; padding: 40px; border-radius: 40px; box-shadow: 0 10px 40px rgba(0,0,0,0.08); text-align: center; position: relative; transition: all 0.5s ease; z-index: 10; }
+        
+        .full-screen-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: white; z-index: 100; display: none; flex-direction: column; justify-content: center; align-items: center; padding: 50px; box-sizing: border-box; }
+        .full-screen-overlay.active { display: flex; }
+
+        /* 엔딩 메시지 폰트 크기를 1.7배(약 4.8rem)로 확대 */
+        .big-text { font-size: 4.8rem; font-weight: 800; line-height: 1.4; color: #2d3436; word-break: keep-all; text-align: center; white-space: pre-line; }
+        
+        #endingArea .big-text { color: #2d3436; text-shadow: 1px 1px 2px rgba(255,255,255,0.8); }
+
+        h1 { color: var(--primary); font-size: 3rem; margin-top: 0; }
+
+        .btn { 
+            border: none; padding: 20px 40px; border-radius: 20px; cursor: pointer; 
+            font-size: 1.5rem; font-weight: bold; width: 100%; margin-top: 20px; 
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            box-shadow: 0 4px 0px rgba(0,0,0,0.1);
+        }
+        .btn:hover { 
+            transform: translateY(-5px); 
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+            filter: brightness(1.1);
+        }
+        .btn:active { transform: translateY(2px); box-shadow: 0 2px 0px rgba(0,0,0,0.1); }
+
+        #startBtn {
+            background: var(--start-grad);
+            color: white;
+            font-size: 1.8rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            border: 3px solid rgba(255,255,255,0.3);
+            display: block;
+            margin-top: 30px;
+        }
+
+        #startBtn.disabled {
+            background: #dfe6e9;
+            color: #b2bec3;
+            cursor: not-allowed;
+            opacity: 0.6;
+            transform: none;
+            box-shadow: none;
+            text-shadow: none;
+            border-color: transparent;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 10px 20px rgba(108, 92, 231, 0.3); }
+            50% { transform: scale(1.03); box-shadow: 0 15px 30px rgba(108, 92, 231, 0.5); }
+            100% { transform: scale(1); box-shadow: 0 10px 20px rgba(108, 92, 231, 0.3); }
+        }
+        .pulse-ready { animation: pulse 1.5s infinite ease-in-out; }
+
+        .quiz-card { display: none; width: 100%; }
+        
+        .progress-indicator { 
+            font-size: 1.2rem; 
+            color: #b2bec3; 
+            font-weight: bold; 
+            margin-bottom: 10px;
+            background: #f1f2f6;
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 50px;
+        }
+
+        .chosung { font-size: 7rem; font-weight: 900; color: #2d3436; margin: 20px 0; letter-spacing: 15px; }
+        .answer { font-size: 8rem; font-weight: 900; color: var(--primary); margin: 20px 0; display: none; }
+        .answer.show { display: block; transform: scale(1.1); transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        
+        .timer-container { width: 100%; height: 20px; background: #eee; border-radius: 10px; margin: 10px 0 20px 0; overflow: hidden; }
+        #timer-bar { width: 100%; height: 100%; background: var(--accent); transition: width 1s linear; }
+
+        #endingArea { 
+            background: rgba(230, 230, 250, 0.8); 
+            cursor: pointer; 
+            backdrop-filter: blur(8px);
+        }
+
+        #file-status { margin-top: 10px; color: #636e72; font-weight: bold; font-size: 1.1rem; }
+
+        /* 하단 안내 문구 크기 유지 전용 스타일 */
+        .sub-guide-text { color: rgba(0,0,0,0.5); margin-top: 40px; font-size: 1.5rem !important; font-weight: normal; }
+    </style>
+</head>
+<body>
+
+<div class="container" id="mainContainer">
+    <div id="introArea">
+        <h1>꿈들레🏵️선생님🤓과 함께하는</h1> <h1>🐱 내 친구의 이름은?</h1>
+        
+        <button class="btn" style="background: #efefef; color:#2d3436; border: 2px dashed #b2bec3;" onmouseenter="playPopSound()" onclick="document.getElementById('fileInput').click()">📁 명단 업로드(엑셀)</button>
+        <input type="file" id="fileInput" accept=".xlsx, .xls" style="display:none">
+        <div id="file-status">아직 업로드된 명단이 없어요 🧐</div>
+
+        <button class="btn" style="background:var(--yellow); color:#855e00;" onmouseenter="playPopSound()" onclick="showGuide()">💡 게임 방법 보기</button>
+        
+        <button id="startBtn" class="btn disabled" onmouseenter="playPopSound()" onclick="startGame()">🚀 게임 시작하기</button>
+        
+        <p id="error-log" style="color:red; margin-top:10px;"></p>
+    </div>
+
+    <div id="quizArea" class="quiz-card">
+        <div class="progress-indicator">
+            <span id="currentNum">0</span> / <span id="totalNum">0</span>
+        </div>
+        <div id="timer-text" style="color:var(--accent); font-weight:bold; font-size:2rem;">20s</div>
+        <div class="timer-container"><div id="timer-bar"></div></div>
+        <div id="chosungText" class="chosung"></div>
+        <div id="answerText" class="answer"></div>
+        <button id="showBtn" class="btn" style="background:var(--primary); color:white;" onmouseenter="playPopSound()" onclick="revealAnswer()">정답 확인</button>
+        <button id="nextBtn" class="btn" style="background:#00b894; color:white; display:none;" onmouseenter="playPopSound()" onclick="goNext()">다음 문제 👉</button>
+    </div>
+</div>
+
+<div id="guideOverlay" class="full-screen-overlay">
+    <div style="font-size: 3.2rem; font-weight: 800; color: var(--primary); margin-bottom: 30px;">📖 게임 방법은 요!</div>
+    <div style="font-size: 2.8rem; font-weight: 800; line-height: 1.6; text-align: left;">
+        1. 초성을 보고 손을 들어 친구 이름 맞추기<br>
+        2. 자신의 이름이 나오면 일어나서 인사해주기<br>
+        3. 친구들은 이름을 3번 불러주기
+    </div>
+    <button class="btn" style="background:var(--accent); color:white; max-width: 400px; margin-top: 50px;" onmouseenter="playPopSound()" onclick="hideGuide()">닫기</button>
+</div>
+
+<div id="endingArea" class="full-screen-overlay" onclick="nextCard()">
+    <div id="cardDisplay" class="big-text">화면을 클릭하면 메시지가 나타나요!</div>
+    <p class="sub-guide-text">클릭하여 다음 이야기 보기 ✨</p>
+</div>
+
+<script>
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playPopSound() {
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        oscillator.type = 'sine'; 
+        oscillator.frequency.setValueAtTime(400, audioCtx.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1);
+        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.1);
+    }
+
+    function playTickSound() {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(1000, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.05);
+    }
+
+    function playEmergencySound() {
+        const duration = 0.5;
+        [850, 950].forEach((freq) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            osc.frequency.linearRampToValueAtTime(freq + 100, audioCtx.currentTime + duration/2);
+            osc.frequency.linearRampToValueAtTime(freq, audioCtx.currentTime + duration);
+            gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        });
+    }
+
+    function playTaDaSound() {
+        const notes = [523.25, 659.25];
+        notes.forEach((freq, i) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            const time = audioCtx.currentTime + (i * 0.15);
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, time);
+            gain.gain.setValueAtTime(0.2, time);
+            gain.gain.exponentialRampToValueAtTime(0.01, time + 0.4);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(time);
+            osc.stop(time + 0.4);
+        });
+    }
+
+    let questions = [];
+    let currentIndex = 0;
+    let timeLeft = 20; 
+    let timerInterval;
+    let isFileReady = false;
+
+    const endingMessages = [
+        "오늘 우리가 부른 이름들 속에\n따뜻한 마음이 가득 담겼어요. ✨",
+        "누군가의 이름을 다정하게 부르는 건\n'너는 나에게 참 소중해'라고\n말해주는 것과 같아요. 🥰",
+        "서로의 이름을 기억하고 불러줄 때,\n우리 꿈들레반은 세상에서 가장 행복한\n꽃밭이 된답니다. 🏵️🌻🌷",
+        "내일도, 모레도 우리 친구들의 이름을\n사랑을 담아 불러줄 수 있죠? ❤️"
+    ];
+    let cardIndex = 0;
+
+    function showGuide() { document.getElementById('guideOverlay').classList.add('active'); }
+    function hideGuide() { document.getElementById('guideOverlay').classList.remove('active'); }
+
+    function getChosung(str) {
+        const cho = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+        let result = "";
+        for(let i=0; i<str.length; i++) {
+            let code = str.charCodeAt(i) - 44032;
+            if(code >= 0 && code <= 11171) result += cho[Math.floor(code/588)];
+            else result += str.charAt(i);
+        }
+        return result;
+    }
+
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        document.getElementById('file-status').innerText = "✅ 명단 확인 완료! 이제 시작해 볼까요?";
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                let rawWords = [];
+                for(let r = 4; r <= 27; r++) {
+                    const cell = sheet[XLSX.utils.encode_cell({r: r, c: 2})];
+                    if(cell && cell.v) rawWords.push(String(cell.v).trim());
+                }
+                questions = rawWords.sort(() => Math.random() - 0.5).map(w => ({ word: w, cho: getChosung(w) }));
+                if(questions.length > 0) {
+                    isFileReady = true;
+                    const startBtn = document.getElementById('startBtn');
+                    startBtn.classList.remove('disabled');
+                    startBtn.classList.add('pulse-ready');
+                    document.getElementById('error-log').innerText = "";
+                }
+            } catch (err) { 
+                document.getElementById('error-log').innerText = "파일 로드 오류!"; 
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    });
+
+    function startGame() {
+        if(!isFileReady) return;
+        document.getElementById('totalNum').innerText = questions.length;
+        document.getElementById('introArea').style.display = 'none';
+        document.getElementById('quizArea').style.display = 'block';
+        render();
+    }
+
+    function render() {
+        const q = questions[currentIndex];
+        document.getElementById('currentNum').innerText = currentIndex + 1;
+        document.getElementById('chosungText').innerText = q.cho;
+        document.getElementById('chosungText').style.display = 'block';
+        const ansElem = document.getElementById('answerText');
+        ansElem.innerText = q.word;
+        ansElem.classList.remove('show');
+        document.getElementById('showBtn').style.display = 'block';
+        document.getElementById('nextBtn').style.display = 'none';
+        
+        timeLeft = 20; 
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('timer-text').innerText = timeLeft + "s";
+            document.getElementById('timer-bar').style.width = (timeLeft/20*100) + "%";
+            if (timeLeft > 5) playTickSound();
+            else if (timeLeft <= 5 && timeLeft > 0) playEmergencySound();
+            if (timeLeft <= 0) { clearInterval(timerInterval); revealAnswer(); }
+        }, 1000);
+    }
+
+    function revealAnswer() {
+        clearInterval(timerInterval);
+        playTaDaSound();
+        document.getElementById('chosungText').style.display = 'none';
+        document.getElementById('answerText').classList.add('show');
+        document.getElementById('showBtn').style.display = 'none';
+        document.getElementById('nextBtn').style.display = 'block';
+        confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+    }
+
+    function goNext() {
+        currentIndex++;
+        if(currentIndex < questions.length) render();
+        else showEnding();
+    }
+
+    function showEnding() {
+        document.getElementById('mainContainer').style.display = 'none';
+        document.getElementById('endingArea').classList.add('active');
+        nextCard();
+    }
+
+    function nextCard() {
+        const display = document.getElementById('cardDisplay');
+        if(cardIndex < endingMessages.length) {
+            display.innerText = endingMessages[cardIndex];
+            cardIndex++;
+            confetti({ particleCount: 100, spread: 80, origin: { y: 0.5 } });
+        } else {
+            display.innerText = "꿈꾸는 민들레🏵️반 친구들❤️\n 모두 모두 사랑해!😍👋";
+            setTimeout(() => location.reload(), 4000);
+        }
+    }
+</script>
+</body>
+</html>
