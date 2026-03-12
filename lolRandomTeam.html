@@ -2,109 +2,104 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>LOL CUSTOM MATCH</title>
+    <title>LOL CUSTOM MATCH - PICK PHASE</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap');
 
         body { 
             font-family: 'Noto Sans KR', sans-serif; 
             background: radial-gradient(circle, #0a1428 0%, #010a13 100%); 
-            color: #f0e6d2; 
-            margin: 0; padding: 40px 20px;
-            display: flex; flex-direction: column; align-items: center;
-            min-height: 100vh;
+            color: #f0e6d2; margin: 0; padding: 20px;
+            display: flex; flex-direction: column; align-items: center; min-height: 100vh;
         }
 
-        .container { width: 100%; max-width: 900px; }
+        .container { width: 100%; max-width: 1000px; }
+        h1 { text-align: center; color: #c8aa6e; letter-spacing: 5px; border-bottom: 2px solid #c89b3c; padding-bottom: 10px; margin-bottom: 20px; }
 
-        h1 { 
-            text-align: center; color: #c8aa6e; text-transform: uppercase; 
-            letter-spacing: 5px; border-bottom: 2px solid #c89b3c;
-            padding-bottom: 15px; margin-bottom: 30px;
-            text-shadow: 0 0 10px rgba(200, 170, 110, 0.5);
+        /* 멤버 선택 풀 (Pick Pool) */
+        .member-pool-section {
+            background: rgba(1, 10, 19, 0.9); border: 1px solid #5b5a56; padding: 20px; margin-bottom: 20px;
+        }
+        .section-title { color: #a09b8c; font-size: 14px; margin-bottom: 15px; font-weight: bold; text-transform: uppercase; }
+        .pool-grid { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+        .member-chip { 
+            background: #1e2328; border: 1px solid #5b5a56; color: #cdbe91; padding: 6px 12px; cursor: pointer;
+            transition: 0.2s; font-size: 13px; border-radius: 2px;
+        }
+        .member-chip:hover { border-color: #c8aa6e; background: #2a2e35; color: #f0e6d2; }
+        .member-chip.selected { border-color: #c8aa6e; background: #c8aa6e; color: #1e2328; font-weight: bold; pointer-events: none; opacity: 0.5; }
+
+        /* 현재 선택된 엔트리 (Entry) */
+        .entry-section { 
+            background: rgba(30, 35, 40, 0.5); border: 1px solid #c8aa6e; padding: 20px; margin-bottom: 20px;
+        }
+        .entry-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+        .entry-slot { 
+            height: 40px; background: #0a1428; border: 1px solid #5b5a56; 
+            display: flex; align-items: center; justify-content: center; 
+            font-weight: bold; color: #f0e6d2; cursor: pointer; position: relative;
+        }
+        .entry-slot:empty::after { content: "EMPTY"; color: #3c3c41; font-size: 11px; }
+        .entry-slot.filled { border-color: #c8aa6e; box-shadow: inset 0 0 5px rgba(200, 170, 110, 0.2); }
+        .entry-slot.filled:hover::after { 
+            content: "REMOVE"; position: absolute; width: 100%; height: 100%; background: rgba(232, 65, 24, 0.8);
+            display: flex; align-items: center; justify-content: center; color: white; font-size: 10px;
         }
 
-        /* 입력창 구역 */
-        .input-section { 
-            background: rgba(1, 10, 19, 0.9); border: 1px solid #5b5a56;
-            padding: 25px; border-radius: 2px; margin-bottom: 30px;
-            box-shadow: inset 0 0 10px #000;
-        }
-        .input-grid { 
-            display: grid; grid-template-columns: repeat(5, 1fr); 
-            gap: 12px; margin-bottom: 20px;
-        }
-        input { 
-            background: #1e2328; border: 1px solid #5b5a56; color: #f0e6d2;
-            padding: 10px; outline: none; transition: 0.2s; text-align: center;
-        }
-        input:focus { border-color: #c8aa6e; background: #2a2e35; box-shadow: 0 0 5px rgba(200, 170, 110, 0.3); }
+        .btn-area { display: flex; gap: 10px; margin-bottom: 30px; }
+        button { flex: 1; padding: 15px; background: #1e2328; color: #c8aa6e; border: 1px solid #c8aa6e; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        button:hover:not(:disabled) { background: #c8aa6e; color: #1e2328; box-shadow: 0 0 20px rgba(200, 170, 110, 0.4); }
+        button:disabled { border-color: #3c3c41; color: #3c3c41; cursor: not-allowed; }
+        .reset-btn { flex: 0.2; border-color: #e84118; color: #e84118; }
+        .reset-btn:hover { background: #e84118 !important; color: #fff !important; }
 
-        button { 
-            width: 100%; padding: 15px; background: #1e2328; 
-            color: #c8aa6e; border: 1px solid #c8aa6e; cursor: pointer;
-            font-size: 18px; font-weight: bold; text-transform: uppercase;
-            transition: all 0.3s ease; letter-spacing: 2px;
-        }
-        button:hover { background: #c8aa6e; color: #1e2328; box-shadow: 0 0 20px rgba(200, 170, 110, 0.5); }
-
-        /* 결과 화면 레이아웃 */
-        .match-wrap { display: flex; justify-content: space-between; gap: 30px; display: none; margin-top: 20px; }
-        .team-box { flex: 1; border: 1px solid #5b5a56; background: rgba(0, 0, 0, 0.7); position: relative; }
-        
-        .team-header { padding: 15px; text-align: center; font-size: 20px; font-weight: bold; letter-spacing: 3px; background: rgba(255,255,255,0.03); }
-        .blue-side { border-top: 5px solid #0097e6; box-shadow: 0 0 15px rgba(0, 151, 230, 0.2); }
-        .red-side { border-top: 5px solid #e84118; box-shadow: 0 0 15px rgba(232, 65, 24, 0.2); }
-        
+        /* 배정 결과 */
+        .match-wrap { display: flex; justify-content: space-between; gap: 30px; display: none; width: 100%; }
+        .team-box { flex: 1; border: 1px solid #5b5a56; background: rgba(0, 0, 0, 0.7); }
+        .team-header { padding: 15px; text-align: center; font-size: 20px; font-weight: bold; letter-spacing: 3px; }
+        .blue-side { border-top: 5px solid #0097e6; }
+        .red-side { border-top: 5px solid #e84118; }
         .blue-side .team-header { color: #0097e6; }
         .red-side .team-header { color: #e84118; }
 
-        .player-row { 
-            display: flex; align-items: center; padding: 12px 20px; 
-            border-bottom: 1px solid #3c3c41;
-        }
-        .player-row:last-child { border-bottom: none; }
-
-        /* 포지션 뱃지 - 크기 및 텍스트 맞춤 수정 */
+        .player-row { display: flex; align-items: center; padding: 12px 20px; border-bottom: 1px solid #3c3c41; }
         .pos-badge { 
-            width: 85px; /* 너비를 충분히 확보 */
-            height: 28px;
-            font-size: 11px; font-weight: bold; color: #a09b8c;
-            border: 1px solid #5b5a56; 
-            display: flex; align-items: center; justify-content: center; /* 텍스트 중앙 정렬 */
-            margin-right: 20px; background: #1e2328;
-            letter-spacing: 1px;
-            flex-shrink: 0; /* 박스 크기 유지 */
+            width: 85px; height: 28px; font-size: 11px; font-weight: bold; color: #a09b8c;
+            border: 1px solid #5b5a56; display: flex; align-items: center; justify-content: center;
+            margin-right: 20px; background: #1e2328; flex-shrink: 0;
         }
-        
-        .player-name { font-size: 18px; color: #cdbe91; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-        /* 애니메이션 */
+        .player-name { font-size: 18px; color: #cdbe91; }
         .fade-in { animation: fadeIn 0.6s ease forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        
-        @media (max-width: 600px) {
-            .input-grid { grid-template-columns: 1fr 1fr; }
-            .match-wrap { flex-direction: column; }
-        }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h1>Custom Matchmaking</h1>
-    
-    <div class="input-section">
-        <div class="input-grid" id="inputGrid"></div>
-        <button onclick="generateMatch()">Start Random Draft</button>
+
+    <div class="member-pool-section">
+        <div class="section-title">Available Summoners (Click to Pick)</div>
+        <div class="pool-grid" id="poolGrid"></div>
+    </div>
+
+    <div class="entry-section">
+        <div class="section-title">Selected Entry (<span id="count">0</span> / 10)</div>
+        <div class="entry-grid" id="entryGrid">
+            </div>
+    </div>
+
+    <div class="btn-area">
+        <button class="reset-btn" onclick="resetEntry()">RESET</button>
+        <button id="startBtn" onclick="generateMatch()" disabled>Start Random Draft</button>
     </div>
 
     <div id="matchWrap" class="match-wrap">
-        <div class="team-box blue-side" id="blueBox">
+        <div class="team-box blue-side fade-in">
             <div class="team-header">BLUE TEAM</div>
             <div id="blueTeamList"></div>
         </div>
-        <div class="team-box red-side" id="redBox">
+        <div class="team-box red-side fade-in">
             <div class="team-header">RED TEAM</div>
             <div id="redTeamList"></div>
         </div>
@@ -112,22 +107,79 @@
 </div>
 
 <script>
-    const POSITIONS = ["TOP", "JUNGLE", "MIDDLE", "BOTTOM", "SUPPORT"];
+    const MEMBER_LIST = [
+        "민준국", "이아니스", "최빛누리", "골드레이", "귀요미 상우", 
+        "나도너도속는무빙", "대 파", "로밍과 줄리엣", "바린이", "배시시시", 
+        "성일짱", "아메리칸 프로그", "여기 쓸쓸함 한잔 주시오", "임쏘은", 
+        "조즈리얼", "증오는 빼는 편이야", "지나가는루돌프", "태구리", "해운대구보안관"
+    ];
 
-    const grid = document.getElementById('inputGrid');
-    for(let i=1; i<=10; i++) {
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.className = 'p-input';
-        input.placeholder = `Summoner ${i}`;
-        input.value = `플레이어 ${i}`; 
-        grid.appendChild(input);
+    const POSITIONS = ["TOP", "JUNGLE", "MIDDLE", "BOTTOM", "SUPPORT"];
+    let selectedPlayers = [];
+
+    // 초기화: 풀 생성 및 슬롯 생성
+    function init() {
+        const poolGrid = document.getElementById('poolGrid');
+        MEMBER_LIST.forEach(name => {
+            const chip = document.createElement('div');
+            chip.className = 'member-chip';
+            chip.innerText = name;
+            chip.onclick = () => addPlayer(name, chip);
+            poolGrid.appendChild(chip);
+        });
+
+        const entryGrid = document.getElementById('entryGrid');
+        for(let i=0; i<10; i++) {
+            const slot = document.createElement('div');
+            slot.className = 'entry-slot';
+            slot.id = `slot-${i}`;
+            entryGrid.appendChild(slot);
+        }
+    }
+
+    function addPlayer(name, chipElement) {
+        if (selectedPlayers.length < 10 && !selectedPlayers.includes(name)) {
+            selectedPlayers.push(name);
+            chipElement.classList.add('selected');
+            updateEntry();
+        }
+    }
+
+    function removePlayer(name) {
+        selectedPlayers = selectedPlayers.filter(p => p !== name);
+        // 칩 상태 복구
+        const chips = document.querySelectorAll('.member-chip');
+        chips.forEach(c => { if(c.innerText === name) c.classList.remove('selected'); });
+        updateEntry();
+    }
+
+    function updateEntry() {
+        for(let i=0; i<10; i++) {
+            const slot = document.getElementById(`slot-${i}`);
+            if (selectedPlayers[i]) {
+                slot.innerText = selectedPlayers[i];
+                slot.className = 'entry-slot filled';
+                slot.onclick = () => removePlayer(selectedPlayers[i]);
+            } else {
+                slot.innerText = "";
+                slot.className = 'entry-slot';
+                slot.onclick = null;
+            }
+        }
+        document.getElementById('count').innerText = selectedPlayers.length;
+        document.getElementById('startBtn').disabled = selectedPlayers.length !== 10;
+    }
+
+    function resetEntry() {
+        selectedPlayers = [];
+        const chips = document.querySelectorAll('.member-chip');
+        chips.forEach(c => c.classList.remove('selected'));
+        updateEntry();
+        document.getElementById('matchWrap').style.display = 'none';
     }
 
     function generateMatch() {
-        const inputs = document.querySelectorAll('.p-input');
-        let players = Array.from(inputs).map(i => i.value.trim() || "Unknown");
-
+        let players = [...selectedPlayers];
         for (let i = players.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [players[i], players[j]] = [players[j], players[i]];
@@ -135,32 +187,22 @@
 
         renderTeam('blueTeamList', players.slice(0, 5));
         renderTeam('redTeamList', players.slice(5, 10));
-
-        const wrap = document.getElementById('matchWrap');
-        wrap.style.display = 'flex';
-        
-        // 애니메이션 재트리거
-        document.getElementById('blueBox').classList.remove('fade-in');
-        document.getElementById('redBox').classList.remove('fade-in');
-        void wrap.offsetWidth; 
-        document.getElementById('blueBox').classList.add('fade-in');
-        document.getElementById('redBox').classList.add('fade-in');
+        document.getElementById('matchWrap').style.display = 'flex';
     }
 
-    function renderTeam(id, playerList) {
+    function renderTeam(id, list) {
         const target = document.getElementById(id);
         target.innerHTML = "";
-        
         POSITIONS.forEach((pos, idx) => {
-            const html = `
+            target.innerHTML += `
                 <div class="player-row">
                     <div class="pos-badge">${pos}</div>
-                    <div class="player-name">${playerList[idx]}</div>
-                </div>
-            `;
-            target.innerHTML += html;
+                    <div class="player-name">${list[idx]}</div>
+                </div>`;
         });
     }
+
+    init();
 </script>
 
 </body>
