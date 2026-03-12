@@ -2,105 +2,151 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>롤 5vs5 내전 배정기</title>
+    <title>LOL CUSTOM MATCH</title>
     <style>
-        body { font-family: 'Pretendard', sans-serif; background-color: #1a1a2e; color: #fff; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .container { background: #16213e; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 90%; max-width: 800px; }
-        h2 { text-align: center; color: #48dbfb; text-transform: uppercase; letter-spacing: 2px; }
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap');
+
+        body { 
+            font-family: 'Noto Sans KR', sans-serif; 
+            background: radial-gradient(circle, #0a1428 0%, #010a13 100%); 
+            color: #f0e6d2; 
+            margin: 0; padding: 40px 20px;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        .container { width: 100%; max-width: 900px; }
+
+        h1 { 
+            text-align: center; color: #c8aa6e; text-transform: uppercase; 
+            letter-spacing: 4px; border-bottom: 2px solid #c89b3c;
+            padding-bottom: 15px; margin-bottom: 30px;
+        }
+
+        /* 입력창 구역 */
+        .input-section { 
+            background: rgba(1, 10, 19, 0.8); border: 1px solid #5b5a56;
+            padding: 20px; border-radius: 4px; margin-bottom: 30px;
+        }
+        .input-grid { 
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); 
+            gap: 10px; margin-bottom: 15px;
+        }
+        input { 
+            background: #1e2328; border: 1px solid #5b5a56; color: #f0e6d2;
+            padding: 8px 12px; outline: none; transition: 0.2s;
+        }
+        input:focus { border-color: #c8aa6e; background: #2a2e35; }
+
+        button { 
+            width: 100%; padding: 15px; background: #1e2328; 
+            color: #c8aa6e; border: 1px solid #c8aa6e; cursor: pointer;
+            font-size: 18px; font-weight: bold; text-transform: uppercase;
+            transition: all 0.3s ease;
+        }
+        button:hover { background: #c8aa6e; color: #1e2328; box-shadow: 0 0 15px rgba(200, 170, 110, 0.4); }
+
+        /* 결과 화면 레이아웃 */
+        .match-wrap { display: flex; justify-content: space-between; gap: 40px; display: none; margin-top: 20px; }
+        .team-box { flex: 1; border: 1px solid #5b5a56; background: rgba(0, 0, 0, 0.6); position: relative; }
         
-        /* 입력창 스타일 */
-        .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-        input { background: #0f3460; border: 1px solid #48dbfb; color: white; padding: 10px; border-radius: 5px; outline: none; }
-        input::placeholder { color: #888; }
+        /* 팀 컬러 헤더 */
+        .team-header { padding: 15px; text-align: center; font-size: 22px; font-weight: bold; letter-spacing: 2px; }
+        .blue-side { border-top: 4px solid #0097e6; color: #0097e6; }
+        .red-side { border-top: 4px solid #e84118; color: #e84118; }
 
-        button { width: 100%; padding: 15px; background: #e94560; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 18px; font-weight: bold; transition: 0.3s; }
-        button:hover { background: #ff2e63; transform: scale(1.02); }
+        .player-row { 
+            display: flex; align-items: center; padding: 15px; 
+            border-bottom: 1px solid #3c3c41; transition: background 0.2s;
+        }
+        .player-row:last-child { border-bottom: none; }
+        .player-row:hover { background: rgba(200, 170, 110, 0.05); }
 
-        /* 결과 화면 스타일 */
-        .match-display { display: flex; justify-content: space-between; margin-top: 30px; gap: 20px; display: none; }
-        .team-card { flex: 1; background: #0f3460; border-radius: 10px; padding: 15px; border-top: 5px solid; }
-        .blue-team { border-color: #00d2ff; }
-        .red-team { border-color: #ff4b2b; }
-        
-        .team-title { text-align: center; font-size: 20px; margin-bottom: 15px; font-weight: bold; }
-        .blue-title { color: #00d2ff; }
-        .red-title { color: #ff4b2b; }
+        /* 포지션 아이콘 느낌 */
+        .pos-badge { 
+            width: 45px; font-size: 12px; font-weight: bold; color: #a09b8c;
+            border: 1px solid #5b5a56; padding: 2px 4px; text-align: center;
+            margin-right: 20px; background: #1e2328;
+        }
+        .player-name { font-size: 18px; color: #cdbe91; font-weight: 500; }
 
-        .row { display: flex; justify-content: space-between; padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .pos-label { color: #aaa; font-size: 0.9em; font-weight: bold; width: 50px; }
-        .player-name { font-weight: 500; }
+        /* 애니메이션 효과 */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.5s ease forwards; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>LOL 10인 내전 메이커</h2>
+    <h1>Custom Matchmaking</h1>
     
-    <div class="input-grid" id="inputGrid">
+    <div class="input-section">
+        <div class="input-grid" id="inputGrid"></div>
+        <button onclick="generateMatch()">Start Random Draft</button>
+    </div>
+
+    <div id="matchWrap" class="match-wrap">
+        <div class="team-box blue-side fade-in">
+            <div class="team-header">BLUE TEAM</div>
+            <div id="blueTeamList"></div>
         </div>
-
-    <button onclick="shuffleTeams()">팀 및 포지션 결정!</button>
-
-    <div id="matchDisplay" class="match-display">
-        <div class="team-card blue-team">
-            <div class="team-title blue-title">1팀 (BLUE)</div>
-            <div id="team1List"></div>
-        </div>
-
-        <div class="team-card red-team">
-            <div class="team-title red-title">2팀 (RED)</div>
-            <div id="team2List"></div>
+        <div class="team-box red-side fade-in">
+            <div class="team-header">RED TEAM</div>
+            <div id="redTeamList"></div>
         </div>
     </div>
 </div>
 
 <script>
-    // 페이지 로드 시 입력창 10개 생성
-    const inputGrid = document.getElementById('inputGrid');
+    // 포지션 데이터
+    const POSITIONS = ["TOP", "JUNGLE", "MID", "BOTTOM", "SUPPORT"];
+
+    // 10명 입력창 생성
+    const grid = document.getElementById('inputGrid');
     for(let i=1; i<=10; i++) {
         const input = document.createElement('input');
         input.type = 'text';
-        input.className = 'player-input';
-        input.placeholder = `플레이어 ${i}`;
-        // 테스트 편의를 위해 기본값 세팅 (실제 사용 시 삭제 가능)
-        input.value = `유저${i}`; 
-        inputGrid.appendChild(input);
+        input.className = 'p-input';
+        input.placeholder = `Summoner ${i}`;
+        input.value = `소환사${i}`; // 실제 사용 시 이 줄을 지우면 빈칸으로 시작합니다.
+        grid.appendChild(input);
     }
 
-    function shuffleTeams() {
-        const positions = ["TOP", "JNG", "MID", "ADC", "SUP"];
-        const inputs = document.querySelectorAll('.player-input');
-        let players = Array.from(inputs).map(i => i.value.trim() || "익명");
+    function generateMatch() {
+        const inputs = document.querySelectorAll('.p-input');
+        let players = Array.from(inputs).map(i => i.value.trim() || "Unidentified");
 
-        // 1. 10명의 명단을 무작위로 섞음
+        // 셔플 (피셔-예이츠)
         for (let i = players.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [players[i], players[j]] = [players[j], players[i]];
         }
 
-        // 2. 앞의 5명은 1팀, 뒤의 5명은 2팀
-        const team1 = players.slice(0, 5);
-        const team2 = players.slice(5, 10);
+        const teamBlue = players.slice(0, 5);
+        const teamRed = players.slice(5, 10);
 
-        // 3. 화면 출력 함수
-        renderTeam('team1List', team1, positions);
-        renderTeam('team2List', team2, positions);
+        renderTeam('blueTeamList', teamBlue);
+        renderTeam('redTeamList', teamRed);
 
-        document.getElementById('matchDisplay').style.display = 'flex';
+        const wrap = document.getElementById('matchWrap');
+        wrap.style.display = 'flex';
+        // 애니메이션 초기화
+        wrap.classList.remove('fade-in');
+        void wrap.offsetWidth; 
+        wrap.classList.add('fade-in');
     }
 
-    function renderTeam(elementId, teamPlayers, positions) {
-        const listDiv = document.getElementById(elementId);
-        listDiv.innerHTML = "";
+    function renderTeam(id, playerList) {
+        const target = document.getElementById(id);
+        target.innerHTML = "";
         
-        positions.forEach((pos, idx) => {
-            const row = `
-                <div class="row">
-                    <span class="pos-label">${pos}</span>
-                    <span class="player-name">${teamPlayers[idx]}</span>
+        POSITIONS.forEach((pos, idx) => {
+            const html = `
+                <div class="player-row">
+                    <div class="pos-badge">${pos}</div>
+                    <div class="player-name">${playerList[idx]}</div>
                 </div>
             `;
-            listDiv.innerHTML += row;
+            target.innerHTML += html;
         });
     }
 </script>
