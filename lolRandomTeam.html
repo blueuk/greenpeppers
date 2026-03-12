@@ -12,66 +12,81 @@
             color: #f0e6d2; 
             margin: 0; padding: 40px 20px;
             display: flex; flex-direction: column; align-items: center;
+            min-height: 100vh;
         }
 
         .container { width: 100%; max-width: 900px; }
 
         h1 { 
             text-align: center; color: #c8aa6e; text-transform: uppercase; 
-            letter-spacing: 4px; border-bottom: 2px solid #c89b3c;
+            letter-spacing: 5px; border-bottom: 2px solid #c89b3c;
             padding-bottom: 15px; margin-bottom: 30px;
+            text-shadow: 0 0 10px rgba(200, 170, 110, 0.5);
         }
 
         /* 입력창 구역 */
         .input-section { 
-            background: rgba(1, 10, 19, 0.8); border: 1px solid #5b5a56;
-            padding: 20px; border-radius: 4px; margin-bottom: 30px;
+            background: rgba(1, 10, 19, 0.9); border: 1px solid #5b5a56;
+            padding: 25px; border-radius: 2px; margin-bottom: 30px;
+            box-shadow: inset 0 0 10px #000;
         }
         .input-grid { 
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); 
-            gap: 10px; margin-bottom: 15px;
+            display: grid; grid-template-columns: repeat(5, 1fr); 
+            gap: 12px; margin-bottom: 20px;
         }
         input { 
             background: #1e2328; border: 1px solid #5b5a56; color: #f0e6d2;
-            padding: 8px 12px; outline: none; transition: 0.2s;
+            padding: 10px; outline: none; transition: 0.2s; text-align: center;
         }
-        input:focus { border-color: #c8aa6e; background: #2a2e35; }
+        input:focus { border-color: #c8aa6e; background: #2a2e35; box-shadow: 0 0 5px rgba(200, 170, 110, 0.3); }
 
         button { 
             width: 100%; padding: 15px; background: #1e2328; 
             color: #c8aa6e; border: 1px solid #c8aa6e; cursor: pointer;
             font-size: 18px; font-weight: bold; text-transform: uppercase;
-            transition: all 0.3s ease;
+            transition: all 0.3s ease; letter-spacing: 2px;
         }
-        button:hover { background: #c8aa6e; color: #1e2328; box-shadow: 0 0 15px rgba(200, 170, 110, 0.4); }
+        button:hover { background: #c8aa6e; color: #1e2328; box-shadow: 0 0 20px rgba(200, 170, 110, 0.5); }
 
         /* 결과 화면 레이아웃 */
-        .match-wrap { display: flex; justify-content: space-between; gap: 40px; display: none; margin-top: 20px; }
-        .team-box { flex: 1; border: 1px solid #5b5a56; background: rgba(0, 0, 0, 0.6); position: relative; }
+        .match-wrap { display: flex; justify-content: space-between; gap: 30px; display: none; margin-top: 20px; }
+        .team-box { flex: 1; border: 1px solid #5b5a56; background: rgba(0, 0, 0, 0.7); position: relative; }
         
-        /* 팀 컬러 헤더 */
-        .team-header { padding: 15px; text-align: center; font-size: 22px; font-weight: bold; letter-spacing: 2px; }
-        .blue-side { border-top: 4px solid #0097e6; color: #0097e6; }
-        .red-side { border-top: 4px solid #e84118; color: #e84118; }
+        .team-header { padding: 15px; text-align: center; font-size: 20px; font-weight: bold; letter-spacing: 3px; background: rgba(255,255,255,0.03); }
+        .blue-side { border-top: 5px solid #0097e6; box-shadow: 0 0 15px rgba(0, 151, 230, 0.2); }
+        .red-side { border-top: 5px solid #e84118; box-shadow: 0 0 15px rgba(232, 65, 24, 0.2); }
+        
+        .blue-side .team-header { color: #0097e6; }
+        .red-side .team-header { color: #e84118; }
 
         .player-row { 
-            display: flex; align-items: center; padding: 15px; 
-            border-bottom: 1px solid #3c3c41; transition: background 0.2s;
+            display: flex; align-items: center; padding: 12px 20px; 
+            border-bottom: 1px solid #3c3c41;
         }
         .player-row:last-child { border-bottom: none; }
-        .player-row:hover { background: rgba(200, 170, 110, 0.05); }
 
-        /* 포지션 아이콘 느낌 */
+        /* 포지션 뱃지 - 크기 및 텍스트 맞춤 수정 */
         .pos-badge { 
-            width: 45px; font-size: 12px; font-weight: bold; color: #a09b8c;
-            border: 1px solid #5b5a56; padding: 2px 4px; text-align: center;
+            width: 85px; /* 너비를 충분히 확보 */
+            height: 28px;
+            font-size: 11px; font-weight: bold; color: #a09b8c;
+            border: 1px solid #5b5a56; 
+            display: flex; align-items: center; justify-content: center; /* 텍스트 중앙 정렬 */
             margin-right: 20px; background: #1e2328;
+            letter-spacing: 1px;
+            flex-shrink: 0; /* 박스 크기 유지 */
         }
-        .player-name { font-size: 18px; color: #cdbe91; font-weight: 500; }
+        
+        .player-name { font-size: 18px; color: #cdbe91; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-        /* 애니메이션 효과 */
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .fade-in { animation: fadeIn 0.5s ease forwards; }
+        /* 애니메이션 */
+        .fade-in { animation: fadeIn 0.6s ease forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        @media (max-width: 600px) {
+            .input-grid { grid-template-columns: 1fr 1fr; }
+            .match-wrap { flex-direction: column; }
+        }
     </style>
 </head>
 <body>
@@ -85,11 +100,11 @@
     </div>
 
     <div id="matchWrap" class="match-wrap">
-        <div class="team-box blue-side fade-in">
+        <div class="team-box blue-side" id="blueBox">
             <div class="team-header">BLUE TEAM</div>
             <div id="blueTeamList"></div>
         </div>
-        <div class="team-box red-side fade-in">
+        <div class="team-box red-side" id="redBox">
             <div class="team-header">RED TEAM</div>
             <div id="redTeamList"></div>
         </div>
@@ -97,42 +112,39 @@
 </div>
 
 <script>
-    // 포지션 데이터
-    const POSITIONS = ["TOP", "JUNGLE", "MID", "BOTTOM", "SUPPORT"];
+    const POSITIONS = ["TOP", "JUNGLE", "MIDDLE", "BOTTOM", "SUPPORT"];
 
-    // 10명 입력창 생성
     const grid = document.getElementById('inputGrid');
     for(let i=1; i<=10; i++) {
         const input = document.createElement('input');
         input.type = 'text';
         input.className = 'p-input';
         input.placeholder = `Summoner ${i}`;
-        input.value = `소환사${i}`; // 실제 사용 시 이 줄을 지우면 빈칸으로 시작합니다.
+        input.value = `플레이어 ${i}`; 
         grid.appendChild(input);
     }
 
     function generateMatch() {
         const inputs = document.querySelectorAll('.p-input');
-        let players = Array.from(inputs).map(i => i.value.trim() || "Unidentified");
+        let players = Array.from(inputs).map(i => i.value.trim() || "Unknown");
 
-        // 셔플 (피셔-예이츠)
         for (let i = players.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [players[i], players[j]] = [players[j], players[i]];
         }
 
-        const teamBlue = players.slice(0, 5);
-        const teamRed = players.slice(5, 10);
-
-        renderTeam('blueTeamList', teamBlue);
-        renderTeam('redTeamList', teamRed);
+        renderTeam('blueTeamList', players.slice(0, 5));
+        renderTeam('redTeamList', players.slice(5, 10));
 
         const wrap = document.getElementById('matchWrap');
         wrap.style.display = 'flex';
-        // 애니메이션 초기화
-        wrap.classList.remove('fade-in');
+        
+        // 애니메이션 재트리거
+        document.getElementById('blueBox').classList.remove('fade-in');
+        document.getElementById('redBox').classList.remove('fade-in');
         void wrap.offsetWidth; 
-        wrap.classList.add('fade-in');
+        document.getElementById('blueBox').classList.add('fade-in');
+        document.getElementById('redBox').classList.add('fade-in');
     }
 
     function renderTeam(id, playerList) {
