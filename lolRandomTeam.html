@@ -2,83 +2,106 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>롤 포지션 배정기</title>
+    <title>롤 5vs5 내전 배정기</title>
     <style>
-        body { font-family: 'Pretendard', sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
-        .container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
-        h2 { text-align: center; color: #1a2a6c; }
-        .input-group { margin-bottom: 20px; }
-        input { width: calc(100% - 22px); padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; }
-        button { width: 100%; padding: 12px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold; }
-        button:hover { background-color: #0056b3; }
-        .result-area { margin-top: 30px; display: none; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid #eee; padding: 12px; text-align: center; }
-        th { background-color: #f8f9fa; color: #555; }
-        .pos { font-weight: bold; color: #007bff; width: 40%; }
+        body { font-family: 'Pretendard', sans-serif; background-color: #1a1a2e; color: #fff; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .container { background: #16213e; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 90%; max-width: 800px; }
+        h2 { text-align: center; color: #48dbfb; text-transform: uppercase; letter-spacing: 2px; }
+        
+        /* 입력창 스타일 */
+        .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        input { background: #0f3460; border: 1px solid #48dbfb; color: white; padding: 10px; border-radius: 5px; outline: none; }
+        input::placeholder { color: #888; }
+
+        button { width: 100%; padding: 15px; background: #e94560; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 18px; font-weight: bold; transition: 0.3s; }
+        button:hover { background: #ff2e63; transform: scale(1.02); }
+
+        /* 결과 화면 스타일 */
+        .match-display { display: flex; justify-content: space-between; margin-top: 30px; gap: 20px; display: none; }
+        .team-card { flex: 1; background: #0f3460; border-radius: 10px; padding: 15px; border-top: 5px solid; }
+        .blue-team { border-color: #00d2ff; }
+        .red-team { border-color: #ff4b2b; }
+        
+        .team-title { text-align: center; font-size: 20px; margin-bottom: 15px; font-weight: bold; }
+        .blue-title { color: #00d2ff; }
+        .red-title { color: #ff4b2b; }
+
+        .row { display: flex; justify-content: space-between; padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .pos-label { color: #aaa; font-size: 0.9em; font-weight: bold; width: 50px; }
+        .player-name { font-weight: 500; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>🎮 포지션 랜덤 배정</h2>
+    <h2>LOL 10인 내전 메이커</h2>
     
-    <div class="input-group">
-        <p>플레이어 5명의 이름을 입력하세요:</p>
-        <input type="text" class="player" placeholder="플레이어 1" value="소환사1">
-        <input type="text" class="player" placeholder="플레이어 2" value="소환사2">
-        <input type="text" class="player" placeholder="플레이어 3" value="소환사3">
-        <input type="text" class="player" placeholder="플레이어 4" value="소환사4">
-        <input type="text" class="player" placeholder="플레이어 5" value="소환사5">
-    </div>
+    <div class="input-grid" id="inputGrid">
+        </div>
 
-    <button onclick="assignPositions()">포지션 배정하기!</button>
+    <button onclick="shuffleTeams()">팀 및 포지션 결정!</button>
 
-    <div id="result" class="result-area">
-        <h3 id="teamName"></h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>포지션</th>
-                    <th>이름</th>
-                </tr>
-            </thead>
-            <tbody id="resultBody">
-                </tbody>
-        </table>
+    <div id="matchDisplay" class="match-display">
+        <div class="team-card blue-team">
+            <div class="team-title blue-title">1팀 (BLUE)</div>
+            <div id="team1List"></div>
+        </div>
+
+        <div class="team-card red-team">
+            <div class="team-title red-title">2팀 (RED)</div>
+            <div id="team2List"></div>
+        </div>
     </div>
 </div>
 
 <script>
-    function assignPositions() {
-        const positions = ["탑", "정글", "미드", "원딜", "서폿"];
-        const inputs = document.querySelectorAll('.player');
-        let players = Array.from(inputs).map(input => input.value.trim() || "익명");
+    // 페이지 로드 시 입력창 10개 생성
+    const inputGrid = document.getElementById('inputGrid');
+    for(let i=1; i<=10; i++) {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'player-input';
+        input.placeholder = `플레이어 ${i}`;
+        // 테스트 편의를 위해 기본값 세팅 (실제 사용 시 삭제 가능)
+        input.value = `유저${i}`; 
+        inputGrid.appendChild(input);
+    }
 
-        // 1. 플레이어 순서를 무작위로 섞음 (피셔-예이츠 셔플)
+    function shuffleTeams() {
+        const positions = ["TOP", "JNG", "MID", "ADC", "SUP"];
+        const inputs = document.querySelectorAll('.player-input');
+        let players = Array.from(inputs).map(i => i.value.trim() || "익명");
+
+        // 1. 10명의 명단을 무작위로 섞음
         for (let i = players.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [players[i], players[j]] = [players[j], players[i]];
         }
 
-        // 2. 팀 랜덤 결정 (1팀 또는 2팀)
-        const teamNum = Math.floor(Math.random() * 2) + 1;
+        // 2. 앞의 5명은 1팀, 뒤의 5명은 2팀
+        const team1 = players.slice(0, 5);
+        const team2 = players.slice(5, 10);
+
+        // 3. 화면 출력 함수
+        renderTeam('team1List', team1, positions);
+        renderTeam('team2List', team2, positions);
+
+        document.getElementById('matchDisplay').style.display = 'flex';
+    }
+
+    function renderTeam(elementId, teamPlayers, positions) {
+        const listDiv = document.getElementById(elementId);
+        listDiv.innerHTML = "";
         
-        // 3. 화면 업데이트
-        const resultBody = document.getElementById('resultBody');
-        const teamName = document.getElementById('teamName');
-        resultBody.innerHTML = "";
-        teamName.innerText = `✨ ${teamNum}팀 배정 결과`;
-
-        positions.forEach((pos, index) => {
-            const row = `<tr>
-                <td class="pos">${pos}</td>
-                <td>${players[index]}</td>
-            </tr>`;
-            resultBody.innerHTML += row;
+        positions.forEach((pos, idx) => {
+            const row = `
+                <div class="row">
+                    <span class="pos-label">${pos}</span>
+                    <span class="player-name">${teamPlayers[idx]}</span>
+                </div>
+            `;
+            listDiv.innerHTML += row;
         });
-
-        document.getElementById('result').style.display = 'block';
     }
 </script>
 
