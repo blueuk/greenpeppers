@@ -46,7 +46,7 @@
 </div>
 
 <div class="container">
-    <h1>Custom Matchmaking <div class="version">v2.0.5 (PRO DRAFT)</div></h1>
+    <h1>Custom Matchmaking <div class="version">v2.0.6 (PRO DRAFT)</div></h1>
     <div class="section-box">
         <div class="pool-grid" id="poolGrid"></div>
         <div class="entry-grid" id="entryGrid"></div>
@@ -98,6 +98,10 @@
     }
 
     async function startDraft() {
+        // 리롤 시 결과창 초기화
+        document.getElementById('blueTeam').innerHTML = '<div style="color:#0097e6; font-weight:bold; margin-bottom:10px;">BLUE TEAM</div>';
+        document.getElementById('redTeam').innerHTML = '<div style="color:#e84118; font-weight:bold; margin-bottom:10px;">RED TEAM</div>';
+
         document.getElementById('modalOverlay').style.display = 'flex';
         document.getElementById('matchWrap').style.display = 'grid';
         let pool = [...selected], bluePos = ["TOP", "JUNGLE", "MID", "BOT", "SUP"], redPos = ["TOP", "JUNGLE", "MID", "BOT", "SUP"];
