@@ -2,113 +2,133 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>LOL CUSTOM MATCH - STEPPED GACHA</title>
+    <title>LOL CUSTOM - DOUBLE GACHA</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap');
-        body { font-family: 'Noto Sans KR', sans-serif; background: radial-gradient(circle, #0a1428 0%, #010a13 100%); color: #f0e6d2; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
-        .container { width: 100%; max-width: 1000px; }
-        h1 { text-align: center; color: #c8aa6e; letter-spacing: 5px; border-bottom: 2px solid #c89b3c; padding-bottom: 10px; }
-        
-        /* 모달 스타일 */
+        body { font-family: 'Noto Sans KR', sans-serif; background: radial-gradient(circle, #0a1428 0%, #010a13 100%); color: #f0e6d2; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow-x: hidden; }
+        .container { width: 100%; max-width: 1000px; z-index: 1; }
+        h1 { text-align: center; color: #c8aa6e; letter-spacing: 5px; border-bottom: 2px solid #c89b3c; padding-bottom: 10px; margin-bottom: 20px; }
+        .section-box { background: rgba(1, 10, 19, 0.9); border: 1px solid #5b5a56; padding: 20px; margin-bottom: 20px; }
+        .section-title { color: #a09b8c; font-size: 14px; margin-bottom: 15px; font-weight: bold; text-transform: uppercase; border-left: 3px solid #c8aa6e; padding-left: 10px; }
+        .pool-grid { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+        .member-chip { background: #1e2328; border: 1px solid #5b5a56; color: #cdbe91; padding: 6px 12px; cursor: pointer; transition: 0.2s; font-size: 13px; border-radius: 2px; }
+        .member-chip.selected { border-color: #c8aa6e; background: #c8aa6e; color: #1e2328; opacity: 0.4; pointer-events: none; }
+        .entry-grid { display: grid; grid-template-columns: repeat(5, 2fr); gap: 10px; }
+        .entry-slot { height: 45px; background: #0a1428; border: 1px solid #5b5a56; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #f0e6d2; font-size: 14px; }
+        .entry-slot.filled { border-color: #c8aa6e; }
+        .btn-group { display: flex; gap: 10px; margin-bottom: 30px; }
+        .start-btn { flex: 4; padding: 15px; background: #1e2328; color: #c8aa6e; border: 1px solid #c8aa6e; cursor: pointer; font-size: 18px; font-weight: bold; }
+        .start-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .match-wrap { display: none; justify-content: space-between; gap: 30px; margin-top: 10px; }
+        .team-box { flex: 1; border: 1px solid #5b5a56; background: rgba(0, 0, 0, 0.8); }
+        .team-header { padding: 15px; text-align: center; font-size: 20px; font-weight: bold; }
+        .blue-side { border-top: 5px solid #0097e6; }
+        .red-side { border-top: 5px solid #e84118; }
+        .player-row { display: flex; align-items: center; padding: 12px 20px; border-bottom: 1px solid #3c3c41; opacity: 0; }
+        .player-row.reveal { opacity: 1; transition: 0.5s; }
+        .pos-badge { width: 85px; height: 28px; font-size: 11px; font-weight: bold; color: #a09b8c; border: 1px solid #5b5a56; display: flex; align-items: center; justify-content: center; margin-right: 20px; background: #1e2328; }
         #modalOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.9); display: none; justify-content: center; align-items: center; z-index: 100; }
-        .modal-card { background: #010a13; border: 2px solid #c8aa6e; width: 90%; max-width: 600px; padding: 40px; text-align: center; color: #f0e6d2; }
-        .slot-display { font-size: 50px; font-weight: bold; color: #c8aa6e; margin: 30px 0; height: 80px; }
-        .next-btn { padding: 15px 40px; background: #c8aa6e; color: #1e2328; font-weight: bold; cursor: pointer; border: none; }
-        
-        .btn-group { display: flex; gap: 10px; margin-bottom: 30px; justify-content: center; }
-        .start-btn { padding: 15px 50px; background: #1e2328; color: #c8aa6e; border: 1px solid #c8aa6e; cursor: pointer; font-size: 18px; font-weight: bold; }
-        .match-wrap { display: flex; justify-content: space-between; gap: 20px; width: 100%; }
-        .team-box { flex: 1; border: 1px solid #5b5a56; padding: 20px; background: rgba(0,0,0,0.5); }
+        .pachinko-card { background: #010a13; border: 2px solid #c89b3c; width: 90%; max-width: 600px; height: 350px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .slot-display { font-size: 40px; font-weight: bold; color: #f0e6d2; height: 60px; }
+        .slot-display.fixed { color: #c8aa6e; transform: scale(1.1); }
     </style>
 </head>
 <body>
 
 <div id="modalOverlay">
-    <div class="modal-card">
-        <h2 id="modalTitle">STEP 1: 닉네임 추첨</h2>
-        <div id="slotDisplay" class="slot-display">---</div>
-        <button id="nextBtn" class="next-btn" onclick="handleNextStep()">확인</button>
+    <div class="pachinko-card">
+        <div id="modalTeam" style="font-size: 24px; margin-bottom: 20px;">DRAFTING...</div>
+        <div id="nameSlot" class="slot-display">---</div>
+        <div id="posSlot" class="slot-display" style="margin-top: 20px;">---</div>
     </div>
 </div>
 
 <div class="container">
     <h1>Custom Matchmaking</h1>
-    <div style="text-align: center; margin-bottom: 20px;">
-        <button id="startBtn" class="start-btn" onclick="startNewDraft()">START DRAFT</button>
+    <div class="section-box">
+        <div class="section-title">Summoner Selection</div>
+        <div class="pool-grid" id="poolGrid"></div>
     </div>
-    <div class="match-wrap" id="matchWrap" style="display:none;">
-        <div class="team-box blue-side"><h3>BLUE TEAM</h3><div id="blueList"></div></div>
-        <div class="team-box red-side"><h3>RED TEAM</h3><div id="redList"></div></div>
+    <div class="section-box">
+        <div class="section-title">Selected Roster (<span id="count">0</span> / 10)</div>
+        <div class="entry-grid" id="entryGrid"></div>
+    </div>
+    <div class="btn-group">
+        <button id="startBtn" class="start-btn" onclick="generateMatch()" disabled>START DRAFT</button>
+    </div>
+    <div id="matchWrap" class="match-wrap">
+        <div class="team-box blue-side"><div class="team-header">BLUE TEAM</div><div id="blueTeamList"></div></div>
+        <div class="team-box red-side"><div class="team-header">RED TEAM</div><div id="redTeamList"></div></div>
     </div>
 </div>
 
 <script>
-    let participants = ["민준국", "이아니스", "최빛누리", "골드레이", "귀요미 상우", "나도너도속는무빙", "대 파", "로밍과 줄리엣", "바린이", "배시시시"];
-    let currentStep = 0; // 0:닉네임, 1:포지션, 2:팀
-    let draftData = { name: '', pos: '', team: '' };
-    let pickedCount = 0;
+    const DEFAULT_MEMBERS = ["민준국", "이아니스", "최빛누리", "골드레이", "귀요미 상우", "나도너도속는무빙", "대 파", "로밍과 줄리엣", "바린이", "배시시시", "성일짱", "아메리칸 프로그", "여기 쓸쓸함 한잔 주시오", "임쏘은", "조즈리얼", "증오는 빼는 편이야", "지나가는루돌프", "태구리", "해운대구보안관"];
+    let selectedPlayers = [];
+    const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-
-    async function startNewDraft() {
-        pickedCount = 0;
-        document.getElementById('blueList').innerHTML = "";
-        document.getElementById('redList').innerHTML = "";
-        document.getElementById('matchWrap').style.display = 'flex';
-        nextRound();
-    }
-
-    async function nextRound() {
-        if (pickedCount >= 10) { document.getElementById('modalOverlay').style.display = 'none'; return; }
-        currentStep = 0;
-        runRoulette();
-    }
-
-    async function runRoulette() {
-        document.getElementById('modalOverlay').style.display = 'flex';
-        const display = document.getElementById('slotDisplay');
-        const title = document.getElementById('modalTitle');
-        
-        // 1. 닉네임 룰렛
-        title.innerText = "STEP 1: 닉네임";
+    function init() {
+        const poolGrid = document.getElementById('poolGrid');
+        DEFAULT_MEMBERS.forEach(name => {
+            const chip = document.createElement('div'); chip.className = 'member-chip'; chip.innerText = name;
+            chip.onclick = () => { if (selectedPlayers.includes(name)) selectedPlayers = selectedPlayers.filter(p => p !== name); else if (selectedPlayers.length < 10) selectedPlayers.push(name); updateUI(); };
+            poolGrid.appendChild(chip);
+        });
         for(let i=0; i<10; i++) {
-            display.innerText = participants[Math.floor(Math.random()*participants.length)];
+            const slot = document.createElement('div'); slot.className = 'entry-slot'; slot.id = `slot-${i}`;
+            document.getElementById('entryGrid').appendChild(slot);
+        }
+    }
+
+    function updateUI() {
+        document.querySelectorAll('.member-chip').forEach(c => c.classList.toggle('selected', selectedPlayers.includes(c.innerText)));
+        for(let i=0; i<10; i++) { const s = document.getElementById(`slot-${i}`); s.innerText = selectedPlayers[i] || ""; s.classList.toggle('filled', !!selectedPlayers[i]); }
+        document.getElementById('count').innerText = selectedPlayers.length;
+        document.getElementById('startBtn').disabled = selectedPlayers.length !== 10;
+    }
+
+    async function runRoulette(items, targetId, duration = 1500) {
+        const slot = document.getElementById(targetId);
+        slot.classList.remove('fixed');
+        const start = Date.now();
+        while(Date.now() - start < duration) {
+            slot.innerText = items[Math.floor(Math.random() * items.length)];
             await sleep(50);
         }
-        draftData.name = participants[Math.floor(Math.random()*participants.length)];
-        display.innerText = draftData.name;
+        const final = items[Math.floor(Math.random() * items.length)];
+        slot.innerText = final;
+        slot.classList.add('fixed');
+        return final;
     }
 
-    async function handleNextStep() {
-        const display = document.getElementById('slotDisplay');
-        const title = document.getElementById('modalTitle');
-        
-        if (currentStep === 0) { // 2. 포지션 룰렛으로 이동
-            currentStep = 1;
-            title.innerText = "STEP 2: 포지션";
-            for(let i=0; i<10; i++) {
-                display.innerText = ["TOP", "JNG", "MID", "BOT", "SUP"][Math.floor(Math.random()*5)];
-                await sleep(50);
-            }
-            draftData.pos = ["TOP", "JNG", "MID", "BOT", "SUP"][Math.floor(Math.random()*5)];
-            display.innerText = draftData.pos;
-        } else if (currentStep === 1) { // 3. 팀 룰렛으로 이동
-            currentStep = 2;
-            title.innerText = "STEP 3: 팀 배정";
-            for(let i=0; i<10; i++) {
-                display.innerText = Math.random() > 0.5 ? "BLUE" : "RED";
-                await sleep(50);
-            }
-            draftData.team = Math.random() > 0.5 ? "BLUE" : "RED";
-            display.innerText = draftData.team;
-        } else { // 결과 반영
-            const list = document.getElementById(draftData.team === "BLUE" ? 'blueList' : 'redList');
-            list.innerHTML += `<div>${draftData.pos} | ${draftData.name}</div>`;
-            pickedCount++;
-            document.getElementById('modalOverlay').style.display = 'none';
-            if (pickedCount < 10) setTimeout(nextRound, 500);
+    async function generateMatch() {
+        document.getElementById('modalOverlay').style.display = 'flex';
+        const blueList = document.getElementById('blueTeamList'), redList = document.getElementById('redTeamList');
+        blueList.innerHTML = ""; redList.innerHTML = "";
+        document.getElementById('matchWrap').style.display = 'flex';
+
+        let pool = [...selectedPlayers], bPos = ["TOP", "JUNGLE", "MIDDLE", "BOTTOM", "SUPPORT"], rPos = [...bPos];
+
+        for (let i = 0; i < 5; i++) {
+            document.getElementById('modalTeam').innerText = "BLUE TEAM PICK";
+            let name = await runRoulette(pool, "nameSlot"); pool = pool.filter(p => p !== name);
+            await sleep(500); let pos = await runRoulette(bPos, "posSlot"); bPos = bPos.filter(p => p !== pos);
+            addPlayerRow(blueList, pos, name); await sleep(500);
+
+            document.getElementById('modalTeam').innerText = "RED TEAM PICK";
+            name = await runRoulette(pool, "nameSlot"); pool = pool.filter(p => p !== name);
+            await sleep(500); pos = await runRoulette(rPos, "posSlot"); rPos = rPos.filter(p => p !== pos);
+            addPlayerRow(redList, pos, name); await sleep(500);
         }
+        document.getElementById('modalOverlay').style.display = 'none';
     }
+
+    function addPlayerRow(container, pos, name) {
+        const row = document.createElement('div'); row.className = 'player-row';
+        row.innerHTML = `<div class="pos-badge">${pos}</div><div>${name}</div>`;
+        container.appendChild(row); setTimeout(() => row.classList.add('reveal'), 10);
+    }
+    init();
 </script>
 </body>
 </html>
