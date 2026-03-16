@@ -81,7 +81,7 @@
         for(let i=0; i<20; i++) {
             disp.innerText = items[Math.floor(Math.random() * items.length)];
             await new Promise(r => setTimeout(r, delay));
-            if(i > 10) delay += 40; // 룰렛 속도 점감(Easing) 효과
+            if(i > 10) delay += 40; 
         }
         const result = items[Math.floor(Math.random() * items.length)];
         disp.innerText = result;
@@ -92,13 +92,19 @@
         document.getElementById('modalOverlay').style.display = 'flex';
         document.getElementById('matchWrap').style.display = 'grid';
         let pool = [...selected], bluePos = ["TOP", "JUNGLE", "MID", "BOT", "SUP"], redPos = ["TOP", "JUNGLE", "MID", "BOT", "SUP"];
+        let blueTeamCount = 0, redTeamCount = 0;
         
         for(let i = 0; i < 10; i++) {
             const name = await runRoulette(pool, "SUMMONER", "#c8aa6e");
             pool = pool.filter(x => x !== name);
             
-            const team = await runRoulette(["BLUE TEAM", "RED TEAM"], "TEAM ASSIGN", "#c8aa6e");
+            let team;
+            if (blueTeamCount >= 5) team = "RED TEAM";
+            else if (redTeamCount >= 5) team = "BLUE TEAM";
+            else team = await runRoulette(["BLUE TEAM", "RED TEAM"], "TEAM ASSIGN", "#c8aa6e");
+
             const color = team === "BLUE TEAM" ? "#0097e6" : "#e84118";
+            if (team === "BLUE TEAM") blueTeamCount++; else redTeamCount++;
             
             let posList = (team === "BLUE TEAM" ? bluePos : redPos);
             const pos = await runRoulette(posList, "POSITION", color);
