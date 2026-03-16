@@ -25,8 +25,6 @@
         .result-info { font-size: 2rem; color: #fff; margin-top: 20px; text-align: center; }
         .match-wrap { display: none; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
         .team-box { border: 1px solid #5b5a56; padding: 15px; background: #0a1428; }
-        
-        /* 롤 UI 스타일 리스트 */
         .player-row { display: flex; align-items: center; padding: 8px; border-bottom: 1px solid #3c3c41; }
         .badge { width: 70px; font-size: 0.8rem; font-weight: bold; padding: 4px; border: 1px solid #5b5a56; margin-right: 15px; text-align: center; background: #1e2328; color: #cdbe91; }
     </style>
@@ -98,28 +96,29 @@
         let blueTeamCount = 0, redTeamCount = 0;
         
         for(let i = 0; i < 10; i++) {
+            // 1. 닉네임
             const name = await runRoulette(pool, "SUMMONER", "#c8aa6e");
             pool = pool.filter(x => x !== name);
             
-            // 팀 룰렛: 텍스트 컬러 지정 (BLUE/RED)
+            // 2. 팀
             let team;
             if (blueTeamCount >= 5) team = "RED TEAM";
             else if (redTeamCount >= 5) team = "BLUE TEAM";
             else team = await runRoulette(["BLUE TEAM", "RED TEAM"], "TEAM ASSIGN", "#c8aa6e");
-
+            
             const color = team === "BLUE TEAM" ? "#0097e6" : "#e84118";
             if (team === "BLUE TEAM") blueTeamCount++; else redTeamCount++;
             
+            // 3. 포지션
             let posList = (team === "BLUE TEAM" ? bluePos : redPos);
             const pos = await runRoulette(posList, "POSITION", color);
+            if (team === "BLUE TEAM") bluePos = bluePos.filter(x => x !== pos); else redPos = redPos.filter(x => x !== pos);
             
-            if (team === "BLUE TEAM") bluePos = bluePos.filter(x => x !== pos);
-            else redPos = redPos.filter(x => x !== pos);
-            
+            // 최종 결과 표시
             document.getElementById('modalLabel').innerText = "ASSIGNED";
             document.getElementById('resultDisplay').innerHTML = `<span style="color:${color}">${team}</span><br>${pos} | ${name}`;
-            
             await new Promise(r => setTimeout(r, 3000));
+            
             document.getElementById('resultDisplay').innerHTML = "";
             document.getElementById(team === "BLUE TEAM" ? 'blueTeam' : 'redTeam').innerHTML += 
                 `<div class="player-row"><div class="badge">${pos}</div><div style="color:#f0e6d2">${name}</div></div>`;
