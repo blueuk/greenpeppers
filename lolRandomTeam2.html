@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>LOL CUSTOM - PACHINKO EDITION</title>
+    <title>LOL CUSTOM - PREMIUM GACHA</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap');
 
@@ -25,7 +25,6 @@
             background: #1e2328; border: 1px solid #5b5a56; color: #cdbe91; padding: 6px 12px; cursor: pointer;
             transition: 0.2s; font-size: 13px; border-radius: 2px;
         }
-        .member-chip:hover { border-color: #c8aa6e; background: #2a2e35; }
         .member-chip.selected { border-color: #c8aa6e; background: #c8aa6e; color: #1e2328; opacity: 0.4; pointer-events: none; }
 
         .custom-input-area { display: flex; gap: 10px; margin-top: 15px; border-top: 1px solid #3c3c41; padding-top: 15px; }
@@ -33,10 +32,7 @@
         .add-btn { background: #1e2328; color: #c8aa6e; border: 1px solid #c8aa6e; padding: 0 20px; cursor: pointer; font-weight: bold; }
 
         .entry-grid { display: grid; grid-template-columns: repeat(5, 2fr); gap: 10px; }
-        .entry-slot { 
-            height: 45px; background: #0a1428; border: 1px solid #5b5a56; 
-            display: flex; align-items: center; justify-content: center; font-weight: bold; color: #f0e6d2; font-size: 14px;
-        }
+        .entry-slot { height: 45px; background: #0a1428; border: 1px solid #5b5a56; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #f0e6d2; font-size: 14px; }
         .entry-slot.filled { border-color: #c8aa6e; }
 
         .btn-group { display: flex; gap: 10px; margin-bottom: 30px; }
@@ -54,24 +50,32 @@
         .player-row.reveal { opacity: 1; transition: 0.5s; }
         .pos-badge { width: 85px; height: 28px; font-size: 11px; font-weight: bold; color: #a09b8c; border: 1px solid #5b5a56; display: flex; align-items: center; justify-content: center; margin-right: 20px; background: #1e2328; }
 
-        /* --- 모달 파칭코 스타일 --- */
+        /* --- 와이드 가챠 모달 스타일 --- */
         #modalOverlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.85); display: none;
+            background: rgba(0, 0, 0, 0.9); display: none;
             justify-content: center; align-items: center; z-index: 100;
         }
         .pachinko-card {
-            background: #010a13; border: 2px solid #c8aa6e; width: 400px; height: 250px;
+            background: #010a13; border: 2px solid #c8aa6e; 
+            width: 90%; max-width: 1200px; height: 350px; /* 너비 확장 */
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            box-shadow: 0 0 50px rgba(200, 170, 110, 0.2); position: relative;
+            box-shadow: 0 0 70px rgba(200, 170, 110, 0.3); position: relative;
+            overflow: hidden;
         }
-        .modal-team-label { position: absolute; top: 20px; font-size: 18px; font-weight: bold; letter-spacing: 2px; }
-        .modal-pos-label { color: #a09b8c; font-size: 14px; margin-bottom: 10px; }
+        .modal-team-label { position: absolute; top: 30px; font-size: 24px; font-weight: bold; letter-spacing: 4px; }
+        .modal-pos-label { color: #a09b8c; font-size: 18px; margin-bottom: 10px; margin-top: 40px;}
         .slot-machine {
-            font-size: 42px; font-weight: bold; color: #f0e6d2; height: 60px; overflow: hidden;
-            text-shadow: 0 0 15px rgba(200, 170, 110, 0.5);
+            width: 100%; font-size: 64px; font-weight: bold; color: #f0e6d2; 
+            height: 100px; display: flex; align-items: center; justify-content: center;
+            text-shadow: 0 0 20px rgba(200, 170, 110, 0.6);
+            transition: all 0.3s;
         }
-        .slot-name { height: 60px; display: flex; align-items: center; justify-content: center; }
+        .slot-name { 
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
+            padding: 0 40px; text-align: center;
+        }
+        .slot-machine.fixed { color: #c8aa6e; transform: scale(1.1); text-shadow: 0 0 30px rgba(200, 170, 110, 0.8); }
     </style>
 </head>
 <body>
@@ -80,7 +84,7 @@
     <div class="pachinko-card">
         <div id="modalTeam" class="modal-team-label">BLUE TEAM</div>
         <div id="modalPos" class="modal-pos-label">TOP</div>
-        <div class="slot-machine">
+        <div id="slotMachine" class="slot-machine">
             <div id="slotName" class="slot-name">---</div>
         </div>
     </div>
@@ -187,7 +191,6 @@
         document.getElementById('matchWrap').style.display = 'none';
     }
 
-    // --- 파칭코 애니메이션 로직 ---
     const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
     async function generateMatch() {
@@ -213,15 +216,15 @@
         modal.style.display = 'flex';
 
         for (let i = 0; i < 5; i++) {
-            // 블루팀 해당 포지션 가챠
+            // 블루팀 가챠
             await runPachinko("BLUE TEAM", POSITIONS[i], blueTeam[i], "#0097e6");
             addPlayerRow(blueList, POSITIONS[i], blueTeam[i]);
-            await sleep(300);
+            await sleep(200);
 
-            // 레드팀 해당 포지션 가챠
+            // 레드팀 가챠
             await runPachinko("RED TEAM", POSITIONS[i], redTeam[i], "#e84118");
             addPlayerRow(redList, POSITIONS[i], redTeam[i]);
-            await sleep(300);
+            await sleep(200);
         }
 
         modal.style.display = 'none';
@@ -233,25 +236,36 @@
         const teamLabel = document.getElementById('modalTeam');
         const posLabel = document.getElementById('modalPos');
         const nameSlot = document.getElementById('slotName');
+        const machine = document.getElementById('slotMachine');
 
+        machine.classList.remove('fixed');
         teamLabel.innerText = teamName;
         teamLabel.style.color = color;
         posLabel.innerText = posName;
         
-        // 파칭코 회전 효과 (무작위 이름 보여주기)
-        for(let j=0; j<15; j++) {
+        // --- 완급 조절 가챠 애니메이션 ---
+        // 1. 아주 빠르게 (10회)
+        for(let j=0; j<10; j++) {
             nameSlot.innerText = selectedPlayers[Math.floor(Math.random() * 10)];
-            nameSlot.style.opacity = "0.5";
-            await sleep(50);
+            await sleep(40);
+        }
+        // 2. 중간 속도 (5회)
+        for(let j=0; j<5; j++) {
+            nameSlot.innerText = selectedPlayers[Math.floor(Math.random() * 10)];
+            await sleep(100);
+        }
+        // 3. 느리게 (3회)
+        for(let j=0; j<3; j++) {
+            nameSlot.innerText = selectedPlayers[Math.floor(Math.random() * 10)];
+            await sleep(250);
         }
 
         // 최종 결정
         nameSlot.innerText = finalName;
-        nameSlot.style.opacity = "1";
-        nameSlot.style.color = "#c8aa6e";
+        machine.classList.add('fixed');
         
-        await sleep(700); // 확정된 이름 보여주는 대기 시간
-        nameSlot.style.color = "#f0e6d2";
+        // 결과 보여주기 (1초 대기)
+        await sleep(1000); 
     }
 
     function addPlayerRow(container, pos, name) {
