@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>LOL CUSTOM MATCH - ANIMATED DRAFT</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap');
+
+        body { 
+            font-family: 'Noto Sans KR', sans-serif; 
+            background: radial-gradient(circle, #0a1428 0%, #010a13 100%); 
+            color: #f0e6d2; margin: 0; padding: 20px;
+            display: flex; flex-direction: column; align-items: center; min-height: 100vh;
+        }
+
+        .container { width: 100%; max-width: 1000px; }
+        h1 { text-align: center; color: #c8aa6e; letter-spacing: 5px; border-bottom: 2px solid #c89b3c; padding-bottom: 10px; margin-bottom: 20px; }
+
+        .section-box { background: rgba(1, 10, 19, 0.9); border: 1px solid #5b5a56; padding: 20px; margin-bottom: 20px; }
+        .section-title { color: #a09b8c; font-size: 14px; margin-bottom: 15px; font-weight: bold; text-transform: uppercase; border-left: 3px solid #c8aa6e; padding-left: 10px; }
+
+        .pool-grid { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+        .member-chip { 
+            background: #1e2328; border: 1px solid #5b5a56; color: #cdbe91; padding: 6px 12px; cursor: pointer;
+            transition: 0.2s; font-size: 13px; border-radius: 2px;
+        }
+        .member-chip:hover { border-color: #c8aa6e; background: #2a2e35; }
+        .member-chip.selected { border-color: #c8aa6e; background: #c8aa6e; color: #1e2328; opacity: 0.4; pointer-events: none; }
+
+        .custom-input-area { display: flex; gap: 10px; margin-top: 15px; border-top: 1px solid #3c3c41; padding-top: 15px; }
+        .custom-input-area input { 
+            flex: 1; background: #1e2328; border: 1px solid #5b5a56; color: #f0e6d2; padding: 10px; outline: none; 
+        }
+        .add-btn { background: #1e2328; color: #c8aa6e; border: 1px solid #c8aa6e; padding: 0 20px; cursor: pointer; font-weight: bold; }
+        .add-btn:hover { background: #c8aa6e; color: #1e2328; }
+
+        .entry-grid { display: grid; grid-template-columns: repeat(5, 2fr); gap: 10px; }
+        .entry-slot { 
+            height: 45px; background: #0a1428; border: 1px solid #5b5a56; 
+            display: flex; align-items: center; justify-content: center; 
+            font-weight: bold; color: #f0e6d2; cursor: pointer; position: relative; font-size: 14px;
+        }
+        .entry-slot:empty::after { content: "EMPTY"; color: #3c3c41; font-size: 11px; letter-spacing: 1px; }
+        .entry-slot.filled { border-color: #c8aa6e; }
+        .entry-slot.filled:hover::after { 
+            content: "REMOVE"; position: absolute; width: 100%; height: 100%; background: rgba(232, 65, 24, 0.9);
+            display: flex; align-items: center; justify-content: center; color: white; font-size: 11px;
+        }
+
+        .btn-group { display: flex; gap: 10px; margin-bottom: 30px; }
+        .start-btn { flex: 4; padding: 15px; background: #1e2328; color: #c8aa6e; border: 1px solid #c8aa6e; cursor: pointer; font-size: 18px; font-weight: bold; }
+        .start-btn:hover:not(:disabled) { background: #c8aa6e; color: #1e2328; box-shadow: 0 0 20px rgba(200, 170, 110, 0.4); }
+        .start-btn:disabled { border-color: #3c3c41; color: #3c3c41; cursor: not-allowed; opacity: 0.5; }
+        .reset-btn { flex: 1; border: 1px solid #e84118; color: #e84118; background: transparent; cursor: pointer; font-weight: bold; }
+        .reset-btn:hover:not(:disabled) { background: #e84118; color: white; }
+        .reset-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        .match-wrap { display: none; justify-content: space-between; gap: 30px; margin-top: 10px; }
+        .team-box { flex: 1; border: 1px solid #5b5a56; background: rgba(0, 0, 0, 0.8); min-height: 300px; }
+        .team-header { padding: 15px; text-align: center; font-size: 20px; font-weight: bold; }
+        .blue-side { border-top: 5px solid #0097e6; }
+        .red-side { border-top: 5px solid #e84118; }
+        .blue-side .team-header { color: #0097e6; background: linear-gradient(to bottom, rgba(0, 151, 230, 0.1), transparent); }
+        .red-side .team-header { color: #e84118; background: linear-gradient(to bottom, rgba(232, 65, 24, 0.1), transparent); }
+
+        .player-row { display: flex; align-items: center; padding: 12px 20px; border-bottom: 1px solid #3c3c41; opacity: 0; transform: translateY(10px); }
+        .player-row.reveal { animation: fadeInRow 0.4s forwards; }
+        
+        /* 현재 뽑히는 중인 라인 효과 */
+        .player-row.highlight { 
+            background: rgba(200, 170, 110, 0.15); 
+            box-shadow: inset 0 0 10px rgba(200, 170, 110, 0.2);
+        }
+
+        .pos-badge { 
+            width: 85px; height: 28px; font-size: 11px; font-weight: bold; color: #a09b8c;
+            border: 1px solid #5b5a56; display: flex; align-items: center; justify-content: center;
+            margin-right: 20px; background: #1e2328; flex-shrink: 0; letter-spacing: 1px;
+        }
+        .player-name { font-size: 17px; color: #cdbe91; font-weight: 500; }
+
+        @keyframes fadeInRow {
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Custom Matchmaking</h1>
+
+    <div class="section-box">
+        <div class="section-title">Summoner Selection (Click or Type)</div>
+        <div class="pool-grid" id="poolGrid"></div>
+        <div class="custom-input-area">
+            <input type="text" id="customName" placeholder="새로운 소환사 이름 입력..." onkeypress="if(event.keyCode==13) addCustomPlayer()">
+            <button class="add-btn" onclick="addCustomPlayer()">ADD</button>
+        </div>
+    </div>
+
+    <div class="section-box">
+        <div class="section-title">Selected Roster (<span id="count">0</span> / 10)</div>
+        <div class="entry-grid" id="entryGrid"></div>
+    </div>
+
+    <div class="btn-group">
+        <button id="resetBtn" class="reset-btn" onclick="resetAll()">RESET</button>
+        <button id="startBtn" class="start-btn" onclick="generateMatch()" disabled>START DRAFT</button>
+    </div>
+
+    <div id="matchWrap" class="match-wrap">
+        <div class="team-box blue-side">
+            <div class="team-header">BLUE TEAM</div>
+            <div id="blueTeamList"></div>
+        </div>
+        <div class="team-box red-side">
+            <div class="team-header">RED TEAM</div>
+            <div id="redTeamList"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const DEFAULT_MEMBERS = [
+        "민준국", "이아니스", "최빛누리", "골드레이", "귀요미 상우", 
+        "나도너도속는무빙", "대 파", "로밍과 줄리엣", "바린이", "배시시시", 
+        "성일짱", "아메리칸 프로그", "여기 쓸쓸함 한잔 주시오", "임쏘은", 
+        "조즈리얼", "증오는 빼는 편이야", "지나가는루돌프", "태구리", "해운대구보안관"
+    ];
+
+    const POSITIONS = ["TOP", "JUNGLE", "MIDDLE", "BOTTOM", "SUPPORT"];
+    let selectedPlayers = [];
+
+    function init() {
+        const poolGrid = document.getElementById('poolGrid');
+        DEFAULT_MEMBERS.forEach(name => {
+            const chip = document.createElement('div');
+            chip.className = 'member-chip';
+            chip.innerText = name;
+            chip.onclick = () => togglePlayer(name);
+            poolGrid.appendChild(chip);
+        });
+
+        const entryGrid = document.getElementById('entryGrid');
+        for(let i=0; i<10; i++) {
+            const slot = document.createElement('div');
+            slot.className = 'entry-slot';
+            slot.id = `slot-${i}`;
+            entryGrid.appendChild(slot);
+        }
+    }
+
+    function togglePlayer(name) {
+        if (selectedPlayers.includes(name)) {
+            removePlayer(name);
+        } else if (selectedPlayers.length < 10) {
+            selectedPlayers.push(name);
+            updateUI();
+        }
+    }
+
+    function addCustomPlayer() {
+        const input = document.getElementById('customName');
+        const name = input.value.trim();
+        if (name && !selectedPlayers.includes(name)) {
+            if (selectedPlayers.length < 10) {
+                selectedPlayers.push(name);
+                input.value = "";
+                updateUI();
+            } else {
+                alert("이미 10명이 가득 찼습니다!");
+            }
+        }
+    }
+
+    function removePlayer(name) {
+        selectedPlayers = selectedPlayers.filter(p => p !== name);
+        updateUI();
+    }
+
+    function updateUI() {
+        document.querySelectorAll('.member-chip').forEach(chip => {
+            chip.classList.toggle('selected', selectedPlayers.includes(chip.innerText));
+        });
+
+        for(let i=0; i<10; i++) {
+            const slot = document.getElementById(`slot-${i}`);
+            if (selectedPlayers[i]) {
+                slot.innerText = selectedPlayers[i];
+                slot.className = 'entry-slot filled';
+                const pName = selectedPlayers[i];
+                slot.onclick = () => removePlayer(pName);
+            } else {
+                slot.innerText = "";
+                slot.className = 'entry-slot';
+                slot.onclick = null;
+            }
+        }
+        document.getElementById('count').innerText = selectedPlayers.length;
+        document.getElementById('startBtn').disabled = selectedPlayers.length !== 10;
+    }
+
+    function resetAll() {
+        selectedPlayers = [];
+        updateUI();
+        document.getElementById('matchWrap').style.display = 'none';
+        document.getElementById('blueTeamList').innerHTML = "";
+        document.getElementById('redTeamList').innerHTML = "";
+    }
+
+    // --- 애니메이션 핵심 로직 ---
+
+    const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+    async function generateMatch() {
+        const startBtn = document.getElementById('startBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const blueList = document.getElementById('blueTeamList');
+        const redList = document.getElementById('redTeamList');
+        const wrap = document.getElementById('matchWrap');
+
+        // 버튼 비활성화 (진행 중 방해 금지)
+        startBtn.disabled = true;
+        resetBtn.disabled = true;
+        
+        // 결과창 초기화 및 표시
+        blueList.innerHTML = "";
+        redList.innerHTML = "";
+        wrap.style.display = 'flex';
+
+        // 셔플
+        let players = [...selectedPlayers];
+        for (let i = players.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [players[i], players[j]] = [players[j], players[i]];
+        }
+
+        const blueTeam = players.slice(0, 5);
+        const redTeam = players.slice(5, 10);
+
+        // 한 명씩 등장
+        for (let i = 0; i < 5; i++) {
+            // 블루 팀 포지션 공개
+            await revealPlayer(blueList, POSITIONS[i], blueTeam[i]);
+            await sleep(500); // 0.5초 간격
+
+            // 레드 팀 포지션 공개
+            await revealPlayer(redList, POSITIONS[i], redTeam[i]);
+            await sleep(500);
+        }
+
+        // 완료 후 리셋 버튼만 활성화
+        resetBtn.disabled = false;
+        startBtn.innerText = "DRAFT COMPLETED";
+    }
+
+    async function revealPlayer(container, pos, finalName) {
+        const row = document.createElement('div');
+        row.className = 'player-row highlight'; // 하이라이트와 함께 생성
+        row.innerHTML = `
+            <div class="pos-badge">${pos}</div>
+            <div class="player-name" id="rolling-${pos}-${container.id}">---</div>
+        `;
+        container.appendChild(row);
+
+        // 부드럽게 나타나기 위해 약간의 시간차
+        requestAnimationFrame(() => row.classList.add('reveal'));
+
+        const nameDisplay = row.querySelector('.player-name');
+        
+        // 슬롯머신 효과 (이름이 막 변하다가 멈춤)
+        for(let j=0; j<6; j++) {
+            nameDisplay.innerText = selectedPlayers[Math.floor(Math.random() * 10)];
+            await sleep(50);
+        }
+
+        // 최종 이름 확정
+        nameDisplay.innerText = finalName;
+        nameDisplay.style.color = "#f0e6d2";
+        
+        // 하이라이트 제거
+        setTimeout(() => {
+            row.classList.remove('highlight');
+        }, 300);
+    }
+
+    init();
+</script>
+
+</body>
+</html>
