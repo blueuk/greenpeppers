@@ -26,7 +26,6 @@
         .slot { font-size: 3rem; font-weight: bold; color: #555; height: 80px; width: 600px; display: flex; align-items: center; justify-content: center; border-bottom: 2px solid #333; transition: 0.3s; }
         .slot.active { color: #c8aa6e; }
         
-        /* 팡파레 애니메이션 */
         @keyframes fanfare { 0% { transform: scale(1); } 50% { transform: scale(1.1); color: #ffd700; } 100% { transform: scale(1); } }
         .fanfare { animation: fanfare 0.5s ease; }
 
@@ -47,7 +46,7 @@
 </div>
 
 <div class="container">
-    <h1>Custom Matchmaking <div class="version">v2.0.4 (PRO DRAFT)</div></h1>
+    <h1>Custom Matchmaking <div class="version">v2.0.5 (PRO DRAFT)</div></h1>
     <div class="section-box">
         <div class="pool-grid" id="poolGrid"></div>
         <div class="entry-grid" id="entryGrid"></div>
@@ -86,7 +85,7 @@
     async function runSlot(elementId, items, color, remainingCount) {
         const el = document.getElementById(elementId);
         el.classList.add('active');
-        let delay = Math.max(10, remainingCount * 5); // 남은 인원 적을수록 빨라짐
+        let delay = Math.max(10, remainingCount * 5);
         for(let i=0; i<15; i++) {
             el.innerText = items.length > 0 ? items[Math.floor(Math.random() * items.length)] : "---";
             await sleep(delay);
@@ -107,9 +106,12 @@
         for(let i=10; i > 0; i--) {
             document.querySelectorAll('.slot').forEach(s => { s.innerText = "---"; s.style.color = "#555"; s.classList.remove('fanfare'); });
 
-            // 1. 팀 선정 (균형 유지)
+            // 1. 팀 선정
             let team = (bCount >= 5) ? "RED TEAM" : (rCount >= 5) ? "BLUE TEAM" : await runSlot('slot-team', ["BLUE TEAM", "RED TEAM"], "#fff", i);
-            const color = (team === "BLUE TEAM") ? "#0097e6" : "#e84118";
+            const teamColor = (team === "BLUE TEAM") ? "#0097e6" : "#e84118";
+            document.getElementById('slot-team').innerText = team;
+            document.getElementById('slot-team').style.color = teamColor;
+            
             if(team === "BLUE TEAM") bCount++; else rCount++;
             await sleep(1000);
 
@@ -120,7 +122,7 @@
 
             // 3. 포지션 선정
             const posList = (team === "BLUE TEAM" ? bluePos : redPos);
-            const pos = await runSlot('slot-pos', posList, color, i);
+            const pos = await runSlot('slot-pos', posList, teamColor, i);
             if(team === "BLUE TEAM") bluePos = bluePos.filter(x => x !== pos); else redPos = redPos.filter(x => x !== pos);
             
             // 배정 완료 팡파레
@@ -128,7 +130,7 @@
             await sleep(1500);
 
             document.getElementById(team === "BLUE TEAM" ? 'blueTeam' : 'redTeam').innerHTML += 
-                `<div class="player-row" style="color:${color}"><div class="badge">${pos}</div>${name}</div>`;
+                `<div class="player-row" style="color:${teamColor}"><div class="badge">${pos}</div>${name}</div>`;
         }
         document.getElementById('modalOverlay').style.display = 'none';
         document.getElementById('startBtn').innerText = "RE-ROLL DRAFT";
