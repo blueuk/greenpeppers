@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>LOL CUSTOM - PREMIUM GACHA</title>
+    <title>LOL CUSTOM - DOUBLE GACHA</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap');
 
@@ -57,25 +57,26 @@
             justify-content: center; align-items: center; z-index: 100;
         }
         .pachinko-card {
-            background: #010a13; border: 2px solid #c8aa6e; 
-            width: 90%; max-width: 1200px; height: 350px; /* 너비 확장 */
+            background: #010a13; border: 2px solid #c89b3c; 
+            width: 90%; max-width: 1200px; height: 450px;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             box-shadow: 0 0 70px rgba(200, 170, 110, 0.3); position: relative;
-            overflow: hidden;
         }
-        .modal-team-label { position: absolute; top: 30px; font-size: 24px; font-weight: bold; letter-spacing: 4px; }
-        .modal-pos-label { color: #a09b8c; font-size: 18px; margin-bottom: 10px; margin-top: 40px;}
-        .slot-machine {
-            width: 100%; font-size: 64px; font-weight: bold; color: #f0e6d2; 
-            height: 100px; display: flex; align-items: center; justify-content: center;
-            text-shadow: 0 0 20px rgba(200, 170, 110, 0.6);
-            transition: all 0.3s;
+        .modal-team-label { position: absolute; top: 30px; font-size: 28px; font-weight: bold; letter-spacing: 5px; }
+        
+        /* 룰렛 섹션 */
+        .roulette-section { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 40px;}
+        .roulette-label { color: #a09b8c; font-size: 16px; letter-spacing: 2px; }
+        
+        .slot-display {
+            font-size: 60px; font-weight: bold; color: #f0e6d2; 
+            height: 90px; display: flex; align-items: center; justify-content: center;
+            transition: all 0.3s; width: 100%; text-align: center;
         }
-        .slot-name { 
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
-            padding: 0 40px; text-align: center;
-        }
-        .slot-machine.fixed { color: #c8aa6e; transform: scale(1.1); text-shadow: 0 0 30px rgba(200, 170, 110, 0.8); }
+        .slot-display.fixed { color: #c8aa6e; transform: scale(1.1); text-shadow: 0 0 30px rgba(200, 170, 110, 0.8); }
+        .slot-display.waiting { opacity: 0.2; filter: blur(2px); }
+
+        .divider { width: 60%; height: 1px; background: #3c3c41; margin: 20px 0; }
     </style>
 </head>
 <body>
@@ -83,9 +84,17 @@
 <div id="modalOverlay">
     <div class="pachinko-card">
         <div id="modalTeam" class="modal-team-label">BLUE TEAM</div>
-        <div id="modalPos" class="modal-pos-label">TOP</div>
-        <div id="slotMachine" class="slot-machine">
-            <div id="slotName" class="slot-name">---</div>
+        
+        <div class="roulette-section">
+            <div class="roulette-label">SUMMONER</div>
+            <div id="nameSlot" class="slot-display">---</div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="roulette-section">
+            <div class="roulette-label">POSITION</div>
+            <div id="posSlot" class="slot-display waiting">---</div>
         </div>
     </div>
 </div>
@@ -131,7 +140,6 @@
         "성일짱", "아메리칸 프로그", "여기 쓸쓸함 한잔 주시오", "임쏘은", 
         "조즈리얼", "증오는 빼는 편이야", "지나가는루돌프", "태구리", "해운대구보안관"
     ];
-    const POSITIONS = ["TOP", "JUNGLE", "MIDDLE", "BOTTOM", "SUPPORT"];
     let selectedPlayers = [];
 
     function init() {
@@ -189,6 +197,8 @@
         selectedPlayers = [];
         updateUI();
         document.getElementById('matchWrap').style.display = 'none';
+        document.getElementById('blueTeamList').innerHTML = "";
+        document.getElementById('redTeamList').innerHTML = "";
     }
 
     const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -204,27 +214,28 @@
         redList.innerHTML = "";
         document.getElementById('matchWrap').style.display = 'flex';
 
-        let players = [...selectedPlayers];
-        for (let i = players.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [players[i], players[j]] = [players[j], players[i]];
-        }
-
-        const blueTeam = players.slice(0, 5);
-        const redTeam = players.slice(5, 10);
+        // 이번 세션에 사용할 플레이어 복사본 및 포지션 리스트
+        let remainingPlayers = [...selectedPlayers];
+        let bluePosLeft = ["TOP", "JUNGLE", "MIDDLE", "BOTTOM", "SUPPORT"];
+        let redPosLeft = ["TOP", "JUNGLE", "MIDDLE", "BOTTOM", "SUPPORT"];
 
         modal.style.display = 'flex';
 
+        // 팀당 5명씩 총 10번의 룰렛
         for (let i = 0; i < 5; i++) {
-            // 블루팀 가챠
-            await runPachinko("BLUE TEAM", POSITIONS[i], blueTeam[i], "#0097e6");
-            addPlayerRow(blueList, POSITIONS[i], blueTeam[i]);
-            await sleep(200);
+            // 블루팀 차례
+            const bRes = await runDoublePachinko("BLUE TEAM", remainingPlayers, bluePosLeft, "#0097e6");
+            remainingPlayers = remainingPlayers.filter(p => p !== bRes.name);
+            bluePosLeft = bluePosLeft.filter(p => p !== bRes.pos);
+            addPlayerRow(blueList, bRes.pos, bRes.name);
+            await sleep(300);
 
-            // 레드팀 가챠
-            await runPachinko("RED TEAM", POSITIONS[i], redTeam[i], "#e84118");
-            addPlayerRow(redList, POSITIONS[i], redTeam[i]);
-            await sleep(200);
+            // 레드팀 차례
+            const rRes = await runDoublePachinko("RED TEAM", remainingPlayers, redPosLeft, "#e84118");
+            remainingPlayers = remainingPlayers.filter(p => p !== rRes.name);
+            redPosLeft = redPosLeft.filter(p => p !== rRes.pos);
+            addPlayerRow(redList, rRes.pos, rRes.name);
+            await sleep(300);
         }
 
         modal.style.display = 'none';
@@ -232,50 +243,59 @@
         startBtn.innerText = "🔄 RE-ROLL DRAFT";
     }
 
-    async function runPachinko(teamName, posName, finalName, color) {
+    async function runDoublePachinko(teamName, currentPlayers, currentPositions, color) {
         const teamLabel = document.getElementById('modalTeam');
-        const posLabel = document.getElementById('modalPos');
-        const nameSlot = document.getElementById('slotName');
-        const machine = document.getElementById('slotMachine');
+        const nameSlot = document.getElementById('nameSlot');
+        const posSlot = document.getElementById('posSlot');
 
-        machine.classList.remove('fixed');
+        // 초기화
         teamLabel.innerText = teamName;
         teamLabel.style.color = color;
-        posLabel.innerText = posName;
-        
-        // --- 완급 조절 가챠 애니메이션 ---
-        // 1. 아주 빠르게 (10회)
-        for(let j=0; j<10; j++) {
-            nameSlot.innerText = selectedPlayers[Math.floor(Math.random() * 10)];
-            await sleep(40);
-        }
-        // 2. 중간 속도 (5회)
-        for(let j=0; j<5; j++) {
-            nameSlot.innerText = selectedPlayers[Math.floor(Math.random() * 10)];
-            await sleep(100);
-        }
-        // 3. 느리게 (3회)
-        for(let j=0; j<3; j++) {
-            nameSlot.innerText = selectedPlayers[Math.floor(Math.random() * 10)];
-            await sleep(250);
-        }
+        nameSlot.classList.remove('fixed');
+        posSlot.classList.remove('fixed');
+        posSlot.classList.add('waiting');
+        posSlot.innerText = "---";
 
-        // 최종 결정
+        // 1단계: 닉네임 룰렛
+        for(let j=0; j<12; j++) {
+            nameSlot.innerText = currentPlayers[Math.floor(Math.random() * currentPlayers.length)];
+            await sleep(j * 10 + 30);
+        }
+        const finalName = currentPlayers[Math.floor(Math.random() * currentPlayers.length)];
         nameSlot.innerText = finalName;
-        machine.classList.add('fixed');
-        
-        // 결과 보여주기 (1초 대기)
-        await sleep(1000); 
+        nameSlot.classList.add('fixed');
+        await sleep(500); // 닉네임 확정 후 잠시 대기
+
+        // 2단계: 포지션 룰렛
+        posSlot.classList.remove('waiting');
+        for(let j=0; j<12; j++) {
+            posSlot.innerText = currentPositions[Math.floor(Math.random() * currentPositions.length)];
+            await sleep(j * 10 + 30);
+        }
+        const finalPos = currentPositions[Math.floor(Math.random() * currentPositions.length)];
+        posSlot.innerText = finalPos;
+        posSlot.classList.add('fixed');
+
+        await sleep(1000); // 최종 결과 1초간 보여주기
+
+        return { name: finalName, pos: finalPos };
     }
 
     function addPlayerRow(container, pos, name) {
+        // 포지션 순서대로 삽입하기 위한 로직 (옵션)
+        const order = {"TOP":0, "JUNGLE":1, "MIDDLE":2, "BOTTOM":3, "SUPPORT":4};
         const row = document.createElement('div');
         row.className = 'player-row';
-        row.innerHTML = `
-            <div class="pos-badge">${pos}</div>
-            <div class="player-name">${name}</div>
-        `;
+        row.dataset.posOrder = order[pos];
+        row.innerHTML = `<div class="pos-badge">${pos}</div><div class="player-name">${name}</div>`;
+        
         container.appendChild(row);
+        
+        // 추가된 후 포지션 순서에 맞게 정렬 (실시간 정렬)
+        const rows = Array.from(container.querySelectorAll('.player-row'));
+        rows.sort((a, b) => a.dataset.posOrder - b.dataset.posOrder);
+        rows.forEach(r => container.appendChild(r));
+
         setTimeout(() => row.classList.add('reveal'), 10);
     }
 
