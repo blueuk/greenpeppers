@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>LOL CUSTOM MATCH - ANIMATED DRAFT</title>
+    <title>LOL CUSTOM MATCH - REROLL SYSTEM</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap');
 
@@ -51,6 +51,11 @@
         .start-btn { flex: 4; padding: 15px; background: #1e2328; color: #c8aa6e; border: 1px solid #c8aa6e; cursor: pointer; font-size: 18px; font-weight: bold; }
         .start-btn:hover:not(:disabled) { background: #c8aa6e; color: #1e2328; box-shadow: 0 0 20px rgba(200, 170, 110, 0.4); }
         .start-btn:disabled { border-color: #3c3c41; color: #3c3c41; cursor: not-allowed; opacity: 0.5; }
+        
+        /* 리롤 모드일 때 스타일 */
+        .start-btn.reroll-active { border-color: #00d2ff; color: #00d2ff; }
+        .start-btn.reroll-active:hover { background: #00d2ff; color: #1e2328; box-shadow: 0 0 20px rgba(0, 210, 255, 0.4); }
+
         .reset-btn { flex: 1; border: 1px solid #e84118; color: #e84118; background: transparent; cursor: pointer; font-weight: bold; }
         .reset-btn:hover:not(:disabled) { background: #e84118; color: white; }
         .reset-btn:disabled { opacity: 0.3; cursor: not-allowed; }
@@ -65,12 +70,7 @@
 
         .player-row { display: flex; align-items: center; padding: 12px 20px; border-bottom: 1px solid #3c3c41; opacity: 0; transform: translateY(10px); }
         .player-row.reveal { animation: fadeInRow 0.4s forwards; }
-        
-        /* 현재 뽑히는 중인 라인 효과 */
-        .player-row.highlight { 
-            background: rgba(200, 170, 110, 0.15); 
-            box-shadow: inset 0 0 10px rgba(200, 170, 110, 0.2);
-        }
+        .player-row.highlight { background: rgba(200, 170, 110, 0.15); box-shadow: inset 0 0 10px rgba(200, 170, 110, 0.2); }
 
         .pos-badge { 
             width: 85px; height: 28px; font-size: 11px; font-weight: bold; color: #a09b8c;
@@ -197,7 +197,11 @@
             }
         }
         document.getElementById('count').innerText = selectedPlayers.length;
-        document.getElementById('startBtn').disabled = selectedPlayers.length !== 10;
+        
+        const startBtn = document.getElementById('startBtn');
+        startBtn.disabled = selectedPlayers.length !== 10;
+        startBtn.innerText = "START DRAFT";
+        startBtn.classList.remove('reroll-active');
     }
 
     function resetAll() {
@@ -208,8 +212,6 @@
         document.getElementById('redTeamList').innerHTML = "";
     }
 
-    // --- 애니메이션 핵심 로직 ---
-
     const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
     async function generateMatch() {
@@ -219,16 +221,14 @@
         const redList = document.getElementById('redTeamList');
         const wrap = document.getElementById('matchWrap');
 
-        // 버튼 비활성화 (진행 중 방해 금지)
+        // 진행 중 버튼 비활성화 및 초기화
         startBtn.disabled = true;
         resetBtn.disabled = true;
-        
-        // 결과창 초기화 및 표시
         blueList.innerHTML = "";
         redList.innerHTML = "";
         wrap.style.display = 'flex';
 
-        // 셔플
+        // 셔플 로직
         let players = [...selectedPlayers];
         for (let i = players.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
@@ -238,50 +238,42 @@
         const blueTeam = players.slice(0, 5);
         const redTeam = players.slice(5, 10);
 
-        // 한 명씩 등장
+        // 비동기 순차 등장
         for (let i = 0; i < 5; i++) {
-            // 블루 팀 포지션 공개
             await revealPlayer(blueList, POSITIONS[i], blueTeam[i]);
-            await sleep(500); // 0.5초 간격
-
-            // 레드 팀 포지션 공개
+            await sleep(400); 
             await revealPlayer(redList, POSITIONS[i], redTeam[i]);
-            await sleep(500);
+            await sleep(400);
         }
 
-        // 완료 후 리셋 버튼만 활성화
+        // --- 배정 완료 후 RE-ROLL 상태로 변경 ---
+        startBtn.disabled = false;
         resetBtn.disabled = false;
-        startBtn.innerText = "DRAFT COMPLETED";
+        startBtn.innerText = "🔄 RE-ROLL DRAFT";
+        startBtn.classList.add('reroll-active');
     }
 
     async function revealPlayer(container, pos, finalName) {
         const row = document.createElement('div');
-        row.className = 'player-row highlight'; // 하이라이트와 함께 생성
+        row.className = 'player-row highlight';
         row.innerHTML = `
             <div class="pos-badge">${pos}</div>
-            <div class="player-name" id="rolling-${pos}-${container.id}">---</div>
+            <div class="player-name">---</div>
         `;
         container.appendChild(row);
 
-        // 부드럽게 나타나기 위해 약간의 시간차
         requestAnimationFrame(() => row.classList.add('reveal'));
 
         const nameDisplay = row.querySelector('.player-name');
         
-        // 슬롯머신 효과 (이름이 막 변하다가 멈춤)
+        // 슬롯머신 효과
         for(let j=0; j<6; j++) {
             nameDisplay.innerText = selectedPlayers[Math.floor(Math.random() * 10)];
             await sleep(50);
         }
 
-        // 최종 이름 확정
         nameDisplay.innerText = finalName;
-        nameDisplay.style.color = "#f0e6d2";
-        
-        // 하이라이트 제거
-        setTimeout(() => {
-            row.classList.remove('highlight');
-        }, 300);
+        setTimeout(() => row.classList.remove('highlight'), 300);
     }
 
     init();
