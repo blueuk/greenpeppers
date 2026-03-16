@@ -19,8 +19,9 @@
         button { padding: 15px 30px; cursor: pointer; font-weight: bold; }
         .start-btn { background: #c8aa6e; color: #010a13; border: none; flex: 3; }
         .reset-btn { background: transparent; border: 1px solid #e84118; color: #e84118; flex: 1; }
+        
         #modalOverlay { position: fixed; top:0; left:0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.95); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
-        .roulette-text { font-size: 4vw; font-weight: bold; color: #c8aa6e; margin: 20px 0; height: 100px; display: flex; align-items: center; }
+        .roulette-text { font-size: 4vw; font-weight: bold; color: #c8aa6e; margin: 20px 0; height: 100px; display: flex; align-items: center; justify-content: center; }
         .match-wrap { display: none; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
         .team-box { border: 1px solid #5b5a56; padding: 15px; background: #0a1428; }
         .player-row { padding: 10px; border-bottom: 1px solid #3c3c41; font-weight: bold; }
@@ -97,23 +98,31 @@
         document.getElementById('redTeam').innerHTML = '<div style="color:#e84118; margin-bottom:10px;">RED TEAM</div>';
         
         let pool = [...selected];
-        let positions = ["TOP", "JUNGLE", "MID", "BOT", "SUP"];
+        let bluePos = ["TOP", "JUNGLE", "MID", "BOT", "SUP"];
+        let redPos = ["TOP", "JUNGLE", "MID", "BOT", "SUP"];
         
         for(let i=0; i<10; i++) {
             const name = await runRoulette(pool, "SUMMONER");
             pool = pool.filter(x => x !== name);
-            await sleep(1000);
-            
-            const pos = await runRoulette(positions, "POSITION");
-            positions = positions.filter(x => x !== pos);
-            await sleep(1000);
+            await sleep(500);
             
             const teamSide = await runRoulette(["BLUE TEAM", "RED TEAM"], "TEAM ASSIGN");
-            const target = teamSide === "BLUE TEAM" ? 'blueTeam' : 'redTeam';
             
+            let pos;
+            if (teamSide === "BLUE TEAM") {
+                pos = bluePos[Math.floor(Math.random() * bluePos.length)];
+                bluePos = bluePos.filter(x => x !== pos);
+            } else {
+                pos = redPos[Math.floor(Math.random() * redPos.length)];
+                redPos = redPos.filter(x => x !== pos);
+            }
+            
+            document.getElementById('rouletteDisplay').innerText = pos;
+            await sleep(1000);
+            
+            const target = teamSide === "BLUE TEAM" ? 'blueTeam' : 'redTeam';
             document.getElementById(target).innerHTML += `<div class="player-row">${pos} | ${name}</div>`;
             
-            // 배정 완료 후 3초 대기
             document.getElementById('modalLabel').innerText = "결과 확인 중...";
             await sleep(3000);
         }
