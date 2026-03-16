@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>LOL CUSTOM MATCH - REROLL SYSTEM</title>
+    <title>LOL CUSTOM - PACHINKO EDITION</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap');
 
@@ -11,9 +11,10 @@
             background: radial-gradient(circle, #0a1428 0%, #010a13 100%); 
             color: #f0e6d2; margin: 0; padding: 20px;
             display: flex; flex-direction: column; align-items: center; min-height: 100vh;
+            overflow-x: hidden;
         }
 
-        .container { width: 100%; max-width: 1000px; }
+        .container { width: 100%; max-width: 1000px; z-index: 1; }
         h1 { text-align: center; color: #c8aa6e; letter-spacing: 5px; border-bottom: 2px solid #c89b3c; padding-bottom: 10px; margin-bottom: 20px; }
 
         .section-box { background: rgba(1, 10, 19, 0.9); border: 1px solid #5b5a56; padding: 20px; margin-bottom: 20px; }
@@ -28,69 +29,68 @@
         .member-chip.selected { border-color: #c8aa6e; background: #c8aa6e; color: #1e2328; opacity: 0.4; pointer-events: none; }
 
         .custom-input-area { display: flex; gap: 10px; margin-top: 15px; border-top: 1px solid #3c3c41; padding-top: 15px; }
-        .custom-input-area input { 
-            flex: 1; background: #1e2328; border: 1px solid #5b5a56; color: #f0e6d2; padding: 10px; outline: none; 
-        }
+        .custom-input-area input { flex: 1; background: #1e2328; border: 1px solid #5b5a56; color: #f0e6d2; padding: 10px; outline: none; }
         .add-btn { background: #1e2328; color: #c8aa6e; border: 1px solid #c8aa6e; padding: 0 20px; cursor: pointer; font-weight: bold; }
-        .add-btn:hover { background: #c8aa6e; color: #1e2328; }
 
         .entry-grid { display: grid; grid-template-columns: repeat(5, 2fr); gap: 10px; }
         .entry-slot { 
             height: 45px; background: #0a1428; border: 1px solid #5b5a56; 
-            display: flex; align-items: center; justify-content: center; 
-            font-weight: bold; color: #f0e6d2; cursor: pointer; position: relative; font-size: 14px;
+            display: flex; align-items: center; justify-content: center; font-weight: bold; color: #f0e6d2; font-size: 14px;
         }
-        .entry-slot:empty::after { content: "EMPTY"; color: #3c3c41; font-size: 11px; letter-spacing: 1px; }
         .entry-slot.filled { border-color: #c8aa6e; }
-        .entry-slot.filled:hover::after { 
-            content: "REMOVE"; position: absolute; width: 100%; height: 100%; background: rgba(232, 65, 24, 0.9);
-            display: flex; align-items: center; justify-content: center; color: white; font-size: 11px;
-        }
 
         .btn-group { display: flex; gap: 10px; margin-bottom: 30px; }
         .start-btn { flex: 4; padding: 15px; background: #1e2328; color: #c8aa6e; border: 1px solid #c8aa6e; cursor: pointer; font-size: 18px; font-weight: bold; }
         .start-btn:hover:not(:disabled) { background: #c8aa6e; color: #1e2328; box-shadow: 0 0 20px rgba(200, 170, 110, 0.4); }
-        .start-btn:disabled { border-color: #3c3c41; color: #3c3c41; cursor: not-allowed; opacity: 0.5; }
-        
-        /* 리롤 모드일 때 스타일 */
-        .start-btn.reroll-active { border-color: #00d2ff; color: #00d2ff; }
-        .start-btn.reroll-active:hover { background: #00d2ff; color: #1e2328; box-shadow: 0 0 20px rgba(0, 210, 255, 0.4); }
-
+        .start-btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .reset-btn { flex: 1; border: 1px solid #e84118; color: #e84118; background: transparent; cursor: pointer; font-weight: bold; }
-        .reset-btn:hover:not(:disabled) { background: #e84118; color: white; }
-        .reset-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
         .match-wrap { display: none; justify-content: space-between; gap: 30px; margin-top: 10px; }
-        .team-box { flex: 1; border: 1px solid #5b5a56; background: rgba(0, 0, 0, 0.8); min-height: 300px; }
+        .team-box { flex: 1; border: 1px solid #5b5a56; background: rgba(0, 0, 0, 0.8); }
         .team-header { padding: 15px; text-align: center; font-size: 20px; font-weight: bold; }
         .blue-side { border-top: 5px solid #0097e6; }
         .red-side { border-top: 5px solid #e84118; }
-        .blue-side .team-header { color: #0097e6; background: linear-gradient(to bottom, rgba(0, 151, 230, 0.1), transparent); }
-        .red-side .team-header { color: #e84118; background: linear-gradient(to bottom, rgba(232, 65, 24, 0.1), transparent); }
+        .player-row { display: flex; align-items: center; padding: 12px 20px; border-bottom: 1px solid #3c3c41; opacity: 0; }
+        .player-row.reveal { opacity: 1; transition: 0.5s; }
+        .pos-badge { width: 85px; height: 28px; font-size: 11px; font-weight: bold; color: #a09b8c; border: 1px solid #5b5a56; display: flex; align-items: center; justify-content: center; margin-right: 20px; background: #1e2328; }
 
-        .player-row { display: flex; align-items: center; padding: 12px 20px; border-bottom: 1px solid #3c3c41; opacity: 0; transform: translateY(10px); }
-        .player-row.reveal { animation: fadeInRow 0.4s forwards; }
-        .player-row.highlight { background: rgba(200, 170, 110, 0.15); box-shadow: inset 0 0 10px rgba(200, 170, 110, 0.2); }
-
-        .pos-badge { 
-            width: 85px; height: 28px; font-size: 11px; font-weight: bold; color: #a09b8c;
-            border: 1px solid #5b5a56; display: flex; align-items: center; justify-content: center;
-            margin-right: 20px; background: #1e2328; flex-shrink: 0; letter-spacing: 1px;
+        /* --- 모달 파칭코 스타일 --- */
+        #modalOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85); display: none;
+            justify-content: center; align-items: center; z-index: 100;
         }
-        .player-name { font-size: 17px; color: #cdbe91; font-weight: 500; }
-
-        @keyframes fadeInRow {
-            to { opacity: 1; transform: translateY(0); }
+        .pachinko-card {
+            background: #010a13; border: 2px solid #c8aa6e; width: 400px; height: 250px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            box-shadow: 0 0 50px rgba(200, 170, 110, 0.2); position: relative;
         }
+        .modal-team-label { position: absolute; top: 20px; font-size: 18px; font-weight: bold; letter-spacing: 2px; }
+        .modal-pos-label { color: #a09b8c; font-size: 14px; margin-bottom: 10px; }
+        .slot-machine {
+            font-size: 42px; font-weight: bold; color: #f0e6d2; height: 60px; overflow: hidden;
+            text-shadow: 0 0 15px rgba(200, 170, 110, 0.5);
+        }
+        .slot-name { height: 60px; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
+
+<div id="modalOverlay">
+    <div class="pachinko-card">
+        <div id="modalTeam" class="modal-team-label">BLUE TEAM</div>
+        <div id="modalPos" class="modal-pos-label">TOP</div>
+        <div class="slot-machine">
+            <div id="slotName" class="slot-name">---</div>
+        </div>
+    </div>
+</div>
 
 <div class="container">
     <h1>Custom Matchmaking</h1>
 
     <div class="section-box">
-        <div class="section-title">Summoner Selection (Click or Type)</div>
+        <div class="section-title">Summoner Selection</div>
         <div class="pool-grid" id="poolGrid"></div>
         <div class="custom-input-area">
             <input type="text" id="customName" placeholder="새로운 소환사 이름 입력..." onkeypress="if(event.keyCode==13) addCustomPlayer()">
@@ -127,7 +127,6 @@
         "성일짱", "아메리칸 프로그", "여기 쓸쓸함 한잔 주시오", "임쏘은", 
         "조즈리얼", "증오는 빼는 편이야", "지나가는루돌프", "태구리", "해운대구보안관"
     ];
-
     const POSITIONS = ["TOP", "JUNGLE", "MIDDLE", "BOTTOM", "SUPPORT"];
     let selectedPlayers = [];
 
@@ -140,7 +139,6 @@
             chip.onclick = () => togglePlayer(name);
             poolGrid.appendChild(chip);
         });
-
         const entryGrid = document.getElementById('entryGrid');
         for(let i=0; i<10; i++) {
             const slot = document.createElement('div');
@@ -152,83 +150,57 @@
 
     function togglePlayer(name) {
         if (selectedPlayers.includes(name)) {
-            removePlayer(name);
+            selectedPlayers = selectedPlayers.filter(p => p !== name);
         } else if (selectedPlayers.length < 10) {
             selectedPlayers.push(name);
-            updateUI();
         }
+        updateUI();
     }
 
     function addCustomPlayer() {
         const input = document.getElementById('customName');
         const name = input.value.trim();
-        if (name && !selectedPlayers.includes(name)) {
-            if (selectedPlayers.length < 10) {
-                selectedPlayers.push(name);
-                input.value = "";
-                updateUI();
-            } else {
-                alert("이미 10명이 가득 찼습니다!");
-            }
+        if (name && !selectedPlayers.includes(name) && selectedPlayers.length < 10) {
+            selectedPlayers.push(name);
+            input.value = "";
+            updateUI();
         }
-    }
-
-    function removePlayer(name) {
-        selectedPlayers = selectedPlayers.filter(p => p !== name);
-        updateUI();
     }
 
     function updateUI() {
         document.querySelectorAll('.member-chip').forEach(chip => {
             chip.classList.toggle('selected', selectedPlayers.includes(chip.innerText));
         });
-
         for(let i=0; i<10; i++) {
             const slot = document.getElementById(`slot-${i}`);
-            if (selectedPlayers[i]) {
-                slot.innerText = selectedPlayers[i];
-                slot.className = 'entry-slot filled';
-                const pName = selectedPlayers[i];
-                slot.onclick = () => removePlayer(pName);
-            } else {
-                slot.innerText = "";
-                slot.className = 'entry-slot';
-                slot.onclick = null;
-            }
+            slot.innerText = selectedPlayers[i] || "";
+            slot.classList.toggle('filled', !!selectedPlayers[i]);
         }
         document.getElementById('count').innerText = selectedPlayers.length;
-        
-        const startBtn = document.getElementById('startBtn');
-        startBtn.disabled = selectedPlayers.length !== 10;
-        startBtn.innerText = "START DRAFT";
-        startBtn.classList.remove('reroll-active');
+        document.getElementById('startBtn').disabled = selectedPlayers.length !== 10;
+        document.getElementById('startBtn').innerText = "START DRAFT";
     }
 
     function resetAll() {
         selectedPlayers = [];
         updateUI();
         document.getElementById('matchWrap').style.display = 'none';
-        document.getElementById('blueTeamList').innerHTML = "";
-        document.getElementById('redTeamList').innerHTML = "";
     }
 
+    // --- 파칭코 애니메이션 로직 ---
     const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
     async function generateMatch() {
         const startBtn = document.getElementById('startBtn');
-        const resetBtn = document.getElementById('resetBtn');
+        const modal = document.getElementById('modalOverlay');
         const blueList = document.getElementById('blueTeamList');
         const redList = document.getElementById('redTeamList');
-        const wrap = document.getElementById('matchWrap');
 
-        // 진행 중 버튼 비활성화 및 초기화
         startBtn.disabled = true;
-        resetBtn.disabled = true;
         blueList.innerHTML = "";
         redList.innerHTML = "";
-        wrap.style.display = 'flex';
+        document.getElementById('matchWrap').style.display = 'flex';
 
-        // 셔플 로직
         let players = [...selectedPlayers];
         for (let i = players.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
@@ -238,42 +210,59 @@
         const blueTeam = players.slice(0, 5);
         const redTeam = players.slice(5, 10);
 
-        // 비동기 순차 등장
+        modal.style.display = 'flex';
+
         for (let i = 0; i < 5; i++) {
-            await revealPlayer(blueList, POSITIONS[i], blueTeam[i]);
-            await sleep(400); 
-            await revealPlayer(redList, POSITIONS[i], redTeam[i]);
-            await sleep(400);
+            // 블루팀 해당 포지션 가챠
+            await runPachinko("BLUE TEAM", POSITIONS[i], blueTeam[i], "#0097e6");
+            addPlayerRow(blueList, POSITIONS[i], blueTeam[i]);
+            await sleep(300);
+
+            // 레드팀 해당 포지션 가챠
+            await runPachinko("RED TEAM", POSITIONS[i], redTeam[i], "#e84118");
+            addPlayerRow(redList, POSITIONS[i], redTeam[i]);
+            await sleep(300);
         }
 
-        // --- 배정 완료 후 RE-ROLL 상태로 변경 ---
+        modal.style.display = 'none';
         startBtn.disabled = false;
-        resetBtn.disabled = false;
         startBtn.innerText = "🔄 RE-ROLL DRAFT";
-        startBtn.classList.add('reroll-active');
     }
 
-    async function revealPlayer(container, pos, finalName) {
-        const row = document.createElement('div');
-        row.className = 'player-row highlight';
-        row.innerHTML = `
-            <div class="pos-badge">${pos}</div>
-            <div class="player-name">---</div>
-        `;
-        container.appendChild(row);
+    async function runPachinko(teamName, posName, finalName, color) {
+        const teamLabel = document.getElementById('modalTeam');
+        const posLabel = document.getElementById('modalPos');
+        const nameSlot = document.getElementById('slotName');
 
-        requestAnimationFrame(() => row.classList.add('reveal'));
-
-        const nameDisplay = row.querySelector('.player-name');
+        teamLabel.innerText = teamName;
+        teamLabel.style.color = color;
+        posLabel.innerText = posName;
         
-        // 슬롯머신 효과
-        for(let j=0; j<6; j++) {
-            nameDisplay.innerText = selectedPlayers[Math.floor(Math.random() * 10)];
+        // 파칭코 회전 효과 (무작위 이름 보여주기)
+        for(let j=0; j<15; j++) {
+            nameSlot.innerText = selectedPlayers[Math.floor(Math.random() * 10)];
+            nameSlot.style.opacity = "0.5";
             await sleep(50);
         }
 
-        nameDisplay.innerText = finalName;
-        setTimeout(() => row.classList.remove('highlight'), 300);
+        // 최종 결정
+        nameSlot.innerText = finalName;
+        nameSlot.style.opacity = "1";
+        nameSlot.style.color = "#c8aa6e";
+        
+        await sleep(700); // 확정된 이름 보여주는 대기 시간
+        nameSlot.style.color = "#f0e6d2";
+    }
+
+    function addPlayerRow(container, pos, name) {
+        const row = document.createElement('div');
+        row.className = 'player-row';
+        row.innerHTML = `
+            <div class="pos-badge">${pos}</div>
+            <div class="player-name">${name}</div>
+        `;
+        container.appendChild(row);
+        setTimeout(() => row.classList.add('reveal'), 10);
     }
 
     init();
