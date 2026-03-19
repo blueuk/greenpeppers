@@ -2,173 +2,238 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>LoL Fearless Draft Tracker</title>
+    <title>LoL Fearless Draft Simulator 0.0.1</title>
     <style>
         :root {
             --lol-gold: #c8aa6e;
-            --lol-blue: #091428;
-            --lol-dark-blue: #010a13;
-            --disabled-gray: #333;
+            --blue-team: #0ac8b9;
+            --red-team: #ef3f27;
+            --bg-dark: #010a13;
+            --panel-bg: rgba(1, 10, 19, 0.9);
         }
 
         body {
-            background-color: var(--lol-dark-blue);
+            background: radial-gradient(circle, #091428 0%, #010a13 100%);
             color: white;
             font-family: 'Malgun Gothic', sans-serif;
-            margin: 0;
-            padding: 20px;
+            margin: 0; padding: 20px;
+            display: flex; flex-direction: column; align-items: center;
         }
 
-        h2 { border-bottom: 2px solid var(--lol-gold); padding-bottom: 10px; color: var(--lol-gold); }
-
-        .container { display: flex; gap: 20px; }
-
-        /* 챔피언 리스트 영역 */
-        .champion-grid {
-            flex: 2;
+        /* 메인 레이아웃 */
+        .draft-container {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-            gap: 10px;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 15px;
-            border: 1px solid var(--lol-gold);
-            max-height: 800px;
-            overflow-y: auto;
-        }
-
-        .champ-card {
-            cursor: pointer;
-            text-align: center;
-            border: 1px solid transparent;
-            transition: 0.2s;
-        }
-
-        .champ-card:hover { border-color: var(--lol-gold); transform: scale(1.05); }
-
-        .champ-card img { width: 100%; border-radius: 4px; }
-
-        .champ-card.disabled {
-            filter: grayscale(100%);
-            opacity: 0.3;
-            pointer-events: none;
-        }
-
-        /* 밴/픽 기록 영역 */
-        .record-panel {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
+            grid-template-columns: 200px 1fr 200px;
             gap: 20px;
+            width: 100%;
+            max-width: 1200px;
         }
 
-        .session-box {
-            background: #091428;
+        /* 밴 영역 (상단) */
+        .ban-row {
+            grid-column: 2;
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 20px;
+        }
+        .ban-group { display: flex; gap: 5px; }
+        .ban-slot { width: 40px; height: 40px; border: 1px solid #444; background: #000; overflow: hidden; }
+        .ban-slot img { width: 100%; filter: grayscale(1); }
+
+        /* 픽 영역 (양 옆) */
+        .side-panel { display: flex; flex-direction: column; gap: 10px; }
+        .pick-slot {
+            height: 80px;
             border: 1px solid var(--lol-gold);
-            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            display: flex; align-items: center;
+            position: relative;
+            overflow: hidden;
         }
+        .pick-slot img { height: 100%; position: absolute; right: 0; opacity: 0.7; }
+        .pick-slot.blue { border-left: 5px solid var(--blue-team); }
+        .pick-slot.red { border-right: 5px solid var(--red-team); flex-direction: row-reverse; }
+        .pick-name { padding: 0 15px; font-weight: bold; z-index: 1; }
 
-        .set-title { font-weight: bold; color: var(--lol-gold); margin-bottom: 10px; }
-
-        .tag-list { display: flex; flex-wrap: wrap; gap: 5px; }
-
-        .tag {
-            background: #1e2328;
-            border: 1px solid var(--lol-gold);
-            padding: 2px 8px;
-            font-size: 12px;
-            border-radius: 2px;
-        }
-
-        button {
-            background: var(--lol-gold);
-            color: black;
-            border: none;
+        /* 중앙 챔피언 선택창 */
+        .center-content { display: flex; flex-direction: column; align-items: center; }
+        .champ-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 8px;
+            max-height: 450px;
+            overflow-y: auto;
             padding: 10px;
-            cursor: pointer;
-            font-weight: bold;
-            margin-top: 10px;
+            border: 1px solid var(--lol-gold);
         }
+        .champ-item { width: 60px; cursor: pointer; border: 1px solid transparent; }
+        .champ-item:hover { border-color: var(--lol-gold); }
+        .champ-item img { width: 100%; }
+        .champ-item.disabled { filter: grayscale(1); opacity: 0.2; pointer-events: none; }
+
+        /* 버튼 및 기록 */
+        .controls { margin-top: 20px; }
+        .btn-complete { 
+            background: var(--lol-gold); border: none; padding: 10px 40px; 
+            font-weight: bold; cursor: pointer; font-size: 16px;
+        }
+        
+        .history-section {
+            margin-top: 40px; width: 100%; max-width: 1200px;
+            border-top: 1px solid #333; padding-top: 20px;
+        }
+        .history-card {
+            background: rgba(255, 255, 255, 0.05);
+            margin-bottom: 15px; padding: 15px; border-radius: 4px;
+        }
+        .history-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-size: 13px; }
+        .blue-text { color: var(--blue-team); }
+        .red-text { color: var(--red-team); }
     </style>
 </head>
 <body>
 
-    <h2>Fearless Draft Tracker (Set 1-3)</h2>
-    
-    <div class="container">
-        <div class="champion-grid" id="championGrid">
-            </div>
-
-        <div class="record-panel">
-            <div class="session-box">
-                <div class="set-title">사용한 챔피언 (다음 세트 밴)</div>
-                <div id="usedList" class="tag-list"></div>
-                <button onclick="resetData()">초기화</button>
-            </div>
-            
-            <div class="session-box">
-                <p style="font-size: 13px; color: #888;">* 챔피언을 클릭하면 사용 목록에 추가됩니다.</p>
-                <p style="font-size: 13px; color: #888;">* 하드 피어리스 규칙에 따라 이전 세트 픽은 자동 비활성화됩니다.</p>
-            </div>
-        </div>
+    <div class="ban-row">
+        <div class="ban-group" id="blueBans"></div>
+        <div style="color: var(--lol-gold); font-weight: bold; line-height: 40px;">BANS</div>
+        <div class="ban-group" id="redBans"></div>
     </div>
 
-    <script>
-        // 실제 데이터는 Riot API에서 가져와야 하지만, 예시로 몇몇 챔피언만 등록합니다.
-        const champions = [
-            "Aatrox", "Ahri", "Akali", "Alistar", "Amumu", "Anivia", "Ashe", "Azir", "Bard", "Blitzcrank",
-            "Brand", "Caitlyn", "Camille", "Cassiopeia", "ChoGath", "Corki", "Darius", "Diana", "DrMundo", "Draven",
-            "Ezreal", "Fiora", "Fizz", "Garen", "Gnar", "Gragas", "Graves", "Gwen", "Hecarim", "Heimerdinger"
-        ];
+    <div class="draft-container">
+        <div class="side-panel" id="bluePicks"></div>
 
-        let usedChampions = JSON.parse(sessionStorage.getItem('usedChamps')) || [];
+        <div class="center-content">
+            <div style="margin-bottom: 10px;">
+                <button onclick="currentMode='ban'">밴 하기</button>
+                <button onclick="currentMode='pick'">픽 하기</button>
+                <span id="turnInfo" style="margin-left: 10px; color: var(--lol-gold);">현재: 픽 모드</span>
+            </div>
+            <div class="champ-grid" id="champGrid"></div>
+            <div class="controls">
+                <button class="btn-complete" onclick="finishSet()">SET 완료</button>
+            </div>
+        </div>
 
-        function init() {
-            const grid = document.getElementById('championGrid');
-            grid.innerHTML = '';
-            
-            champions.forEach(champ => {
-                const isUsed = usedChampions.includes(champ);
-                const div = document.createElement('div');
-                div.className = `champ-card ${isUsed ? 'disabled' : ''}`;
-                div.innerHTML = `
-                    <img src="https://ddragon.leagueoflegends.com/cdn/13.24.1/img/champion/${champ}.png" alt="${champ}">
-                    <div style="font-size:11px">${champ}</div>
-                `;
-                div.onclick = () => selectChampion(champ);
-                grid.appendChild(div);
-            });
+        <div class="side-panel" id="redPicks"></div>
+    </div>
 
-            updateUsedList();
+    <div class="history-section">
+        <h3>세트 기록 (History)</h3>
+        <div id="historyLog"></div>
+    </div>
+
+<script>
+    const champions = ["Aatrox", "Ahri", "Akali", "Alistar", "Amumu", "Anivia", "Ashe", "Azir", "Bard", "Blitzcrank", "Brand", "Caitlyn", "Camille", "Cassiopeia", "Darius", "Diana", "Ezreal", "Fiora", "Fizz", "Garen", "Gnar", "Gragas", "Graves", "Gwen", "Hecarim", "Irelia", "Jax", "Jhin", "KaiSa", "Karma", "Kassadin", "Katarina", "LeeSin", "Leona", "Lux", "Malphite", "Nautilus", "Orianna", "Ornn", "Pyke", "Riven", "Sett", "Sylas", "Thresh", "Vayne", "Yone", "Yuumi", "Zed"];
+
+    let currentMode = 'pick';
+    let currentSet = 1;
+    let fearlessBans = JSON.parse(sessionStorage.getItem('fearlessBans')) || [];
+    let history = JSON.parse(sessionStorage.getItem('draftHistory')) || [];
+
+    let currentDraft = {
+        bluePicks: [], redPicks: [], blueBans: [], redBans: []
+    };
+
+    function renderBoard() {
+        // 그리드 생성
+        const grid = document.getElementById('champGrid');
+        grid.innerHTML = '';
+        champions.forEach(champ => {
+            const isUsed = fearlessBans.includes(champ) || currentDraft.bluePicks.includes(champ) || currentDraft.redPicks.includes(champ) || currentDraft.blueBans.includes(champ) || currentDraft.redBans.includes(champ);
+            const div = document.createElement('div');
+            div.className = `champ-item ${isUsed ? 'disabled' : ''}`;
+            div.innerHTML = `<img src="https://ddragon.leagueoflegends.com/cdn/13.24.1/img/champion/${champ}.png">`;
+            div.onclick = () => handleSelect(champ);
+            grid.appendChild(div);
+        });
+
+        // 픽 슬롯 렌더링
+        renderSlots('bluePicks', 'blue', 'blue');
+        renderSlots('redPicks', 'red', 'red');
+        
+        // 밴 슬롯 렌더링
+        renderBans('blueBans', 'blueBans');
+        renderBans('redBans', 'redBans');
+
+        document.getElementById('turnInfo').innerText = `현재: ${currentMode === 'ban' ? '밴' : '픽'} 모드 (Set ${currentSet})`;
+    }
+
+    function renderSlots(id, side, colorClass) {
+        const el = document.getElementById(id);
+        el.innerHTML = '';
+        for(let i=0; i<5; i++) {
+            const name = currentDraft[id][i] || '';
+            const img = name ? `<img src="https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${name}_0.jpg">` : '';
+            el.innerHTML += `<div class="pick-slot ${colorClass}">${img}<div class="pick-name">${name}</div></div>`;
+        }
+    }
+
+    function renderBans(id, divId) {
+        const el = document.getElementById(divId);
+        el.innerHTML = '';
+        for(let i=0; i<5; i++) {
+            const name = currentDraft[id][i] || '';
+            const img = name ? `<img src="https://ddragon.leagueoflegends.com/cdn/13.24.1/img/champion/${name}.png">` : '';
+            el.innerHTML += `<div class="ban-slot">${img}</div>`;
+        }
+    }
+
+    function handleSelect(name) {
+        if (currentMode === 'pick') {
+            if (currentDraft.bluePicks.length < 5) currentDraft.bluePicks.push(name);
+            else if (currentDraft.redPicks.length < 5) currentDraft.redPicks.push(name);
+        } else {
+            if (currentDraft.blueBans.length < 5) currentDraft.blueBans.push(name);
+            else if (currentDraft.redBans.length < 5) currentDraft.redBans.push(name);
+        }
+        renderBoard();
+    }
+
+    function finishSet() {
+        if (currentDraft.bluePicks.length < 5 || currentDraft.redPicks.length < 5) {
+            alert("양 팀의 픽을 모두 완료해주세요!"); return;
         }
 
-        function selectChampion(name) {
-            if (!usedChampions.includes(name)) {
-                usedChampions.push(name);
-                sessionStorage.setItem('usedChamps', JSON.stringify(usedChampions));
-                init();
-            }
-        }
+        // 히스토리 추가
+        history.push({...currentDraft, setNum: currentSet});
+        
+        // 하드 피어리스 적용: 이번 세트의 모든 픽을 밴 리스트로 이동
+        fearlessBans = [...fearlessBans, ...currentDraft.bluePicks, ...currentDraft.redPicks];
+        
+        // 데이터 저장
+        sessionStorage.setItem('fearlessBans', JSON.stringify(fearlessBans));
+        sessionStorage.setItem('draftHistory', JSON.stringify(history));
 
-        function updateUsedList() {
-            const listDiv = document.getElementById('usedList');
-            listDiv.innerHTML = '';
-            usedChampions.forEach(champ => {
-                const span = document.createElement('span');
-                span.className = 'tag';
-                span.innerText = champ;
-                listDiv.appendChild(span);
-            });
-        }
+        // 초기화
+        currentDraft = { bluePicks: [], redPicks: [], blueBans: [], redBans: [] };
+        currentSet++;
+        updateHistoryUI();
+        renderBoard();
+    }
 
-        function resetData() {
-            if(confirm("모든 기록을 초기화할까요?")) {
-                usedChampions = [];
-                sessionStorage.removeItem('usedChamps');
-                init();
-            }
-        }
+    function updateHistoryUI() {
+        const log = document.getElementById('historyLog');
+        log.innerHTML = history.map(h => `
+            <div class="history-card">
+                <strong>[제 ${h.setNum} 세트]</strong>
+                <div class="history-grid">
+                    <div>
+                        <p class="blue-text">BLUE Bans: ${h.blueBans.join(', ')}</p>
+                        <p class="blue-text">BLUE Picks: <b>${h.bluePicks.join(', ')}</b></p>
+                    </div>
+                    <div>
+                        <p class="red-text">RED Bans: ${h.redBans.join(', ')}</p>
+                        <p class="red-text">RED Picks: <b>${h.redPicks.join(', ')}</b></p>
+                    </div>
+                </div>
+            </div>
+        `).reverse().join('');
+    }
 
-        init();
-    </script>
+    // 초기 실행
+    updateHistoryUI();
+    renderBoard();
+</script>
 </body>
 </html>
