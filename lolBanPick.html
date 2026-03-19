@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>LoL Fearless Draft v1.0.0</title>
+    <title>LoL Fearless Draft v1.1.0</title>
     <style>
         :root {
             --lol-gold: #c8aa6e;
@@ -19,7 +19,10 @@
             display: flex; flex-direction: column; align-items: center;
         }
 
-        .version-tag { position: absolute; top: 10px; right: 20px; color: var(--lol-gold); font-size: 12px; border: 1px solid var(--lol-gold); padding: 2px 8px; }
+        .header-controls { width: 100%; max-width: 1300px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .version-tag { color: var(--lol-gold); font-size: 12px; border: 1px solid var(--lol-gold); padding: 2px 8px; }
+        .reset-btn { background: transparent; color: #ff4d4d; border: 1px solid #ff4d4d; cursor: pointer; padding: 4px 10px; border-radius: 4px; font-size: 12px; }
+        .reset-btn:hover { background: #ff4d4d; color: white; }
 
         /* 밴 영역 */
         .ban-container { display: flex; justify-content: center; gap: 50px; margin: 10px 0; }
@@ -39,7 +42,7 @@
         .pick-slot img { height: 100%; position: absolute; right: 0; opacity: 0.6; z-index: 0; }
         .pick-name { padding: 0 15px; font-weight: bold; z-index: 1; text-shadow: 2px 2px 4px #000; }
 
-        /* 현재 순서 강조 효과 */
+        /* 현재 순서 강조 */
         @keyframes glow {
             0% { box-shadow: 0 0 5px var(--lol-gold); border-color: var(--lol-gold); }
             50% { box-shadow: 0 0 20px var(--lol-gold); border-color: #fff; }
@@ -58,17 +61,26 @@
         .champ-item.disabled { filter: grayscale(1); opacity: 0.15; pointer-events: none; }
         .champ-item img { width: 100%; }
 
-        /* 하단 기록 */
+        /* 히스토리 영역 (이미지 포함) */
         .history-area { margin-top: 30px; width: 100%; max-width: 1300px; border-top: 1px solid #333; padding-top: 10px; }
-        .history-item { background: rgba(255,255,255,0.03); padding: 10px; margin-bottom: 8px; border-radius: 4px; display: flex; justify-content: space-between; font-size: 13px; }
+        .history-item { background: rgba(255,255,255,0.03); padding: 15px; margin-bottom: 10px; border-radius: 4px; display: flex; flex-direction: column; gap: 10px; }
+        .history-set-title { font-weight: bold; color: var(--lol-gold); border-bottom: 1px solid #444; padding-bottom: 5px; }
+        .history-row { display: flex; align-items: center; gap: 15px; }
+        .history-champs { display: flex; gap: 5px; }
+        .history-champs img { width: 35px; height: 35px; border: 1px solid #555; border-radius: 2px; }
+        .team-label { width: 80px; font-weight: bold; font-size: 13px; }
 
         button.complete-btn { background: var(--lol-gold); border: none; padding: 10px 30px; font-weight: bold; cursor: pointer; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-<div class="version-tag">ver 1.0.0</div>
-<h3 style="color: var(--lol-gold); margin: 5px;">FEARLESS DRAFT SYSTEM</h3>
+<div class="header-controls">
+    <button class="reset-btn" onclick="confirmReset()">전체 데이터 초기화</button>
+    <div class="version-tag">ver 1.1.0</div>
+</div>
+
+<h3 style="color: var(--lol-gold); margin: 0 0 10px 0;">FEARLESS DRAFT SYSTEM</h3>
 
 <div class="ban-container">
     <div class="ban-group" id="blueBans"></div>
@@ -87,21 +99,26 @@
 </div>
 
 <div class="history-area">
-    <h4 style="margin: 5px 0;">MATCH HISTORY</h4>
+    <h4 style="margin: 5px 0 15px 0;">MATCH HISTORY</h4>
     <div id="historyLog"></div>
 </div>
 
 <script>
-    // 샘플 챔피언 리스트 (실제 구현 시 더 추가 가능)
-    const champions = ["Aatrox", "Ahri", "Akali", "Alistar", "Amumu", "Anivia", "Ashe", "Azir", "Bard", "Blitzcrank", "Brand", "Bravo", "Caitlyn", "Camille", "Cassiopeia", "Darius", "Diana", "Ezreal", "Fiora", "Fizz", "Garen", "Gnar", "Gragas", "Graves", "Gwen", "Hecarim", "Irelia", "Jax", "Jhin", "KaiSa", "Karma", "Kassadin", "Katarina", "LeeSin", "Leona", "Lux", "Malphite", "Nautilus", "Orianna", "Ornn", "Pyke", "Riven", "Sett", "Sylas", "Thresh", "Vayne", "Yone", "Yuumi", "Zed"];
+    const champions = ["Aatrox", "Ahri", "Akali", "Alistar", "Amumu", "Anivia", "Ashe", "Azir", "Bard", "Blitzcrank", "Brand", "Braum", "Caitlyn", "Camille", "Cassiopeia", "Darius", "Diana", "Ezreal", "Fiora", "Fizz", "Garen", "Gnar", "Gragas", "Graves", "Gwen", "Hecarim", "Irelia", "Jax", "Jhin", "KaiSa", "Karma", "Kassadin", "Katarina", "LeeSin", "Leona", "Lux", "Malphite", "Nautilus", "Orianna", "Ornn", "Pyke", "Riven", "Sett", "Sylas", "Thresh", "Vayne", "Yone", "Yuumi", "Zed"];
 
-    // 밴픽 순서 정의 (type: ban/pick, team: blue/red, index: slot_index)
     const sequence = [
-        {t:'ban', side:'blue', i:0}, {t:'ban', side:'red', i:0}, {t:'ban', side:'blue', i:1}, {t:'ban', side:'red', i:1}, {t:'ban', side:'blue', i:2}, {t:'ban', side:'red', i:2}, // 1페 밴
-        {t:'pick', side:'blue', i:0}, {t:'pick', side:'red', i:0}, {t:'pick', side:'red', i:1}, {t:'pick', side:'blue', i:1}, {t:'pick', side:'blue', i:2}, {t:'pick', side:'red', i:2}, // 1페 픽 (1-2-2-1)
-        {t:'ban', side:'red', i:3}, {t:'ban', side:'blue', i:3}, {t:'ban', side:'red', i:4}, {t:'ban', side:'blue', i:4}, // 2페 밴
-        {t:'pick', side:'red', i:3}, {t:'pick', side:'blue', i:3}, {t:'pick', side:'blue', i:4}, {t:'pick', side:'red', i:4} // 2페 픽 (1-2-1 순서 반영)
+        {t:'ban', side:'blue', i:0}, {t:'ban', side:'red', i:0}, {t:'ban', side:'blue', i:1}, {t:'ban', side:'red', i:1}, {t:'ban', side:'blue', i:2}, {t:'ban', side:'red', i:2},
+        {t:'pick', side:'blue', i:0}, {t:'pick', side:'red', i:0}, {t:'pick', side:'red', i:1}, {t:'pick', side:'blue', i:1}, {t:'pick', side:'blue', i:2}, {t:'pick', side:'red', i:2},
+        {t:'ban', side:'red', i:3}, {t:'ban', side:'blue', i:3}, {t:'ban', side:'red', i:4}, {t:'ban', side:'blue', i:4},
+        {t:'pick', side:'red', i:3}, {t:'pick', side:'blue', i:3}, {t:'pick', side:'blue', i:4}, {t:'pick', side:'red', i:4}
     ];
+
+    // 오디오 설정 (무료 효과음 소스)
+    const sfx = {
+        ban: new Audio('https://www.soundjay.com/buttons/sounds/button-16.mp3'),
+        pick: new Audio('https://www.soundjay.com/buttons/sounds/button-3.mp3'),
+        complete: new Audio('https://www.soundjay.com/buttons/sounds/button-09.mp3')
+    };
 
     let step = 0;
     let currentSet = 1;
@@ -110,7 +127,6 @@
     let currentDraft = { bluePicks: [], redPicks: [], blueBans: [], redBans: [] };
 
     function initBoard() {
-        // 슬롯 생성
         createSlots('blueBans', 5, 'ban-slot');
         createSlots('redBans', 5, 'ban-slot');
         createSlots('bluePicks', 5, 'pick-slot blue');
@@ -145,18 +161,20 @@
 
     function selectChamp(name) {
         if(step >= sequence.length) return;
-        
         const turn = sequence[step];
         const targetList = turn.side + (turn.t === 'ban' ? 'Bans' : 'Picks');
         currentDraft[targetList][turn.i] = name;
         
+        // 소리 재생
+        sfx[turn.t].currentTime = 0;
+        sfx[turn.t].play();
+
         step++;
         renderChamps();
         updateUI();
     }
 
     function updateUI() {
-        // 모든 슬롯 초기화 후 데이터 매칭
         ['blueBans', 'redBans', 'bluePicks', 'redPicks'].forEach(key => {
             currentDraft[key].forEach((name, i) => {
                 const slot = document.getElementById(`${key}-${i}`);
@@ -169,13 +187,13 @@
             });
         });
 
-        // 반짝임 효과 제거 및 현재 차례 적용
         document.querySelectorAll('.active-turn').forEach(el => el.classList.remove('active-turn'));
         
         if(step < sequence.length) {
             const turn = sequence[step];
             const activeId = `${turn.side}${turn.t === 'ban' ? 'Bans' : 'Picks'}-${turn.i}`;
-            document.getElementById(activeId).classList.add('active-turn');
+            const targetEl = document.getElementById(activeId);
+            if(targetEl) targetEl.classList.add('active-turn');
             document.getElementById('statusText').innerText = `NEXT: ${turn.side.toUpperCase()} ${turn.t.toUpperCase()}`;
             document.getElementById('finishBtn').style.display = 'none';
         } else {
@@ -185,13 +203,13 @@
     }
 
     function finishSet() {
+        sfx.complete.play();
         history.push({ ...currentDraft, set: currentSet });
         fearlessBans = [...fearlessBans, ...currentDraft.bluePicks, ...currentDraft.redPicks];
         
         sessionStorage.setItem('fearlessBans', JSON.stringify(fearlessBans));
         sessionStorage.setItem('draftHistory', JSON.stringify(history));
 
-        // 초기화 후 다음 세트
         currentDraft = { bluePicks: [], redPicks: [], blueBans: [], redBans: [] };
         step = 0;
         currentSet++;
@@ -203,11 +221,30 @@
         const log = document.getElementById('historyLog');
         log.innerHTML = history.slice().reverse().map(h => `
             <div class="history-item">
-                <span style="color:var(--lol-gold)">SET ${h.set}</span>
-                <span style="color:var(--blue-team)">BLUE: ${h.bluePicks.join(', ')}</span>
-                <span style="color:var(--red-team)">RED: ${h.redPicks.join(', ')}</span>
+                <div class="history-set-title">SET ${h.set} SUMMARY</div>
+                <div class="history-row">
+                    <div class="team-label blue-text" style="color:var(--blue-team)">BLUE TEAM</div>
+                    <div class="history-champs">
+                        ${h.bluePicks.map(c => `<img src="https://ddragon.leagueoflegends.com/cdn/13.24.1/img/champion/${c}.png" title="${c}">`).join('')}
+                    </div>
+                    <div style="font-size:11px; color:#777; margin-left:10px;">Bans: ${h.blueBans.join(', ')}</div>
+                </div>
+                <div class="history-row">
+                    <div class="team-label red-text" style="color:var(--red-team)">RED TEAM</div>
+                    <div class="history-champs">
+                        ${h.redPicks.map(c => `<img src="https://ddragon.leagueoflegends.com/cdn/13.24.1/img/champion/${c}.png" title="${c}">`).join('')}
+                    </div>
+                    <div style="font-size:11px; color:#777; margin-left:10px;">Bans: ${h.redBans.join(', ')}</div>
+                </div>
             </div>
         `).join('');
+    }
+
+    function confirmReset() {
+        if(confirm("모든 밴픽 히스토리와 피어리스 데이터를 초기화할까요? 이 작업은 되돌릴 수 없습니다.")) {
+            sessionStorage.clear();
+            location.reload();
+        }
     }
 
     initBoard();
