@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>LoL Fearless Draft v1.2.1</title>
+    <title>LoL Fearless Draft v1.3.0</title>
     <style>
         :root {
             --lol-gold: #c8aa6e;
@@ -21,12 +21,16 @@
 
         .header-controls { width: 100%; max-width: 1300px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .version-tag { color: var(--lol-gold); font-size: 12px; border: 1px solid var(--lol-gold); padding: 2px 8px; }
+        
+        .control-btns { display: flex; gap: 10px; }
+        .undo-btn { background: #333; color: white; border: 1px solid #555; cursor: pointer; padding: 4px 12px; border-radius: 4px; font-size: 12px; }
+        .undo-btn:hover { background: #555; border-color: var(--lol-gold); }
         .reset-btn { background: transparent; color: #ff4d4d; border: 1px solid #ff4d4d; cursor: pointer; padding: 4px 10px; border-radius: 4px; font-size: 12px; }
         .reset-btn:hover { background: #ff4d4d; color: white; }
 
         .ban-container { display: flex; justify-content: center; gap: 50px; margin: 10px 0; }
         .ban-group { display: flex; gap: 4px; }
-        .ban-slot { width: 35px; height: 35px; border: 1px solid #444; background: #000; position: relative; }
+        .ban-slot { width: 35px; height: 35px; border: 1px solid #444; background: #000; position: relative; transition: all 0.3s; }
         .ban-slot img { width: 100%; filter: grayscale(1); }
         
         .draft-main { display: grid; grid-template-columns: 220px 1fr 220px; gap: 15px; width: 100%; max-width: 1300px; }
@@ -34,10 +38,11 @@
         .pick-slot {
             height: 70px; border: 1px solid #333; background: rgba(0,0,0,0.6);
             display: flex; align-items: center; position: relative; overflow: hidden;
+            transition: all 0.4s ease;
         }
         .pick-slot.blue { border-left: 4px solid var(--blue-team); }
         .pick-slot.red { border-right: 4px solid var(--red-team); flex-direction: row-reverse; }
-        .pick-slot img { height: 100%; position: absolute; right: 0; opacity: 0.6; z-index: 0; }
+        .pick-slot img { height: 100%; position: absolute; right: 0; opacity: 0.6; z-index: 0; transition: transform 0.5s; }
         .pick-name { padding: 0 15px; font-weight: bold; z-index: 1; text-shadow: 2px 2px 4px #000; font-size: 14px; }
 
         @keyframes glow {
@@ -57,8 +62,17 @@
             display: grid; grid-template-columns: repeat(10, 1fr); gap: 5px;
             max-height: 480px; overflow-y: auto; padding: 10px; border: 1px solid #222; background: rgba(0,0,0,0.3);
         }
-        .champ-item { width: 55px; cursor: pointer; transition: 0.1s; border: 1px solid transparent; text-align: center; }
-        .champ-item:hover { border-color: var(--lol-gold); transform: scale(1.1); }
+        .champ-item { 
+            width: 55px; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+            border: 1px solid transparent; text-align: center; position: relative;
+        }
+        /* 후버 효과 추가 */
+        .champ-item:not(.disabled):hover { 
+            border-color: var(--lol-gold); 
+            transform: scale(1.15); 
+            z-index: 10;
+            box-shadow: 0 0 15px rgba(200, 170, 110, 0.5);
+        }
         .champ-item.disabled { filter: grayscale(1); opacity: 0.15; pointer-events: none; }
         .champ-item img { width: 100%; border-radius: 2px; }
         .champ-label { font-size: 10px; color: #ccc; margin-top: 2px; overflow: hidden; white-space: nowrap; }
@@ -68,17 +82,22 @@
         .history-set-title { font-weight: bold; color: var(--lol-gold); border-bottom: 1px solid #444; padding-bottom: 5px; }
         .history-row { display: flex; align-items: center; gap: 15px; border-bottom: 1px solid #222; padding-bottom: 8px; }
         .history-champs { display: flex; gap: 5px; align-items: center; }
-        .history-champs img { width: 35px; height: 35px; border: 1px solid #555; border-radius: 2px; }
+        .history-champs img { width: 35px; height: 35px; border: 1px solid #555; border-radius: 2px; transition: transform 0.2s; }
+        .history-champs img:hover { transform: scale(1.2); z-index: 5; border-color: var(--lol-gold); }
         .history-ban-img { filter: grayscale(1); border-color: #333; opacity: 0.6; } 
         
         button.complete-btn { background: var(--lol-gold); border: none; padding: 10px 30px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        button.complete-btn:hover { background: #e2c07d; box-shadow: 0 0 10px var(--lol-gold); }
     </style>
 </head>
 <body>
 
 <div class="header-controls">
-    <button class="reset-btn" onclick="confirmReset()">전체 데이터 초기화</button>
-    <div class="version-tag">ver 1.2.1</div>
+    <div class="control-btns">
+        <button class="undo-btn" id="undoBtn" onclick="undoLastAction()">이전 단계로 되돌리기</button>
+        <button class="reset-btn" onclick="confirmReset()">전체 데이터 초기화</button>
+    </div>
+    <div class="version-tag">ver 1.3.0</div>
 </div>
 
 <h3 style="color: var(--lol-gold); margin: 0 0 10px 0;">FEARLESS DRAFT SYSTEM</h3>
@@ -108,7 +127,7 @@
 <script>
     let championData = {};
     let sortedChampKeys = []; 
-    let latestVersion = "14.4.1"; // 기본값 (API로 업데이트됨)
+    let latestVersion = "15.1.1"; 
     
     const sequence = [
         {t:'ban', side:'blue', i:0}, {t:'ban', side:'red', i:0}, {t:'ban', side:'blue', i:1}, {t:'ban', side:'red', i:1}, {t:'ban', side:'blue', i:2}, {t:'ban', side:'red', i:2},
@@ -120,7 +139,8 @@
     const sfx = {
         ban: new Audio('https://www.soundjay.com/buttons/sounds/button-16.mp3'),
         pick: new Audio('https://www.soundjay.com/buttons/sounds/button-3.mp3'),
-        complete: new Audio('https://www.soundjay.com/buttons/sounds/button-09.mp3')
+        complete: new Audio('https://www.soundjay.com/buttons/sounds/button-09.mp3'),
+        undo: new Audio('https://www.soundjay.com/buttons/sounds/button-11.mp3')
     };
 
     let step = 0;
@@ -133,7 +153,7 @@
         try {
             const versionRes = await fetch('https://ddragon.leagueoflegends.com/api/versions.json');
             const versions = await versionRes.json();
-            latestVersion = versions[0]; // 실시간 최신 버전 획득
+            latestVersion = versions[0];
 
             const res = await fetch(`https://ddragon.leagueoflegends.com/cdn/${latestVersion}/data/ko_KR/champion.json`);
             const data = await res.json();
@@ -206,17 +226,38 @@
         updateUI();
     }
 
+    // 되돌리기 기능 추가
+    function undoLastAction() {
+        if (step <= 0) return;
+        
+        sfx.undo.currentTime = 0;
+        sfx.undo.play();
+
+        step--;
+        const turn = sequence[step];
+        const targetList = turn.side + (turn.t === 'ban' ? 'Bans' : 'Picks');
+        
+        // 해당 슬롯 이미지 및 데이터 제거
+        const slot = document.getElementById(`${targetList}-${turn.i}`);
+        slot.innerHTML = '';
+        currentDraft[targetList][turn.i] = null;
+
+        renderChamps();
+        updateUI();
+    }
+
     function updateUI() {
         ['blueBans', 'redBans', 'bluePicks', 'redPicks'].forEach(key => {
             currentDraft[key].forEach((champKey, i) => {
                 const slot = document.getElementById(`${key}-${i}`);
                 if(champKey) {
                     const champName = championData[champKey].name;
-                    // 스플래시 이미지도 최신 버전 경로로 설정
                     const imgUrl = key.includes('Picks') 
                         ? `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${champKey}_0.jpg`
                         : `https://ddragon.leagueoflegends.com/cdn/${latestVersion}/img/champion/${champKey}.png`;
                     slot.innerHTML = `<img src="${imgUrl}"><div class="pick-name">${champName}</div>`;
+                } else {
+                    slot.innerHTML = ''; // 빈 슬롯 보장
                 }
             });
         });
@@ -230,16 +271,20 @@
             if(targetEl) targetEl.classList.add('active-turn');
             document.getElementById('statusText').innerText = `NEXT: ${turn.side.toUpperCase()} ${turn.t.toUpperCase()}`;
             document.getElementById('finishBtn').style.display = 'none';
+            document.getElementById('undoBtn').disabled = false;
         } else {
             document.getElementById('statusText').innerText = `밴픽 완료!`;
             document.getElementById('finishBtn').style.display = 'block';
         }
+
+        // 0단계에서는 되돌리기 버튼 비활성화 시각화
+        document.getElementById('undoBtn').style.opacity = step === 0 ? "0.5" : "1";
     }
 
     function finishSet() {
         sfx.complete.play();
         history.push({ ...currentDraft, set: currentSet });
-        fearlessBans = [...fearlessBans, ...currentDraft.bluePicks, ...currentDraft.redPicks];
+        fearlessBans = [...fearlessBans, ...currentDraft.bluePicks.filter(x => x), ...currentDraft.redPicks.filter(x => x)];
         
         sessionStorage.setItem('fearlessBans', JSON.stringify(fearlessBans));
         sessionStorage.setItem('draftHistory', JSON.stringify(history));
