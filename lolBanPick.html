@@ -22,11 +22,19 @@
         .header-controls { width: 100%; max-width: 1300px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .version-tag { color: var(--lol-gold); font-size: 12px; border: 1px solid var(--lol-gold); padding: 2px 8px; }
         
-        .control-btns { display: flex; gap: 10px; }
+        .control-btns { display: flex; gap: 10px; align-items: center; }
         .undo-btn { background: #333; color: white; border: 1px solid #555; cursor: pointer; padding: 4px 12px; border-radius: 4px; font-size: 12px; }
         .undo-btn:hover { background: #555; border-color: var(--lol-gold); }
         .reset-btn { background: transparent; color: #ff4d4d; border: 1px solid #ff4d4d; cursor: pointer; padding: 4px 10px; border-radius: 4px; font-size: 12px; }
         .reset-btn:hover { background: #ff4d4d; color: white; }
+        
+        /* BGM 버튼 스타일 */
+        .mute-btn { 
+            background: none; border: 1px solid var(--lol-gold); color: var(--lol-gold); 
+            cursor: pointer; padding: 4px 8px; border-radius: 4px; font-size: 14px; 
+            display: flex; align-items: center; justify-content: center; width: 35px; height: 30px;
+        }
+        .mute-btn:hover { background: rgba(200, 170, 110, 0.2); }
 
         .ban-container { display: flex; justify-content: center; gap: 50px; margin: 10px 0; }
         .ban-group { display: flex; gap: 4px; }
@@ -66,7 +74,6 @@
             width: 55px; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
             border: 1px solid transparent; text-align: center; position: relative;
         }
-        /* 후버 효과 추가 */
         .champ-item:not(.disabled):hover { 
             border-color: var(--lol-gold); 
             transform: scale(1.15); 
@@ -96,8 +103,9 @@
     <div class="control-btns">
         <button class="undo-btn" id="undoBtn" onclick="undoLastAction()">이전 단계로 되돌리기</button>
         <button class="reset-btn" onclick="confirmReset()">전체 데이터 초기화</button>
+        <button class="mute-btn" id="bgmBtn" onclick="toggleBGM()" title="배경음악 ON/OFF">🔇</button>
     </div>
-    <div class="version-tag">ver 1.3.0</div>
+    <div class="version-tag">ver 1.3.1</div>
 </div>
 
 <h3 style="color: var(--lol-gold); margin: 0 0 10px 0;">FEARLESS DRAFT SYSTEM</h3>
@@ -129,19 +137,38 @@
     let sortedChampKeys = []; 
     let latestVersion = "15.1.1"; 
     
+    // 오디오 설정
+    const sfx = {
+        ban: new Audio('https://www.soundjay.com/buttons/sounds/button-16.mp3'),
+        pick: new Audio('https://www.soundjay.com/buttons/sounds/button-3.mp3'),
+        complete: new Audio('https://www.soundjay.com/buttons/sounds/button-09.mp3'),
+        undo: new Audio('https://www.soundjay.com/buttons/sounds/button-11.mp3'),
+        bgm: new Audio('lol_bg.mp3') // 로컬 배경음악 파일
+    };
+    sfx.bgm.loop = true;
+    sfx.bgm.volume = 0.5; // 배경음 볼륨 50%
+
+    let isPlaying = false;
+
+    function toggleBGM() {
+        const btn = document.getElementById('bgmBtn');
+        if (isPlaying) {
+            sfx.bgm.pause();
+            btn.innerText = "🔇";
+            isPlaying = false;
+        } else {
+            sfx.bgm.play().catch(e => console.log("자동 재생이 차단되었습니다. 상호작용 후 재생 가능합니다."));
+            btn.innerText = "🔊";
+            isPlaying = true;
+        }
+    }
+
     const sequence = [
         {t:'ban', side:'blue', i:0}, {t:'ban', side:'red', i:0}, {t:'ban', side:'blue', i:1}, {t:'ban', side:'red', i:1}, {t:'ban', side:'blue', i:2}, {t:'ban', side:'red', i:2},
         {t:'pick', side:'blue', i:0}, {t:'pick', side:'red', i:0}, {t:'pick', side:'red', i:1}, {t:'pick', side:'blue', i:1}, {t:'pick', side:'blue', i:2}, {t:'pick', side:'red', i:2},
         {t:'ban', side:'red', i:3}, {t:'ban', side:'blue', i:3}, {t:'ban', side:'red', i:4}, {t:'ban', side:'blue', i:4},
         {t:'pick', side:'red', i:3}, {t:'pick', side:'blue', i:3}, {t:'pick', side:'blue', i:4}, {t:'pick', side:'red', i:4}
     ];
-
-    const sfx = {
-        ban: new Audio('https://www.soundjay.com/buttons/sounds/button-16.mp3'),
-        pick: new Audio('https://www.soundjay.com/buttons/sounds/button-3.mp3'),
-        complete: new Audio('https://www.soundjay.com/buttons/sounds/button-09.mp3'),
-        undo: new Audio('https://www.soundjay.com/buttons/sounds/button-11.mp3')
-    };
 
     let step = 0;
     let currentSet = 1;
@@ -226,7 +253,6 @@
         updateUI();
     }
 
-    // 되돌리기 기능 추가
     function undoLastAction() {
         if (step <= 0) return;
         
@@ -237,7 +263,6 @@
         const turn = sequence[step];
         const targetList = turn.side + (turn.t === 'ban' ? 'Bans' : 'Picks');
         
-        // 해당 슬롯 이미지 및 데이터 제거
         const slot = document.getElementById(`${targetList}-${turn.i}`);
         slot.innerHTML = '';
         currentDraft[targetList][turn.i] = null;
@@ -257,7 +282,7 @@
                         : `https://ddragon.leagueoflegends.com/cdn/${latestVersion}/img/champion/${champKey}.png`;
                     slot.innerHTML = `<img src="${imgUrl}"><div class="pick-name">${champName}</div>`;
                 } else {
-                    slot.innerHTML = ''; // 빈 슬롯 보장
+                    slot.innerHTML = '';
                 }
             });
         });
@@ -271,13 +296,11 @@
             if(targetEl) targetEl.classList.add('active-turn');
             document.getElementById('statusText').innerText = `NEXT: ${turn.side.toUpperCase()} ${turn.t.toUpperCase()}`;
             document.getElementById('finishBtn').style.display = 'none';
-            document.getElementById('undoBtn').disabled = false;
         } else {
             document.getElementById('statusText').innerText = `밴픽 완료!`;
             document.getElementById('finishBtn').style.display = 'block';
         }
 
-        // 0단계에서는 되돌리기 버튼 비활성화 시각화
         document.getElementById('undoBtn').style.opacity = step === 0 ? "0.5" : "1";
     }
 
