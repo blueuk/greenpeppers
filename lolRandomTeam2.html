@@ -2,13 +2,18 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>LoL Champion Slot - Fixed Images</title>
+    <title>LoL Champion Slot - Precision Fixed</title>
     <style>
         :root {
             --hextech-gold: #c89b3c;
             --hextech-border: #785a28;
             --bg-dark: #010a13;
+            /* 슬롯의 높이를 변수로 고정 (오차 방지) */
+            --slot-height: 180px;
+            --slot-width: 115px;
         }
+
+        * { box-sizing: border-box; } /* 모든 요소의 크기 계산 방식 통일 */
 
         body {
             background-color: var(--bg-dark);
@@ -26,7 +31,7 @@
 
         .slot-row-panel {
             display: flex;
-            gap: 8px;
+            gap: 10px;
             padding: 12px;
             background: rgba(5, 13, 22, 0.95);
             border: 2px solid var(--hextech-border);
@@ -34,25 +39,30 @@
         }
 
         .slot {
-            width: 110px;
-            height: 180px;
-            background: #050d16; /* 로딩 전 배경색 */
+            width: var(--slot-width);
+            height: var(--slot-height);
+            background: #000;
             border: 1px solid #3c3c3c;
             overflow: hidden;
             position: relative;
         }
 
-        .slot-inner { display: flex; flex-direction: column; }
+        .slot-inner { 
+            display: flex; 
+            flex-direction: column;
+            will-change: transform;
+        }
 
         .item {
-            width: 110px;
-            height: 180px;
+            width: var(--slot-width);
+            height: var(--slot-height);
             flex-shrink: 0;
             position: relative;
             background-size: cover;
             background-position: center top;
             background-repeat: no-repeat;
-            border-bottom: 1px solid #1e2328;
+            /* 테두리를 안쪽으로(inset) 설정하거나 제거하여 높이 간섭 방지 */
+            border-bottom: none; 
         }
 
         .champ-name {
@@ -97,7 +107,6 @@
     <button class="draw-button" onclick="launchSummon()">챔피언 소환 시작</button>
 
     <script>
-        // 이미지 서버용 ID 보정 (공식 데이터 드래곤 규격)
         const allChampions = [
             {ko:"가렌", en:"Garen"}, {ko:"갈리오", en:"Galio"}, {ko:"갱플랭크", en:"Gangplank"}, {ko:"그라가스", en:"Gragas"}, {ko:"그레이브즈", en:"Graves"}, 
             {ko:"나르", en:"Gnar"}, {ko:"나미", en:"Nami"}, {ko:"나서스", en:"Nasus"}, {ko:"나피리", en:"Naafiri"}, {ko:"노틸러스", en:"Nautilus"}, 
@@ -136,6 +145,7 @@
 
         const wrapper = document.getElementById('main-wrapper');
         const rows = 4, slotsPerRow = 5;
+        const itemHeight = 180; // 변수로 선언하여 JS 연산에 사용
 
         // 초기 화면 설정
         for (let r = 0; r < rows; r++) {
@@ -145,9 +155,8 @@
                 const idx = (r * slotsPerRow) + s;
                 const slot = document.createElement('div');
                 slot.className = 'slot';
-                // 초기 이미지는 가렌으로 설정 (테스트용)
                 slot.innerHTML = `<div class="slot-inner" id="inner-${idx}">
-                    <div class="item" style="background-image:url('https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Garen_0.jpg')">
+                    <div class="item" style="background-image:url('https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Aatrox_0.jpg')">
                         <div class="champ-name">READY</div>
                     </div>
                 </div>`;
@@ -167,14 +176,12 @@
                 const inner = document.getElementById(`inner-${i}`);
                 inner.innerHTML = '';
                 
-                const scrollCount = 15; 
+                const scrollCount = 20; // 스쳐가는 개수
                 for(let j=0; j <= scrollCount; j++) {
                     const champ = (j === scrollCount) ? results[i] : allChampions[Math.floor(Math.random() * allChampions.length)];
                     const div = document.createElement('div');
                     div.className = 'item';
-                    // 이미지 URL 생성 (로딩 스플래시 이미지 사용)
-                    const imgUrl = `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${champ.en}_0.jpg`;
-                    div.style.backgroundImage = `url('${imgUrl}')`;
+                    div.style.backgroundImage = `url('https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${champ.en}_0.jpg')`;
                     div.innerHTML = `<div class="champ-name">${champ.ko}</div>`;
                     inner.appendChild(div);
                 }
@@ -182,11 +189,16 @@
                 inner.style.transition = 'none';
                 inner.style.transform = `translateY(0)`;
 
-                setTimeout(() => {
-                    const duration = 2.5 + (Math.random() * 1.5); 
-                    inner.style.transition = `transform ${duration}s cubic-bezier(0.1, 0, 0.1, 1)`;
-                    inner.style.transform = `translateY(-${scrollCount * 180}px)`;
-                }, 50 + (i * 30));
+                // 마이크로 태스크 큐를 이용해 리렌더링 후 애니메이션 적용
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        const duration = 2.5 + (Math.random() * 1.5); 
+                        // 정확히 itemHeight * scrollCount 만큼만 이동
+                        const distance = scrollCount * itemHeight;
+                        inner.style.transition = `transform ${duration}s cubic-bezier(0.1, 0, 0.1, 1)`;
+                        inner.style.transform = `translateY(-${distance}px)`;
+                    });
+                });
             }
             setTimeout(() => { btn.disabled = false; }, 4500);
         }
