@@ -28,7 +28,6 @@
         .reset-btn { background: transparent; color: #ff4d4d; border: 1px solid #ff4d4d; cursor: pointer; padding: 4px 10px; border-radius: 4px; font-size: 12px; }
         .reset-btn:hover { background: #ff4d4d; color: white; }
         
-        /* BGM 버튼 스타일 */
         .mute-btn { 
             background: none; border: 1px solid var(--lol-gold); color: var(--lol-gold); 
             cursor: pointer; padding: 4px 8px; border-radius: 4px; font-size: 14px; 
@@ -49,19 +48,15 @@
             transition: all 0.4s ease;
         }
         .pick-slot.blue { border-left: 4px solid var(--blue-team); }
+        .pick-slot.red { border-right: 4px solid var(--red-team); flex-direction: row-reverse; }
         
-        /* 레드팀 픽 슬롯 수정: 이미지 우측 정렬을 위해 row-reverse 적용 */
-        .pick-slot.red { 
-            border-right: 4px solid var(--red-team); 
-            flex-direction: row-reverse; 
-        }
-        
+        /* 공통 이미지 기본값 (우측) */
         .pick-slot img { height: 100%; position: absolute; right: 0; opacity: 0.6; z-index: 0; transition: transform 0.5s; }
         
-        /* 레드팀 픽 슬롯 내 이미지 위치 수정 */
+        /* 레드팀 이미지 왼쪽 정렬로 수정 */
         .pick-slot.red img {
-            right: 0; /* 우측 끝에 배치 */
-            left: auto;
+            left: 0;
+            right: auto;
         }
         
         .pick-name { padding: 0 15px; font-weight: bold; z-index: 1; text-shadow: 2px 2px 4px #000; font-size: 14px; }
@@ -116,7 +111,7 @@
     <div class="control-btns">
         <button class="undo-btn" id="undoBtn" onclick="undoLastAction()">이전 단계로 되돌리기</button>
         <button class="reset-btn" onclick="confirmReset()">전체 데이터 초기화</button>
-        <button class="mute-btn" id="bgmBtn" onclick="toggleBGM()" title="배경음악 ON/OFF">🔇</button>
+        <button class="mute-btn" id="bgmBtn" onclick="toggleBGM()" title="배경음악 ON/OFF">🔊</button>
     </div>
     <div class="version-tag">ver 1.3.1</div>
 </div>
@@ -150,18 +145,25 @@
     let sortedChampKeys = []; 
     let latestVersion = "15.1.1"; 
     
-    // 오디오 설정
     const sfx = {
         ban: new Audio('https://www.soundjay.com/buttons/sounds/button-16.mp3'),
         pick: new Audio('https://www.soundjay.com/buttons/sounds/button-3.mp3'),
         complete: new Audio('https://www.soundjay.com/buttons/sounds/button-09.mp3'),
         undo: new Audio('https://www.soundjay.com/buttons/sounds/button-11.mp3'),
-        bgm: new Audio('lol_bg.mp3') // 로컬 배경음악 파일
+        bgm: new Audio('lol_bg.mp3')
     };
     sfx.bgm.loop = true;
-    sfx.bgm.volume = 0.5; // 배경음 볼륨 50%
+    sfx.bgm.volume = 0.5;
 
-    let isPlaying = false;
+    // 초기 상태를 true(재생 시도 상태)로 설정
+    let isPlaying = true;
+
+    // 브라우저 정책 해결을 위해 첫 클릭 시 재생 트리거
+    window.addEventListener('click', function() {
+        if (isPlaying && sfx.bgm.paused) {
+            sfx.bgm.play().catch(e => console.log("자동 재생 정책으로 인해 클릭 후 재생됩니다."));
+        }
+    }, { once: true });
 
     function toggleBGM() {
         const btn = document.getElementById('bgmBtn');
@@ -170,7 +172,7 @@
             btn.innerText = "🔇";
             isPlaying = false;
         } else {
-            sfx.bgm.play().catch(e => console.log("자동 재생이 차단되었습니다. 상호작용 후 재생 가능합니다."));
+            sfx.bgm.play();
             btn.innerText = "🔊";
             isPlaying = true;
         }
