@@ -49,8 +49,21 @@
             transition: all 0.4s ease;
         }
         .pick-slot.blue { border-left: 4px solid var(--blue-team); }
-        .pick-slot.red { border-right: 4px solid var(--red-team); flex-direction: row-reverse; }
+        
+        /* 레드팀 픽 슬롯 수정: 이미지 우측 정렬을 위해 row-reverse 적용 */
+        .pick-slot.red { 
+            border-right: 4px solid var(--red-team); 
+            flex-direction: row-reverse; 
+        }
+        
         .pick-slot img { height: 100%; position: absolute; right: 0; opacity: 0.6; z-index: 0; transition: transform 0.5s; }
+        
+        /* 레드팀 픽 슬롯 내 이미지 위치 수정 */
+        .pick-slot.red img {
+            right: 0; /* 우측 끝에 배치 */
+            left: auto;
+        }
+        
         .pick-name { padding: 0 15px; font-weight: bold; z-index: 1; text-shadow: 2px 2px 4px #000; font-size: 14px; }
 
         @keyframes glow {
@@ -148,7 +161,7 @@
     sfx.bgm.loop = true;
     sfx.bgm.volume = 0.5; // 배경음 볼륨 50%
 
-    let isPlaying = true;
+    let isPlaying = false;
 
     function toggleBGM() {
         const btn = document.getElementById('bgmBtn');
