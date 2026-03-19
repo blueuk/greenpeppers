@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>LoL Fearless Draft v1.1.0</title>
+    <title>LoL Fearless Draft v1.1.1</title>
     <style>
         :root {
             --lol-gold: #c8aa6e;
@@ -24,13 +24,13 @@
         .reset-btn { background: transparent; color: #ff4d4d; border: 1px solid #ff4d4d; cursor: pointer; padding: 4px 10px; border-radius: 4px; font-size: 12px; }
         .reset-btn:hover { background: #ff4d4d; color: white; }
 
-        /* 밴 영역 */
+        /* 밴 영역 (실시간 드래프트) */
         .ban-container { display: flex; justify-content: center; gap: 50px; margin: 10px 0; }
         .ban-group { display: flex; gap: 4px; }
         .ban-slot { width: 35px; height: 35px; border: 1px solid #444; background: #000; position: relative; }
-        .ban-slot img { width: 100%; filter: grayscale(1); }
+        .ban-slot img { width: 100%; filter: grayscale(1); } /* 드래프트 중 밴은 항상 흑백 */
         
-        /* 픽 영역 */
+        /* 픽 영역 (실시간 드래프트) */
         .draft-main { display: grid; grid-template-columns: 220px 1fr 220px; gap: 15px; width: 100%; max-width: 1300px; }
         .side-panel { display: flex; flex-direction: column; gap: 8px; }
         .pick-slot {
@@ -65,10 +65,15 @@
         .history-area { margin-top: 30px; width: 100%; max-width: 1300px; border-top: 1px solid #333; padding-top: 10px; }
         .history-item { background: rgba(255,255,255,0.03); padding: 15px; margin-bottom: 10px; border-radius: 4px; display: flex; flex-direction: column; gap: 10px; }
         .history-set-title { font-weight: bold; color: var(--lol-gold); border-bottom: 1px solid #444; padding-bottom: 5px; }
-        .history-row { display: flex; align-items: center; gap: 15px; }
-        .history-champs { display: flex; gap: 5px; }
+        .history-row { display: flex; align-items: center; gap: 15px; border-bottom: 1px solid #222; padding-bottom: 8px; }
+        .history-row:last-child { border-bottom: none; }
+        .history-champs { display: flex; gap: 5px; align-items: center; }
         .history-champs img { width: 35px; height: 35px; border: 1px solid #555; border-radius: 2px; }
+        /* 히스토리 내 밴 초상화 흑백 처리 */
+        .history-champs img.history-ban-img { filter: grayscale(1); border-color: #333; opacity: 0.6; } 
+        
         .team-label { width: 80px; font-weight: bold; font-size: 13px; }
+        .section-label { font-size: 11px; color: #777; font-weight: bold; margin-right: 5px; }
 
         button.complete-btn { background: var(--lol-gold); border: none; padding: 10px 30px; font-weight: bold; cursor: pointer; margin-top: 10px; }
     </style>
@@ -77,7 +82,7 @@
 
 <div class="header-controls">
     <button class="reset-btn" onclick="confirmReset()">전체 데이터 초기화</button>
-    <div class="version-tag">ver 1.1.0</div>
+    <div class="version-tag">ver 1.1.1</div>
 </div>
 
 <h3 style="color: var(--lol-gold); margin: 0 0 10px 0;">FEARLESS DRAFT SYSTEM</h3>
@@ -113,7 +118,6 @@
         {t:'pick', side:'red', i:3}, {t:'pick', side:'blue', i:3}, {t:'pick', side:'blue', i:4}, {t:'pick', side:'red', i:4}
     ];
 
-    // 오디오 설정 (무료 효과음 소스)
     const sfx = {
         ban: new Audio('https://www.soundjay.com/buttons/sounds/button-16.mp3'),
         pick: new Audio('https://www.soundjay.com/buttons/sounds/button-3.mp3'),
@@ -165,7 +169,6 @@
         const targetList = turn.side + (turn.t === 'ban' ? 'Bans' : 'Picks');
         currentDraft[targetList][turn.i] = name;
         
-        // 소리 재생
         sfx[turn.t].currentTime = 0;
         sfx[turn.t].play();
 
@@ -222,19 +225,29 @@
         log.innerHTML = history.slice().reverse().map(h => `
             <div class="history-item">
                 <div class="history-set-title">SET ${h.set} SUMMARY</div>
+                
                 <div class="history-row">
                     <div class="team-label blue-text" style="color:var(--blue-team)">BLUE TEAM</div>
                     <div class="history-champs">
+                        <span class="section-label">PICKS:</span>
                         ${h.bluePicks.map(c => `<img src="https://ddragon.leagueoflegends.com/cdn/13.24.1/img/champion/${c}.png" title="${c}">`).join('')}
                     </div>
-                    <div style="font-size:11px; color:#777; margin-left:10px;">Bans: ${h.blueBans.join(', ')}</div>
+                    <div class="history-champs" style="margin-left:15px;">
+                        <span class="section-label">BANS:</span>
+                        ${h.blueBans.map(c => `<img src="https://ddragon.leagueoflegends.com/cdn/13.24.1/img/champion/${c}.png" class="history-ban-img" title="${c}">`).join('')}
+                    </div>
                 </div>
+
                 <div class="history-row">
                     <div class="team-label red-text" style="color:var(--red-team)">RED TEAM</div>
                     <div class="history-champs">
+                        <span class="section-label">PICKS:</span>
                         ${h.redPicks.map(c => `<img src="https://ddragon.leagueoflegends.com/cdn/13.24.1/img/champion/${c}.png" title="${c}">`).join('')}
                     </div>
-                    <div style="font-size:11px; color:#777; margin-left:10px;">Bans: ${h.redBans.join(', ')}</div>
+                    <div class="history-champs" style="margin-left:15px;">
+                        <span class="section-label">BANS:</span>
+                        ${h.redBans.map(c => `<img src="https://ddragon.leagueoflegends.com/cdn/13.24.1/img/champion/${c}.png" class="history-ban-img" title="${c}">`).join('')}
+                    </div>
                 </div>
             </div>
         `).join('');
