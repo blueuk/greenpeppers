@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>LoL Ultimate Champion Slot</title>
+    <title>LoL Champion Slot - No Duplicates</title>
     <style>
         :root {
             --hextech-gold: #c89b3c;
@@ -106,7 +106,7 @@
 <body>
 
     <h1>CHAMPION SUMMONER</h1>
-    <div class="mode-indicator" id="status-text">소환 방식을 선택하세요</div>
+    <div class="mode-indicator" id="status-text">소환 방식을 선택하세요 (중복 없음 모드)</div>
 
     <div class="main-wrapper" id="main-wrapper"></div>
 
@@ -116,13 +116,12 @@
     </div>
 
     <script>
-        // 최신 챔피언 및 이미지 ID 보정 리스트
         const allChampsPool = [
             {ko:"가렌", en:"Garen"}, {ko:"갈리오", en:"Galio"}, {ko:"갱플랭크", en:"Gangplank"}, {ko:"그라가스", en:"Gragas"}, {ko:"그레이브즈", en:"Graves"},
             {ko:"나르", en:"Gnar"}, {ko:"나미", en:"Nami"}, {ko:"나서스", en:"Nasus"}, {ko:"나피리", en:"Naafiri"}, {ko:"노틸러스", en:"Nautilus"},
             {ko:"녹턴", en:"Nocturne"}, {ko:"누누", en:"Nunu"}, {ko:"니달리", en:"Nidalee"}, {ko:"니코", en:"Neeko"}, {ko:"닐라", en:"Nilah"},
             {ko:"다리우스", en:"Darius"}, {ko:"다이애나", en:"Diana"}, {ko:"드레이븐", en:"Draven"}, {ko:"라이즈", en:"Ryze"}, {ko:"라칸", en:"Rakan"},
-            {ko:"람머스", en:"Rammus"}, {ko:"럭스", en:"Lux"}, {ko:"럼블", en:"Rumble"}, {ko:"레나타", en:"Renata글라스"}, {ko:"레넥톤", en:"Renekton"},
+            {ko:"람머스", en:"Rammus"}, {ko:"럭스", en:"Lux"}, {ko:"럼블", en:"Rumble"}, {ko:"레나타", en:"Renata"}, {ko:"레넥톤", en:"Renekton"},
             {ko:"레오나", en:"Leona"}, {ko:"렉사이", en:"RekSai"}, {ko:"렐", en:"Rell"}, {ko:"렝가", en:"Rengar"}, {ko:"루시안", en:"Lucian"},
             {ko:"룰루", en:"Lulu"}, {ko:"르블랑", en:"Leblanc"}, {ko:"리 신", en:"LeeSin"}, {ko:"리븐", en:"Riven"}, {ko:"리산드라", en:"Lissandra"},
             {ko:"릴리아", en:"Lillia"}, {ko:"마스터 이", en:"MasterYi"}, {ko:"마오카이", en:"Maokai"}, {ko:"말자하", en:"Malzahar"}, {ko:"말파이트", en:"Malphite"},
@@ -168,14 +167,11 @@
         const wrapper = document.getElementById('main-wrapper');
         const itemHeight = 180;
 
-        // 초기 화면 (4개 섹션 생성)
+        // 초기 화면 생성
         for (let r = 0; r < 4; r++) {
             const rowPanel = document.createElement('div');
             rowPanel.className = 'slot-row-panel';
-            rowPanel.innerHTML = `
-                <div class="region-label" id="label-${r}">SQUAD ${r+1}</div>
-                <div class="slots-container" id="container-${r}"></div>
-            `;
+            rowPanel.innerHTML = `<div class="region-label" id="label-${r}">SQUAD ${r+1}</div><div class="slots-container" id="container-${r}"></div>`;
             const container = rowPanel.querySelector('.slots-container');
             for (let s = 0; s < 5; s++) {
                 const idx = (r * 5) + s;
@@ -191,58 +187,65 @@
             const btns = document.querySelectorAll('.draw-button');
             btns.forEach(b => b.disabled = true);
             
-            let selectedRegions = [];
-            if (mode === 'regional') {
-                selectedRegions = [...regions].sort(() => 0.5 - Math.random()).slice(0, 4);
-                document.getElementById('status-text').innerText = "지역 테마 소환: 4개의 세력이 응답했습니다!";
-            } else {
-                document.getElementById('status-text').innerText = "전체 랜덤 소환: 모든 챔피언이 소환 후보입니다!";
-            }
+            let finalSelection = []; // 최종적으로 슬롯에 들어갈 20명의 챔피언 리스트
 
-            for (let r = 0; r < 4; r++) {
-                let pool = [];
-                if (mode === 'regional') {
-                    pool = selectedRegions[r].champs;
+            if (mode === 'regional') {
+                const selectedRegions = [...regions].sort(() => 0.5 - Math.random()).slice(0, 4);
+                document.getElementById('status-text').innerText = "지역 테마 소환: 중복 없는 정예 멤버 구성 중...";
+
+                for (let r = 0; r < 4; r++) {
                     const label = document.getElementById(`label-${r}`);
                     label.innerText = selectedRegions[r].name;
                     label.style.color = "#00bcff";
                     label.style.borderColor = "#00bcff";
-                } else {
-                    pool = allChampsPool;
+
+                    // 해당 지역에서 무작위로 5명 추출 (중복 없이)
+                    const regionPool = [...selectedRegions[r].champs].sort(() => 0.5 - Math.random());
+                    for(let s=0; s<5; s++) {
+                        finalSelection.push(regionPool[s % regionPool.length]); 
+                    }
+                }
+            } else {
+                document.getElementById('status-text').innerText = "전체 랜덤 소환: 20명의 다른 챔피언을 부르는 중...";
+                // 전체 풀에서 20명 무작위 셔플 후 추출
+                finalSelection = [...allChampsPool].sort(() => 0.5 - Math.random()).slice(0, 20);
+
+                for (let r = 0; r < 4; r++) {
                     const label = document.getElementById(`label-${r}`);
                     label.innerText = `RANDOM SQUAD ${r+1}`;
                     label.style.color = "var(--hextech-gold)";
                     label.style.borderColor = "var(--hextech-gold)";
                 }
+            }
 
-                for (let s = 0; s < 5; s++) {
-                    const slotIdx = (r * 5) + s;
-                    const inner = document.getElementById(`inner-${slotIdx}`);
-                    inner.innerHTML = '';
-                    
-                    const scrollCount = 20;
-                    const resultChamp = pool[Math.floor(Math.random() * pool.length)];
+            // 슬롯 돌리기
+            for (let i = 0; i < 20; i++) {
+                const inner = document.getElementById(`inner-${i}`);
+                inner.innerHTML = '';
+                
+                const scrollCount = 20;
+                const resultChamp = finalSelection[i]; // i번째 슬롯은 무조건 미리 정해진 i번째 챔피언이 됨
 
-                    for(let j=0; j <= scrollCount; j++) {
-                        const champ = (j === scrollCount) ? resultChamp : allChampsPool[Math.floor(Math.random() * allChampsPool.length)];
-                        const div = document.createElement('div');
-                        div.className = 'item';
-                        div.style.backgroundImage = `url('https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${champ.en}_0.jpg')`;
-                        div.innerHTML = `<div class="champ-name">${champ.ko}</div>`;
-                        inner.appendChild(div);
-                    }
-
-                    inner.style.transition = 'none';
-                    inner.style.transform = `translateY(0)`;
-
-                    requestAnimationFrame(() => {
-                        requestAnimationFrame(() => {
-                            const duration = 2.5 + (Math.random() * 1.5); 
-                            inner.style.transition = `transform ${duration}s cubic-bezier(0.1, 0, 0.1, 1)`;
-                            inner.style.transform = `translateY(-${scrollCount * itemHeight}px)`;
-                        });
-                    });
+                for(let j=0; j <= scrollCount; j++) {
+                    // 회전 중에 보이는 챔피언들은 연출용 랜덤
+                    const champ = (j === scrollCount) ? resultChamp : allChampsPool[Math.floor(Math.random() * allChampsPool.length)];
+                    const div = document.createElement('div');
+                    div.className = 'item';
+                    div.style.backgroundImage = `url('https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${champ.en}_0.jpg')`;
+                    div.innerHTML = `<div class="champ-name">${champ.ko}</div>`;
+                    inner.appendChild(div);
                 }
+
+                inner.style.transition = 'none';
+                inner.style.transform = `translateY(0)`;
+
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        const duration = 2.5 + (Math.random() * 1.5); 
+                        inner.style.transition = `transform ${duration}s cubic-bezier(0.1, 0, 0.1, 1)`;
+                        inner.style.transform = `translateY(-${scrollCount * itemHeight}px)`;
+                    });
+                });
             }
             setTimeout(() => { btns.forEach(b => b.disabled = false); }, 4500);
         }
