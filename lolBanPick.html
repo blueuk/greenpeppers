@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>LoL Fearless Draft Tracker</title>
+    <style>
+        :root {
+            --lol-gold: #c8aa6e;
+            --lol-blue: #091428;
+            --lol-dark-blue: #010a13;
+            --disabled-gray: #333;
+        }
+
+        body {
+            background-color: var(--lol-dark-blue);
+            color: white;
+            font-family: 'Malgun Gothic', sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h2 { border-bottom: 2px solid var(--lol-gold); padding-bottom: 10px; color: var(--lol-gold); }
+
+        .container { display: flex; gap: 20px; }
+
+        /* 챔피언 리스트 영역 */
+        .champion-grid {
+            flex: 2;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            border: 1px solid var(--lol-gold);
+            max-height: 800px;
+            overflow-y: auto;
+        }
+
+        .champ-card {
+            cursor: pointer;
+            text-align: center;
+            border: 1px solid transparent;
+            transition: 0.2s;
+        }
+
+        .champ-card:hover { border-color: var(--lol-gold); transform: scale(1.05); }
+
+        .champ-card img { width: 100%; border-radius: 4px; }
+
+        .champ-card.disabled {
+            filter: grayscale(100%);
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        /* 밴/픽 기록 영역 */
+        .record-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .session-box {
+            background: #091428;
+            border: 1px solid var(--lol-gold);
+            padding: 15px;
+        }
+
+        .set-title { font-weight: bold; color: var(--lol-gold); margin-bottom: 10px; }
+
+        .tag-list { display: flex; flex-wrap: wrap; gap: 5px; }
+
+        .tag {
+            background: #1e2328;
+            border: 1px solid var(--lol-gold);
+            padding: 2px 8px;
+            font-size: 12px;
+            border-radius: 2px;
+        }
+
+        button {
+            background: var(--lol-gold);
+            color: black;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Fearless Draft Tracker (Set 1-3)</h2>
+    
+    <div class="container">
+        <div class="champion-grid" id="championGrid">
+            </div>
+
+        <div class="record-panel">
+            <div class="session-box">
+                <div class="set-title">사용한 챔피언 (다음 세트 밴)</div>
+                <div id="usedList" class="tag-list"></div>
+                <button onclick="resetData()">초기화</button>
+            </div>
+            
+            <div class="session-box">
+                <p style="font-size: 13px; color: #888;">* 챔피언을 클릭하면 사용 목록에 추가됩니다.</p>
+                <p style="font-size: 13px; color: #888;">* 하드 피어리스 규칙에 따라 이전 세트 픽은 자동 비활성화됩니다.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 실제 데이터는 Riot API에서 가져와야 하지만, 예시로 몇몇 챔피언만 등록합니다.
+        const champions = [
+            "Aatrox", "Ahri", "Akali", "Alistar", "Amumu", "Anivia", "Ashe", "Azir", "Bard", "Blitzcrank",
+            "Brand", "Caitlyn", "Camille", "Cassiopeia", "ChoGath", "Corki", "Darius", "Diana", "DrMundo", "Draven",
+            "Ezreal", "Fiora", "Fizz", "Garen", "Gnar", "Gragas", "Graves", "Gwen", "Hecarim", "Heimerdinger"
+        ];
+
+        let usedChampions = JSON.parse(sessionStorage.getItem('usedChamps')) || [];
+
+        function init() {
+            const grid = document.getElementById('championGrid');
+            grid.innerHTML = '';
+            
+            champions.forEach(champ => {
+                const isUsed = usedChampions.includes(champ);
+                const div = document.createElement('div');
+                div.className = `champ-card ${isUsed ? 'disabled' : ''}`;
+                div.innerHTML = `
+                    <img src="https://ddragon.leagueoflegends.com/cdn/13.24.1/img/champion/${champ}.png" alt="${champ}">
+                    <div style="font-size:11px">${champ}</div>
+                `;
+                div.onclick = () => selectChampion(champ);
+                grid.appendChild(div);
+            });
+
+            updateUsedList();
+        }
+
+        function selectChampion(name) {
+            if (!usedChampions.includes(name)) {
+                usedChampions.push(name);
+                sessionStorage.setItem('usedChamps', JSON.stringify(usedChampions));
+                init();
+            }
+        }
+
+        function updateUsedList() {
+            const listDiv = document.getElementById('usedList');
+            listDiv.innerHTML = '';
+            usedChampions.forEach(champ => {
+                const span = document.createElement('span');
+                span.className = 'tag';
+                span.innerText = champ;
+                listDiv.appendChild(span);
+            });
+        }
+
+        function resetData() {
+            if(confirm("모든 기록을 초기화할까요?")) {
+                usedChampions = [];
+                sessionStorage.removeItem('usedChamps');
+                init();
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
