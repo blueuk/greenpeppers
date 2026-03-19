@@ -2,6 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LoL Champion Slot - No Duplicates</title>
     <style>
         :root {
@@ -10,6 +11,18 @@
             --bg-dark: #010a13;
             --slot-height: 180px;
             --slot-width: 115px;
+        }
+
+        /* 📱 모바일 대응용 미디어 쿼리 (화면 폭 600px 이하) */
+        @media screen and (max-width: 600px) {
+            :root {
+                --slot-width: 65px;  /* 슬롯 가로 축소 */
+                --slot-height: 100px; /* 슬롯 세로 축소 */
+            }
+            h1 { font-size: 1.2rem; }
+            .button-group { flex-direction: column; width: 90%; gap: 10px; }
+            .draw-button { width: 100%; padding: 12px; font-size: 0.9rem; }
+            .champ-name { font-size: 8px; padding: 4px 0; }
         }
 
         * { box-sizing: border-box; }
@@ -26,10 +39,10 @@
             background-image: radial-gradient(circle, #0a1428 0%, #010a13 100%);
         }
 
-        h1 { color: var(--hextech-gold); letter-spacing: 4px; margin-bottom: 5px; text-shadow: 0 0 15px rgba(200, 155, 60, 0.4); }
-        .mode-indicator { color: #a0946e; margin-bottom: 25px; font-size: 0.9rem; font-weight: bold; }
+        h1 { color: var(--hextech-gold); letter-spacing: 4px; margin-bottom: 5px; text-shadow: 0 0 15px rgba(200, 155, 60, 0.4); text-align: center; }
+        .mode-indicator { color: #a0946e; margin-bottom: 25px; font-size: 0.8rem; font-weight: bold; text-align: center; padding: 0 10px; }
 
-        .main-wrapper { display: flex; flex-direction: column; gap: 20px; }
+        .main-wrapper { display: flex; flex-direction: column; gap: 20px; width: 100%; align-items: center; }
 
         .slot-row-panel {
             display: flex;
@@ -39,6 +52,8 @@
             box-shadow: 0 0 30px rgba(0,0,0,1);
             padding: 12px;
             transition: all 0.4s ease;
+            width: fit-content;
+            max-width: 95%; /* 모바일에서 화면 폭을 넘지 않게 함 */
         }
 
         .region-label {
@@ -52,7 +67,13 @@
             text-transform: uppercase;
         }
 
-        .slots-container { display: flex; gap: 10px; }
+        /* 💡 핵심: flex-wrap 추가로 모바일에서 자동 줄바꿈 */
+        .slots-container { 
+            display: flex; 
+            gap: 10px; 
+            flex-wrap: wrap; 
+            justify-content: center; 
+        }
 
         .slot {
             width: var(--slot-width);
@@ -105,8 +126,8 @@
 </head>
 <body>
 
-    <h1>CHAMPION SUMMONER 1.0.0</h1>
-    <div class="mode-indicator" id="status-text">소환 방식을 선택하세요 (중복 없음 모드)</div>
+    <h1>CHAMPION SUMMONER 1.1.0</h1>
+    <div class="mode-indicator" id="status-text">소환 방식을 선택하세요 (모바일 대응 완료)</div>
 
     <div class="main-wrapper" id="main-wrapper"></div>
 
@@ -116,6 +137,7 @@
     </div>
 
     <script>
+        // ... (데이터 부분은 이전과 동일하므로 생략하지 않고 그대로 유지)
         const allChampsPool = [
             {ko:"가렌", en:"Garen"}, {ko:"갈리오", en:"Galio"}, {ko:"갱플랭크", en:"Gangplank"}, {ko:"그라가스", en:"Gragas"}, {ko:"그레이브즈", en:"Graves"},
             {ko:"나르", en:"Gnar"}, {ko:"나미", en:"Nami"}, {ko:"나서스", en:"Nasus"}, {ko:"나피리", en:"Naafiri"}, {ko:"노틸러스", en:"Nautilus"},
@@ -161,7 +183,7 @@
             { name: "녹서스", champs: [{ko:"다리우스", en:"Darius"}, {ko:"드레이븐", en:"Draven"}, {ko:"카타리나", en:"Katarina"}, {ko:"스웨인", en:"Swain"}, {ko:"르블랑", en:"Leblanc"}, {ko:"모데카이저", en:"Mordekaiser"}]},
             { name: "슈리마", champs: [{ko:"아지르", en:"Azir"}, {ko:"나서스", en:"Nasus"}, {ko:"레넥톤", en:"Renekton"}, {ko:"시비르", en:"Sivir"}, {ko:"크산테", en:"KSante"}, {ko:"탈리야", en:"Taliyah"}]},
             { name: "그림자 군도", champs: [{ko:"비에고", en:"Viego"}, {ko:"쓰레쉬", en:"Thresh"}, {ko:"헤카림", en:"Hecarim"}, {ko:"칼리스타", en:"Kalista"}, {ko:"그웬", en:"Gwen"}, {ko:"카서스", en:"Karthus"}]},
-            { name: "프렐요드", champs: [{ko:"애쉬", en:"Ashe"}, {ko:"세주아니", en:"Sejuani"}, {ko:"리산드라", en:"Lissandra"}, {ko:"브라움", en:"Braum"}, {ko:"볼리베어", en:"Volibear"}, {ko:"오른", en:"Ornn"}]}
+            { name: "프렐요드", champs: [{ko:"애쉬", en:"Ashe"}, {ko:"세주아니", en:"Sejuani"}, {ko:"리산드라", en:"Lissandra"}, {ko:"브라움", en:"Braum"}, {ko:"올라프", en:"Olaf"}, {ko:"볼리베어", en:"Volibear"}, {ko:"오른", en:"Ornn"}]}
         ];
 
         const wrapper = document.getElementById('main-wrapper');
@@ -187,7 +209,7 @@
             const btns = document.querySelectorAll('.draw-button');
             btns.forEach(b => b.disabled = true);
             
-            let finalSelection = []; // 최종적으로 슬롯에 들어갈 20명의 챔피언 리스트
+            let finalSelection = [];
 
             if (mode === 'regional') {
                 const selectedRegions = [...regions].sort(() => 0.5 - Math.random()).slice(0, 4);
@@ -199,7 +221,6 @@
                     label.style.color = "#00bcff";
                     label.style.borderColor = "#00bcff";
 
-                    // 해당 지역에서 무작위로 5명 추출 (중복 없이)
                     const regionPool = [...selectedRegions[r].champs].sort(() => 0.5 - Math.random());
                     for(let s=0; s<5; s++) {
                         finalSelection.push(regionPool[s % regionPool.length]); 
@@ -207,7 +228,6 @@
                 }
             } else {
                 document.getElementById('status-text').innerText = "전체 랜덤 소환: 20명의 다른 챔피언을 부르는 중...";
-                // 전체 풀에서 20명 무작위 셔플 후 추출
                 finalSelection = [...allChampsPool].sort(() => 0.5 - Math.random()).slice(0, 20);
 
                 for (let r = 0; r < 4; r++) {
@@ -218,16 +238,14 @@
                 }
             }
 
-            // 슬롯 돌리기
             for (let i = 0; i < 20; i++) {
                 const inner = document.getElementById(`inner-${i}`);
                 inner.innerHTML = '';
                 
                 const scrollCount = 20;
-                const resultChamp = finalSelection[i]; // i번째 슬롯은 무조건 미리 정해진 i번째 챔피언이 됨
+                const resultChamp = finalSelection[i];
 
                 for(let j=0; j <= scrollCount; j++) {
-                    // 회전 중에 보이는 챔피언들은 연출용 랜덤
                     const champ = (j === scrollCount) ? resultChamp : allChampsPool[Math.floor(Math.random() * allChampsPool.length)];
                     const div = document.createElement('div');
                     div.className = 'item';
@@ -239,11 +257,14 @@
                 inner.style.transition = 'none';
                 inner.style.transform = `translateY(0)`;
 
+                // 💡 반응형 높이 계산 (모바일에서는 높이가 달라지므로 동적 계산)
+                const currentSlotHeight = document.querySelector('.slot').offsetHeight;
+
                 requestAnimationFrame(() => {
                     requestAnimationFrame(() => {
                         const duration = 2.5 + (Math.random() * 1.5); 
                         inner.style.transition = `transform ${duration}s cubic-bezier(0.1, 0, 0.1, 1)`;
-                        inner.style.transform = `translateY(-${scrollCount * itemHeight}px)`;
+                        inner.style.transform = `translateY(-${scrollCount * currentSlotHeight}px)`;
                     });
                 });
             }
