@@ -2,13 +2,12 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>LoL Hextech Slot Machine</title>
+    <title>LoL All Champions Slot</title>
     <style>
         :root {
             --hextech-gold: #c89b3c;
             --hextech-border: #785a28;
             --bg-dark: #010a13;
-            --panel-bg: rgba(5, 13, 22, 0.9);
         }
 
         body {
@@ -18,82 +17,59 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 40px 0;
+            padding: 20px 0;
             margin: 0;
             background-image: radial-gradient(circle, #0a1428 0%, #010a13 100%);
         }
 
-        h1 {
-            color: var(--hextech-gold);
-            letter-spacing: 5px;
-            text-shadow: 0 0 20px rgba(200, 155, 60, 0.5);
-            margin-bottom: 40px;
-        }
+        .main-wrapper { display: flex; flex-direction: column; gap: 15px; }
 
-        /* 4개의 큰 행(Row) 컨테이너 */
-        .main-wrapper {
-            display: flex;
-            flex-direction: column;
-            gap: 25px; /* 행 사이 간격 */
-        }
-
-        /* 5개 슬롯을 감싸는 하나의 네모칸(행) */
+        /* 5개 슬롯 묶음 패널 */
         .slot-row-panel {
             display: flex;
-            gap: 10px;
-            padding: 15px;
-            background: var(--panel-bg);
+            gap: 8px;
+            padding: 10px;
+            background: rgba(5, 13, 22, 0.9);
             border: 2px solid var(--hextech-border);
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
-            position: relative;
+            box-shadow: 0 0 20px rgba(0,0,0,0.9);
         }
 
-        /* 행 번호 표시 (장식용) */
-        .slot-row-panel::before {
-            content: 'UNIT';
-            position: absolute;
-            left: -50px;
-            top: 50%;
-            transform: translateY(-50%) rotate(-90deg);
-            color: var(--hextech-border);
-            font-size: 12px;
-            font-weight: bold;
-        }
-
-        /* 개별 슬롯 */
         .slot {
             width: 110px;
-            height: 140px;
+            height: 170px;
             background: #000;
             border: 1px solid #3c3c3c;
             overflow: hidden;
             position: relative;
         }
 
-        /* 슬롯 내부 회전 박스 */
-        .slot-inner {
-            display: flex;
-            flex-direction: column;
-        }
+        .slot-inner { display: flex; flex-direction: column; }
 
         .item {
             width: 110px;
-            height: 140px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            font-size: 0.95rem;
-            color: #a0946e;
-            border-bottom: 1px solid rgba(200, 155, 60, 0.1);
+            height: 170px;
             flex-shrink: 0;
-            background: linear-gradient(180deg, #091428 0%, #050d16 100%);
+            position: relative;
+            background-size: cover;
+            background-position: center top;
+            border-bottom: 1px solid #1e2328;
         }
 
-        /* 버튼 */
+        .champ-name {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background: linear-gradient(transparent, rgba(0,0,0,0.9));
+            color: #fff;
+            font-size: 11px;
+            text-align: center;
+            padding: 8px 0 4px 0;
+            text-shadow: 1px 1px 2px #000;
+        }
+
         .draw-button {
-            margin-top: 50px;
-            padding: 15px 80px;
+            margin-top: 30px;
+            padding: 15px 100px;
             background: #1e2328;
             color: var(--hextech-gold);
             border: 2px solid var(--hextech-gold);
@@ -101,6 +77,7 @@
             font-size: 1.2rem;
             font-weight: bold;
             transition: 0.3s;
+            text-transform: uppercase;
         }
 
         .draw-button:hover:not(:disabled) {
@@ -109,40 +86,35 @@
             box-shadow: 0 0 25px var(--hextech-gold);
         }
 
-        .draw-button:disabled {
-            opacity: 0.4;
-            cursor: wait;
-        }
+        .draw-button:disabled { opacity: 0.3; cursor: not-allowed; }
     </style>
 </head>
 <body>
 
-    <h1>CHAMPION REWROUGHT</h1>
+    <h1 style="color:var(--hextech-gold); letter-spacing: 3px;">CHAMPION SUMMONER</h1>
 
-    <div class="main-wrapper" id="main-wrapper">
-        </div>
+    <div class="main-wrapper" id="main-wrapper"></div>
 
-    <button class="draw-button" onclick="launchSummon()">소환 시작</button>
+    <button class="draw-button" onclick="launchSummon()">챔피언 소환</button>
 
     <script>
+        // 168명 전체 챔피언 데이터 (영문 ID는 이미지 서버 매칭용)
         const allChampions = [
-            "가렌", "갈리오", "갱플랭크", "그라가스", "그레이브즈", "나르", "나미", "나서스", "나피리", "노틸러스", "녹턴", "누누", "니달리", "니코", "니플라", "다리우스", "다이애나", "드레이븐", "라이즈", "라칸", "람머스", "럭스", "럼블", "레나타", "레넥톤", "레오나", "렉사이", "렐", "렌가", "루시안", "루루", "르블랑", "리 신", "리븐", "리산드라", "릴리아", "마스터 이", "마오카이", "말자하", "말파이트", "모데카이저", "모르가나", "문도", "미스 포츈", "밀리오", "바드", "바루스", "바이", "베이가", "베인", "벨코즈", "벨베스", "볼리베어", "브라움", "브랜드", "브라이어", "블라디미르", "블리츠", "비에고", "빅토르", "뽀삐", "사미라", "사이온", "사일러스", "샤코", "세나", "세라핀", "세주아니", "세트", "소나", "소라카", "쉔", "쉬바나", "스웨인", "스카너", "스몰더", "시비르", "신 짜오", "신드라", "신지드", "쓰레쉬", "아리", "아무무", "아우솔", "아이번", "아지르", "아칼리", "아크샨", "아트록스", "아펠리오스", "알리스타", "애니", "애니비아", "애쉬", "야스오", "에코", "엘리스", "오공", "오른", "오리아나", "올라프", "요네", "요릭", "우디르", "우르곳", "워윅", "유미", "이렐리아", "이브린", "이즈리얼", "일라오이", "자르반", "자야", "자이라", "자크", "잔나", "잭스", "제드", "제라스", "제리", "제이스", "조이", "직스", "진", "질리언", "징크스", "초가스", "카르마", "카밀", "카사딘", "카시오페아", "카이사", "카직스", "카타리나", "칼리스타", "케넨", "케이틀린", "케인", "케일", "코그모", "코르키", "퀸", "클레드", "키아나", "킨드레드", "타릭", "탈론", "탈리야", "탐 켄치", "트런들", "트리스타나", "트린다미어", "트페", "트위치", "티모", "파이크", "판테온", "피들스틱", "피오라", "피즈", "하이머딩거", "헤카림", "흐웨이"
+            {ko:"가렌", en:"Garen"}, {ko:"갈리오", en:"Galio"}, {ko:"갱플랭크", en:"Gangplank"}, {ko:"그라가스", en:"Gragas"}, {ko:"그레이브즈", en:"Graves"}, {ko:"나르", en:"Gnar"}, {ko:"나미", en:"Nami"}, {ko:"나서스", en:"Nasus"}, {ko:"나피리", en:"Naafiri"}, {ko:"노틸러스", en:"Nautilus"}, {ko:"녹턴", en:"Nocturne"}, {ko:"누누", en:"Nunu"}, {ko:"니달리", en:"Nidalee"}, {ko:"니코", en:"Neeko"}, {ko:"닐라", en:"Nilah"}, {ko:"다리우스", en:"Darius"}, {ko:"다이애나", en:"Diana"}, {ko:"드레이븐", en:"Draven"}, {ko:"라이즈", en:"Ryze"}, {ko:"라칸", en:"Rakan"}, {ko:"람머스", en:"Rammus"}, {ko:"럭스", en:"Lux"}, {ko:"럼블", en:"Rumble"}, {ko:"레나타", en:"Renata"}, {ko:"레넥톤", en:"Renekton"}, {ko:"레오나", en:"Leona"}, {ko:"렉사이", en:"RekSai"}, {ko:"렐", en:"Rell"}, {ko:"렝가", en:"Rengar"}, {ko:"루시안", en:"Lucian"}, {ko:"룰루", en:"Lulu"}, {ko:"르블랑", en:"Leblanc"}, {ko:"리 신", en:"LeeSin"}, {ko:"리븐", en:"Riven"}, {ko:"리산드라", en:"Lissandra"}, {ko:"릴리아", en:"Lillia"}, {ko:"마스터 이", en:"MasterYi"}, {ko:"마오카이", en:"Maokai"}, {ko:"말자하", en:"Malzahar"}, {ko:"말파이트", en:"Malphite"}, {ko:"모데카이저", en:"Mordekaiser"}, {ko:"모르가나", en:"Morgana"}, {ko:"문도 박사", en:"DrMundo"}, {ko:"미스 포츈", en:"MissFortune"}, {ko:"밀리오", en:"Milio"}, {ko:"바드", en:"Bard"}, {ko:"바루스", en:"Varus"}, {ko:"바이", en:"Vi"}, {ko:"베이가", en:"Veigar"}, {ko:"베인", en:"Vayne"}, {ko:"벨코즈", en:"Velkoz"}, {ko:"벨베스", en:"Belveth"}, {ko:"볼리베어", en:"Volibear"}, {ko:"브라움", en:"Braum"}, {ko:"브랜드", en:"Brand"}, {ko:"브라이어", en:"Briar"}, {ko:"블라디미르", en:"Vladimir"}, {ko:"블리츠크랭크", en:"Blitzcrank"}, {ko:"비에고", en:"Viego"}, {ko:"빅토르", en:"Viktor"}, {ko:"뽀삐", en:"Poppy"}, {ko:"사미라", en:"Samira"}, {ko:"사이온", en:"Sion"}, {ko:"사일러스", en:"Sylas"}, {ko:"샤코", en:"Shaco"}, {ko:"세나", en:"Senna"}, {ko:"세라핀", en:"Seraphine"}, {ko:"세주아니", en:"Sejuani"}, {ko:"세트", en:"Sett"}, {ko:"소나", en:"Sona"}, {ko:"소라카", en:"Soraka"}, {ko:"쉔", en:"Shen"}, {ko:"쉬바나", en:"Shyvana"}, {ko:"스웨인", en:"Swain"}, {ko:"스카너", en:"Skarner"}, {ko:"스몰더", en:"Smolder"}, {ko:"시비르", en:"Sivir"}, {ko:"신 짜오", en:"XinZhao"}, {ko:"신드라", en:"Syndra"}, {ko:"신지드", en:"Singed"}, {ko:"쓰레쉬", en:"Thresh"}, {ko:"아리", en:"Ahri"}, {ko:"아무무", en:"Amumu"}, {ko:"아우솔", en:"AurelionSol"}, {ko:"아이번", en:"Ivern"}, {ko:"아지르", en:"Azir"}, {ko:"아칼리", en:"Akali"}, {ko:"아크샨", en:"Akshan"}, {ko:"아트록스", en:"Aatrox"}, {ko:"아펠리오스", en:"Aphelios"}, {ko:"알리스타", en:"Alistar"}, {ko:"암베사", en:"Ambessa"}, {ko:"애니", en:"Annie"}, {ko:"애니비아", en:"Anivia"}, {ko:"애쉬", en:"Ashe"}, {ko:"야스오", en:"Yasuo"}, {ko:"에코", en:"Ekko"}, {ko:"엘리스", en:"Elise"}, {ko:"오공", en:"MonkeyKing"}, {ko:"오른", en:"Ornn"}, {ko:"오리아나", en:"Orianna"}, {ko:"올라프", en:"Olaf"}, {ko:"요네", en:"Yone"}, {ko:"요릭", en:"Yorick"}, {ko:"우디르", en:"Udyir"}, {ko:"우르곳", en:"Urgot"}, {ko:"워윅", en:"Warwick"}, {ko:"유미", en:"Yuumi"}, {ko:"이렐리아", en:"Irelia"}, {ko:"이브린", en:"Evelynn"}, {ko:"이즈리얼", en:"Ezreal"}, {ko:"일라오이", en:"Illaoi"}, {ko:"자르반 4세", en:"JarvanIV"}, {ko:"자야", en:"Xayah"}, {ko:"자이라", en:"Zyra"}, {ko:"자크", en:"Zac"}, {ko:"잔나", en:"Janna"}, {ko:"잭스", en:"Jax"}, {ko:"제드", en:"Zed"}, {ko:"제라스", en:"Xerath"}, {ko:"제리", en:"Zeri"}, {ko:"제이스", en:"Jayce"}, {ko:"조이", en:"Zoe"}, {ko:"직스", en:"Ziggs"}, {ko:"진", en:"Jhin"}, {ko:"질리언", en:"Zilean"}, {ko:"징크스", en:"Jinx"}, {ko:"초가스", en:"Chogath"}, {ko:"카르마", en:"Karma"}, {ko:"카밀", en:"Camille"}, {ko:"카사딘", en:"Kassadin"}, {ko:"카시오페아", en:"Cassiopeia"}, {ko:"카이사", en:"Kaisa"}, {ko:"카직스", en:"Khazix"}, {ko:"카타리나", en:"Katarina"}, {ko:"칼리스타", en:"Kalista"}, {ko:"케넨", en:"Kennen"}, {ko:"케이틀린", en:"Caitlyn"}, {ko:"케인", en:"Kayn"}, {ko:"케일", en:"Kayle"}, {ko:"코그모", en:"KogMaw"}, {ko:"코르키", en:"Corki"}, {ko:"퀸", en:"Quinn"}, {ko:"클레드", en:"Kled"}, {ko:"키아나", en:"Qiyana"}, {ko:"킨드레드", en:"Kindred"}, {ko:"타릭", en:"Taric"}, {ko:"탈론", en:"Talon"}, {ko:"탈리야", en:"Taliyah"}, {ko:"탐 켄치", en:"TahmKench"}, {ko:"트런들", en:"Trundle"}, {ko:"트리스타나", en:"Tristana"}, {ko:"트린다미어", en:"Tryndamere"}, {ko:"트페", en:"TwistedFate"}, {ko:"트위치", en:"Twitch"}, {ko:"티모", en:"Teemo"}, {ko:"파이크", en:"Pyke"}, {ko:"판테온", en:"Pantheon"}, {ko:"피들스틱", en:"Fiddlesticks"}, {ko:"피오라", en:"Fiora"}, {ko:"피즈", en:"Fizz"}, {ko:"하이머딩거", en:"Heimerdinger"}, {ko:"헤카림", en:"Hecarim"}, {ko:"흐웨이", en:"Hwei"}
         ];
 
         const wrapper = document.getElementById('main-wrapper');
-        const rows = 4;
-        const slotsPerRow = 5;
+        const rows = 4, slotsPerRow = 5;
 
-        // 초기 구조 생성
+        // 초기 화면 (빈 슬롯 20개 생성)
         for (let r = 0; r < rows; r++) {
             const rowPanel = document.createElement('div');
             rowPanel.className = 'slot-row-panel';
-            
             for (let s = 0; s < slotsPerRow; s++) {
                 const slotIdx = (r * slotsPerRow) + s;
                 const slot = document.createElement('div');
                 slot.className = 'slot';
-                slot.innerHTML = `<div class="slot-inner" id="inner-${slotIdx}"><div class="item">READY</div></div>`;
+                slot.innerHTML = `<div class="slot-inner" id="inner-${slotIdx}"><div class="item" style="background-image:url('https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Aatrox_0.jpg')"><div class="champ-name">READY</div></div></div>`;
                 rowPanel.appendChild(slot);
             }
             wrapper.appendChild(rowPanel);
@@ -152,39 +124,32 @@
             const btn = document.querySelector('.draw-button');
             btn.disabled = true;
 
-            // 중복 없이 20개 추출
             const shuffled = [...allChampions].sort(() => 0.5 - Math.random());
             const results = shuffled.slice(0, 20);
 
             for (let i = 0; i < 20; i++) {
                 const inner = document.getElementById(`inner-${i}`);
                 inner.innerHTML = '';
-
-                // 애니메이션용 가짜 리스트 (위에서 아래로 흐르는 느낌)
-                const scrollItems = [];
-                for(let j=0; j<20; j++) {
-                    scrollItems.push(allChampions[Math.floor(Math.random() * allChampions.length)]);
-                }
-                scrollItems.push(results[i]); // 최종 도착지
-
-                scrollItems.forEach(name => {
+                
+                const scrollCount = 20; // 회전 시 스쳐지나가는 이미지 수
+                for(let j=0; j <= scrollCount; j++) {
+                    const champ = (j === scrollCount) ? results[i] : allChampions[Math.floor(Math.random() * allChampions.length)];
                     const div = document.createElement('div');
                     div.className = 'item';
-                    div.innerText = name;
+                    div.style.backgroundImage = `url('https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${champ.en}_0.jpg')`;
+                    div.innerHTML = `<div class="champ-name">${champ.ko}</div>`;
                     inner.appendChild(div);
-                });
+                }
 
-                // 애니메이션 설정
                 inner.style.transition = 'none';
                 inner.style.transform = `translateY(0)`;
 
                 setTimeout(() => {
-                    const duration = 2 + (Math.random() * 2); 
+                    const duration = 2.5 + (Math.random() * 1.5); 
                     inner.style.transition = `transform ${duration}s cubic-bezier(0.1, 0, 0.1, 1)`;
-                    inner.style.transform = `translateY(-${(scrollItems.length - 1) * 140}px)`;
-                }, 50 + (i * 30)); // 각 슬롯마다 미세하게 시차를 두어 더 역동적임
+                    inner.style.transform = `translateY(-${scrollCount * 170}px)`;
+                }, 50 + (i * 40));
             }
-
             setTimeout(() => { btn.disabled = false; }, 4500);
         }
     </script>
