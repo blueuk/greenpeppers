@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>LoL Universe Slot Machine</title>
+    <title>LoL Regional Sector Slot</title>
     <style>
         :root {
             --hextech-gold: #c89b3c;
@@ -26,37 +26,50 @@
             background-image: radial-gradient(circle, #0a1428 0%, #010a13 100%);
         }
 
-        /* 현재 선택된 테마 표시기 */
-        #current-theme {
-            font-size: 1.5rem;
-            color: var(--hextech-gold);
-            margin-bottom: 10px;
-            height: 30px;
-            font-weight: bold;
-            text-shadow: 0 0 10px rgba(200, 155, 60, 0.6);
-        }
+        .main-wrapper { display: flex; flex-direction: column; gap: 20px; }
 
-        .main-wrapper { display: flex; flex-direction: column; gap: 15px; }
-
+        /* 지역별 섹션 패널 */
         .slot-row-panel {
-            display: flex; gap: 10px; padding: 12px;
+            display: flex;
+            flex-direction: column;
             background: rgba(5, 13, 22, 0.95);
             border: 2px solid var(--hextech-border);
             box-shadow: 0 0 25px rgba(0,0,0,1);
+            padding: 10px;
         }
 
+        /* 지역 이름 표시 라벨 */
+        .region-label {
+            color: var(--hextech-gold);
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+            padding-left: 5px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border-left: 3px solid var(--hextech-gold);
+        }
+
+        .slots-container { display: flex; gap: 10px; }
+
         .slot {
-            width: var(--slot-width); height: var(--slot-height);
-            background: #050d16; border: 1px solid #3c3c3c;
-            overflow: hidden; position: relative;
+            width: var(--slot-width);
+            height: var(--slot-height);
+            background: #050d16;
+            border: 1px solid #3c3c3c;
+            overflow: hidden;
+            position: relative;
         }
 
         .slot-inner { display: flex; flex-direction: column; will-change: transform; }
 
         .item {
-            width: var(--slot-width); height: var(--slot-height);
-            flex-shrink: 0; position: relative;
-            background-size: cover; background-position: center top;
+            width: var(--slot-width);
+            height: var(--slot-height);
+            flex-shrink: 0;
+            position: relative;
+            background-size: cover;
+            background-position: center top;
         }
 
         .champ-name {
@@ -72,11 +85,8 @@
             padding: 15px 40px; background: #1e2328;
             color: var(--hextech-gold); border: 2px solid var(--hextech-gold);
             cursor: pointer; font-size: 1rem; font-weight: bold;
-            transition: 0.3s; text-transform: uppercase;
+            transition: 0.3s;
         }
-
-        .theme-btn { border-color: #0080ff; color: #0080ff; }
-        .theme-btn:hover:not(:disabled) { background: #0080ff; color: white; box-shadow: 0 0 20px #0080ff; }
 
         .draw-button:hover:not(:disabled) {
             background: var(--hextech-gold); color: #1e2328;
@@ -88,124 +98,115 @@
 </head>
 <body>
 
-    <h1 style="color:var(--hextech-gold); letter-spacing: 3px;">CHAMPION SELECT</h1>
-    <div id="current-theme">전체 소환 모드</div>
+    <h1 style="color:var(--hextech-gold); letter-spacing: 4px; margin-bottom: 10px;">REGIONAL EXPEDITION</h1>
+    <p style="color: #a0946e; margin-bottom: 30px;">4개의 지역에서 정예 챔피언을 소환합니다.</p>
 
     <div class="main-wrapper" id="main-wrapper"></div>
 
     <div class="button-group">
-        <button class="draw-button" onclick="launchSummon('all')">전체 랜덤 소환</button>
-        <button class="draw-button theme-btn" onclick="launchSummon('theme')">지역 테마 소환</button>
+        <button class="draw-button" onclick="launchRegionalSummon()">지역별 정예 소환 시작</button>
     </div>
 
     <script>
-        const allChampions = [
-            {ko:"가렌", en:"Garen"}, {ko:"럭스", en:"Lux"}, {ko:"카이사", en:"Kaisa"}, {ko:"말자하", en:"Malzahar"},
-            {ko:"벨코즈", en:"Velkoz"}, {ko:"카직스", en:"Khazix"}, {ko:"제이스", en:"Jayce"}, {ko:"바이", en:"Vi"},
-            {ko:"징크스", en:"Jinx"}, {ko:"에코", en:"Ekko"}, {ko:"아칼리", en:"Akali"}, {ko:"야스오", en:"Yasuo"},
-            {ko:"이렐리아", en:"Irelia"}, {ko:"다리우스", en:"Darius"}, {ko:"드레이븐", en:"Draven"}, {ko:"카타리나", en:"Katarina"},
-            {ko:"레오나", en:"Leona"}, {ko:"다이애나", en:"Diana"}, {ko:"아지르", en:"Azir"}, {ko:"나서스", en:"Nasus"}
-            // ... (데이터 최적화를 위해 위쪽 리스트를 재사용하거나 확장 가능)
-        ];
-
-        // 🏛️ 세력별 데이터 정의
         const regions = [
             { name: "공허 (The Void)", champs: [
-                {ko:"카이사", en:"Kaisa"}, {ko:"말자하", en:"Malzahar"}, {ko:"벨코즈", en:"Velkoz"}, 
-                {ko:"카직스", en:"Khazix"}, {ko:"렉사이", en:"RekSai"}, {ko:"초가스", en:"Chogath"}, {ko:"벨베스", en:"Belveth"}
+                {ko:"카이사", en:"Kaisa"}, {ko:"말자하", en:"Malzahar"}, {ko:"벨코즈", en:"Velkoz"}, {ko:"카직스", en:"Khazix"}, {ko:"렉사이", en:"RekSai"}, {ko:"초가스", en:"Chogath"}, {ko:"벨베스", en:"Belveth"}
             ]},
             { name: "필트오버 & 자운", champs: [
-                {ko:"바이", en:"Vi"}, {ko:"징크스", en:"Jinx"}, {ko:"에코", en:"Ekko"}, 
-                {ko:"제이스", en:"Jayce"}, {ko:"케이틀린", en:"Caitlyn"}, {ko:"빅토르", en:"Viktor"}, {ko:"워윅", en:"Warwick"}
+                {ko:"바이", en:"Vi"}, {ko:"징크스", en:"Jinx"}, {ko:"에코", en:"Ekko"}, {ko:"제이스", en:"Jayce"}, {ko:"케이틀린", en:"Caitlyn"}, {ko:"빅토르", en:"Viktor"}, {ko:"워윅", en:"Warwick"}, {ko:"블리츠", en:"Blitzcrank"}
             ]},
             { name: "아이오니아", champs: [
-                {ko:"아칼리", en:"Akali"}, {ko:"야스오", en:"Yasuo"}, {ko:"이렐리아", en:"Irelia"}, 
-                {ko:"리 신", en:"LeeSin"}, {ko:"아리", en:"Ahri"}, {ko:"제드", en:"Zed"}, {ko:"요네", en:"Yone"}
+                {ko:"아칼리", en:"Akali"}, {ko:"야스오", en:"Yasuo"}, {ko:"이렐리아", en:"Irelia"}, {ko:"리 신", en:"LeeSin"}, {ko:"아리", en:"Ahri"}, {ko:"제드", en:"Zed"}, {ko:"요네", en:"Yone"}, {ko:"케넨", en:"Kennen"}
             ]},
             { name: "데마시아", champs: [
-                {ko:"가렌", en:"Garen"}, {ko:"럭스", en:"Lux"}, {ko:"자르반 4세", en:"JarvanIV"}, 
-                {ko:"피오라", en:"Fiora"}, {ko:"베인", en:"Vayne"}, {ko:"갈리오", en:"Galio"}, {ko:"사일러스", en:"Sylas"}
+                {ko:"가렌", en:"Garen"}, {ko:"럭스", en:"Lux"}, {ko:"자르반 4세", en:"JarvanIV"}, {ko:"피오라", en:"Fiora"}, {ko:"베인", en:"Vayne"}, {ko:"갈리오", en:"Galio"}, {ko:"사일러스", en:"Sylas"}, {ko:"뽀삐", en:"Poppy"}
             ]},
             { name: "녹서스", champs: [
-                {ko:"다리우스", en:"Darius"}, {ko:"드레이븐", en:"Draven"}, {ko:"카타리나", en:"Katarina"}, 
-                {ko:"스웨인", en:"Swain"}, {ko:"르블랑", en:"Leblanc"}, {ko:"사이온", en:"Sion"}, {ko:"모르데카이저", en:"Mordekaiser"}
+                {ko:"다리우스", en:"Darius"}, {ko:"드레이븐", en:"Draven"}, {ko:"카타리나", en:"Katarina"}, {ko:"스웨인", en:"Swain"}, {ko:"르블랑", en:"Leblanc"}, {ko:"사이온", en:"Sion"}, {ko:"모데카이저", en:"Mordekaiser"}, {ko:"탈론", en:"Talon"}
             ]},
             { name: "슈리마", champs: [
-                {ko:"아지르", en:"Azir"}, {ko:"나서스", en:"Nasus"}, {ko:"레넥톤", en:"Renekton"}, 
-                {ko:"시비르", en:"Sivir"}, {ko:"탈리야", en:"Taliyah"}, {ko:"아무무", en:"Amumu"}, {ko:"크산테", en:"Ksante"}
+                {ko:"아지르", en:"Azir"}, {ko:"나서스", en:"Nasus"}, {ko:"레넥톤", en:"Renekton"}, {ko:"시비르", en:"Sivir"}, {ko:"탈리야", en:"Taliyah"}, {ko:"아무무", en:"Amumu"}, {ko:"크산테", en:"Ksante"}, {ko:"제라스", en:"Xerath"}
             ]},
             { name: "그림자 군도", champs: [
-                {ko:"비에고", en:"Viego"}, {ko:"쓰레쉬", en:"Thresh"}, {ko:"헤카림", en:"Hecarim"}, 
-                {ko:"모르가나", en:"Morgana"}, {ko:"칼리스타", en:"Kalista"}, {ko:"카서스", en:"Karthus"}, {ko:"그웬", en:"Gwen"}
+                {ko:"비에고", en:"Viego"}, {ko:"쓰레쉬", en:"Thresh"}, {ko:"헤카림", en:"Hecarim"}, {ko:"카서스", en:"Karthus"}, {ko:"칼리스타", en:"Kalista"}, {ko:"그웬", en:"Gwen"}, {ko:"모데카이저", en:"Mordekaiser"}, {ko:"요릭", en:"Yorick"}
             ]},
             { name: "프렐요드", champs: [
-                {ko:"애쉬", en:"Ashe"}, {ko:"세주아니", en:"Sejuani"}, {ko:"리산드라", en:"Lissandra"}, 
-                {ko:"브라움", en:"Braum"}, {ko:"올라프", en:"Olaf"}, {ko:"볼리베어", en:"Volibear"}, {ko:"오른", en:"Ornn"}
+                {ko:"애쉬", en:"Ashe"}, {ko:"세주아니", en:"Sejuani"}, {ko:"리산드라", en:"Lissandra"}, {ko:"브라움", en:"Braum"}, {ko:"올라프", en:"Olaf"}, {ko:"볼리베어", en:"Volibear"}, {ko:"오른", en:"Ornn"}, {ko:"트린다미어", en:"Tryndamere"}
             ]}
         ];
 
         const wrapper = document.getElementById('main-wrapper');
-        const themeDisplay = document.getElementById('current-theme');
         const itemHeight = 180;
 
-        // 초기 화면 생성
+        // 초기 화면 (4개 줄 생성)
         for (let r = 0; r < 4; r++) {
             const rowPanel = document.createElement('div');
             rowPanel.className = 'slot-row-panel';
+            rowPanel.innerHTML = `
+                <div class="region-label" id="label-${r}">대기 중...</div>
+                <div class="slots-container" id="container-${r}"></div>
+            `;
+            
+            const container = rowPanel.querySelector('.slots-container');
             for (let s = 0; s < 5; s++) {
-                const idx = (r * 5) + s;
+                const slotIdx = (r * 5) + s;
                 const slot = document.createElement('div');
                 slot.className = 'slot';
-                slot.innerHTML = `<div class="slot-inner" id="inner-${idx}"><div class="item" style="background-image:url('https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Aatrox_0.jpg')"><div class="champ-name">READY</div></div></div>`;
-                rowPanel.appendChild(slot);
+                slot.innerHTML = `<div class="slot-inner" id="inner-${slotIdx}"><div class="item" style="background-image:url('https://ddragon.leagueoflegends.com/cdn/img/champion/loading/Aatrox_0.jpg')"><div class="champ-name">READY</div></div></div>`;
+                container.appendChild(slot);
             }
             wrapper.appendChild(rowPanel);
         }
 
-        function launchSummon(mode) {
-            const btns = document.querySelectorAll('.draw-button');
-            btns.forEach(b => b.disabled = true);
+        function launchRegionalSummon() {
+            const btn = document.querySelector('.draw-button');
+            btn.disabled = true;
 
-            let pool = [];
-            if (mode === 'all') {
-                themeDisplay.innerText = "전체 랜덤 소환 모드";
-                pool = allChampions;
-            } else {
-                // 랜덤 지역 선택
-                const randomRegion = regions[Math.floor(Math.random() * regions.length)];
-                themeDisplay.innerText = `지역 테마: ${randomRegion.name}`;
-                pool = randomRegion.champs;
-            }
+            // 1. 지역 8개 중 4개 중복 없이 무작위 선택
+            const selectedRegions = [...regions].sort(() => 0.5 - Math.random()).slice(0, 4);
 
-            for (let i = 0; i < 20; i++) {
-                const inner = document.getElementById(`inner-${i}`);
-                inner.innerHTML = '';
-                
-                const scrollCount = 20;
-                // 결과값은 중복 허용 (테마 모드일 때 챔피언 수가 적으므로)
-                const resultChamp = pool[Math.floor(Math.random() * pool.length)];
+            for (let r = 0; r < 4; r++) {
+                const region = selectedRegions[r];
+                document.getElementById(`label-${r}`).innerText = region.name;
 
-                for(let j=0; j <= scrollCount; j++) {
-                    const champ = (j === scrollCount) ? resultChamp : pool[Math.floor(Math.random() * pool.length)];
-                    const div = document.createElement('div');
-                    div.className = 'item';
-                    div.style.backgroundImage = `url('https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${champ.en}_0.jpg')`;
-                    div.innerHTML = `<div class="champ-name">${champ.ko}</div>`;
-                    inner.appendChild(div);
+                // 2. 해당 지역 챔피언 중 중복 없이 5명 추출 (명수가 부족하면 중복 허용)
+                const pool = [...region.champs].sort(() => 0.5 - Math.random());
+                const rowResults = [];
+                for(let s=0; s<5; s++) {
+                    rowResults.push(pool[s % pool.length]);
                 }
 
-                inner.style.transition = 'none';
-                inner.style.transform = `translateY(0)`;
+                // 3. 각 슬롯 애니메이션 실행
+                for (let s = 0; s < 5; s++) {
+                    const slotIdx = (r * 5) + s;
+                    const inner = document.getElementById(`inner-${slotIdx}`);
+                    inner.innerHTML = '';
+                    
+                    const scrollCount = 20;
+                    const resultChamp = rowResults[s];
 
-                requestAnimationFrame(() => {
+                    for(let j=0; j <= scrollCount; j++) {
+                        const champ = (j === scrollCount) ? resultChamp : region.champs[Math.floor(Math.random() * region.champs.length)];
+                        const div = document.createElement('div');
+                        div.className = 'item';
+                        div.style.backgroundImage = `url('https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${champ.en}_0.jpg')`;
+                        div.innerHTML = `<div class="champ-name">${champ.ko}</div>`;
+                        inner.appendChild(div);
+                    }
+
+                    inner.style.transition = 'none';
+                    inner.style.transform = `translateY(0)`;
+
                     requestAnimationFrame(() => {
-                        const duration = 2.5 + (Math.random() * 1.5); 
-                        inner.style.transition = `transform ${duration}s cubic-bezier(0.1, 0, 0.1, 1)`;
-                        inner.style.transform = `translateY(-${scrollCount * itemHeight}px)`;
+                        requestAnimationFrame(() => {
+                            const duration = 2.5 + (Math.random() * 1.5); 
+                            inner.style.transition = `transform ${duration}s cubic-bezier(0.1, 0, 0.1, 1)`;
+                            inner.style.transform = `translateY(-${scrollCount * itemHeight}px)`;
+                        });
                     });
-                });
+                }
             }
-            setTimeout(() => { btns.forEach(b => b.disabled = false); }, 4500);
+            setTimeout(() => { btn.disabled = false; }, 4500);
         }
     </script>
 </body>
