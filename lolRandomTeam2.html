@@ -305,17 +305,168 @@
             , {ko:"흐웨이", en:"Hwei"}
         ];
 
-        const regions = [
-            { name: "공허 (The Void)", champs: [{ko:"카이사", en:"Kaisa"}, {ko:"말자하", en:"Malzahar"}, {ko:"벨코즈", en:"Velkoz"}, {ko:"카직스", en:"Khazix"}, {ko:"렉사이", en:"RekSai"}, {ko:"벨베스", en:"Belveth"}]},
-            { name: "필트오버 & 자운", champs: [{ko:"바이", en:"Vi"}, {ko:"징크스", en:"Jinx"}, {ko:"에코", en:"Ekko"}, {ko:"제이스", en:"Jayce"}, {ko:"케이틀린", en:"Caitlyn"}, {ko:"빅토르", en:"Viktor"}]},
-            { name: "아이오니아", champs: [{ko:"아칼리", en:"Akali"}, {ko:"야스오", en:"Yasuo"}, {ko:"이렐리아", en:"Irelia"}, {ko:"리 신", en:"LeeSin"}, {ko:"아리", en:"Ahri"}, {ko:"제드", en:"Zed"}]},
-            { name: "데마시아", champs: [{ko:"가렌", en:"Garen"}, {ko:"럭스", en:"Lux"}, {ko:"자르반 4세", en:"JarvanIV"}, {ko:"피오라", en:"Fiora"}, {ko:"갈리오", en:"Galio"}, {ko:"사일러스", en:"Sylas"}]},
-            { name: "녹서스", champs: [{ko:"다리우스", en:"Darius"}, {ko:"드레이븐", en:"Draven"}, {ko:"카타리나", en:"Katarina"}, {ko:"스웨인", en:"Swain"}, {ko:"르블랑", en:"Leblanc"}, {ko:"모데카이저", en:"Mordekaiser"}]},
-            { name: "슈리마", champs: [{ko:"아지르", en:"Azir"}, {ko:"나서스", en:"Nasus"}, {ko:"레넥톤", en:"Renekton"}, {ko:"시비르", en:"Sivir"}, {ko:"크산테", en:"KSante"}, {ko:"탈리야", en:"Taliyah"}]},
-            { name: "그림자 군도", champs: [{ko:"비에고", en:"Viego"}, {ko:"쓰레쉬", en:"Thresh"}, {ko:"헤카림", en:"Hecarim"}, {ko:"칼리스타", en:"Kalista"}, {ko:"그웬", en:"Gwen"}, {ko:"카서스", en:"Karthus"}]},
-            { name: "프렐요드", champs: [{ko:"애쉬", en:"Ashe"}, {ko:"세주아니", en:"Sejuani"}, {ko:"리산드라", en:"Lissandra"}, {ko:"브라움", en:"Braum"}, {ko:"올라프", en:"Olaf"}, {ko:"볼리베어", en:"Volibear"}, {ko:"오른", en:"Ornn"}]}
-        ];
-
+        const regions = [{
+    "name": "데마시아",
+    "champs": [
+      { "ko": "가렌", "en": "Garen" },
+      { "ko": "럭스", "en": "Lux" },
+      { "ko": "자르반 4세", "en": "JarvanIV" },
+      { "ko": "피오라", "en": "Fiora" },
+      { "ko": "베인", "en": "Vayne" },
+      { "ko": "사일러스", "en": "Sylas" },
+      { "ko": "신 짜오", "en": "XinZhao" },
+      { "ko": "뽀삐", "en": "Poppy" },
+      { "ko": "퀸", "en": "Quinn" },
+      { "ko": "루시안", "en": "Lucian" }
+    ]
+  },
+  {
+    "name": "녹서스",
+    "champs": [
+      { "ko": "다리우스", "en": "Darius" },
+      { "ko": "드레이븐", "en": "Draven" },
+      { "ko": "카타리나", "en": "Katarina" },
+      { "ko": "스웨인", "en": "Swain" },
+      { "ko": "르블랑", "en": "Leblanc" },
+      { "ko": "모데카이저", "en": "Mordekaiser" },
+      { "ko": "클레드", "en": "Kled" },
+      { "ko": "사이온", "en": "Sion" },
+      { "ko": "카시오페아", "en": "Cassiopeia" },
+      { "ko": "탈론", "en": "Talon" }
+    ]
+  },
+  {
+    "name": "아이오니아",
+    "champs": [
+      { "ko": "아리", "en": "Ahri" },
+      { "ko": "야스오", "en": "Yasuo" },
+      { "ko": "요네", "en": "Yone" },
+      { "ko": "제드", "en": "Zed" },
+      { "ko": "아칼리", "en": "Akali" },
+      { "ko": "리 신", "en": "LeeSin" },
+      { "ko": "이렐리아", "en": "Irelia" },
+      { "ko": "쉔", "en": "Shen" },
+      { "ko": "케넨", "en": "Kennen" },
+      { "ko": "마스터 이", "en": "MasterYi" },
+      { "ko": "카르마", "en": "Karma" }
+    ]
+  },
+  {
+    "name": "프렐요드",
+    "champs": [
+      { "ko": "애쉬", "en": "Ashe" },
+      { "ko": "세주아니", "en": "Sejuani" },
+      { "ko": "리산드라", "en": "Lissandra" },
+      { "ko": "볼리베어", "en": "Volibear" },
+      { "ko": "브라움", "en": "Braum" },
+      { "ko": "올라프", "en": "Olaf" },
+      { "ko": "누누", "en": "Nunu" },
+      { "ko": "트린다미어", "en": "Tryndamere" },
+      { "ko": "애니비아", "en": "Anivia" },
+      { "ko": "오른", "en": "Ornn" }
+    ]
+  },
+  {
+    "name": "필트오버 & 자운",
+    "champs": [
+      { "ko": "바이", "en": "Vi" },
+      { "ko": "케이틀린", "en": "Caitlyn" },
+      { "ko": "제이스", "en": "Jayce" },
+      { "ko": "이즈리얼", "en": "Ezreal" },
+      { "ko": "오리아나", "en": "Orianna" },
+      { "ko": "세라핀", "en": "Seraphine" },
+      { "ko": "카밀", "en": "Camille" },
+      { "ko": "하이머딩거", "en": "Heimerdinger" },
+      { "ko": "징크스", "en": "Jinx" },
+      { "ko": "에코", "en": "Ekko" },
+      { "ko": "빅토르", "en": "Viktor" },
+      { "ko": "워윅", "en": "Warwick" },
+      { "ko": "블리츠크랭크", "en": "Blitzcrank" },
+      { "ko": "트위치", "en": "Twitch" },
+      { "ko": "문도 박사", "en": "DrMundo" },
+      { "ko": "신지드", "en": "Singed" },
+      { "ko": "우르곳", "en": "Urgot" },
+      { "ko": "제리", "en": "Zeri" }
+    ]
+  },
+  {
+    "name": "슈리마",
+    "champs": [
+      { "ko": "아지르", "en": "Azir" },
+      { "ko": "나서스", "en": "Nasus" },
+      { "ko": "레넥톤", "en": "Renekton" },
+      { "ko": "시비르", "en": "Sivir" },
+      { "ko": "크산테", "en": "KSante" },
+      { "ko": "탈리야", "en": "Taliyah" },
+      { "ko": "암베사", "en": "Ambessa" },
+      { "ko": "아무무", "en": "Amumu" },
+      { "ko": "람머스", "en": "Rammus" }
+    ]
+  },
+  {
+    "name": "빌지워터",
+    "champs": [
+      { "ko": "미스 포츈", "en": "MissFortune" },
+      { "ko": "갱플랭크", "en": "Gangplank" },
+      { "ko": "그레이브즈", "en": "Graves" },
+      { "ko": "트위스티드 페이트", "en": "TwistedFate" },
+      { "ko": "파이크", "en": "Pyke" },
+      { "ko": "일라오이", "en": "Illaoi" },
+      { "ko": "노틸러스", "en": "Nautilus" },
+      { "ko": "피즈", "en": "Fizz" }
+    ]
+  },
+  {
+    "name": "타곤산 & 이쉬탈",
+    "champs": [
+      { "ko": "레오나", "en": "Leona" },
+      { "ko": "다이애나", "en": "Diana" },
+      { "ko": "판테온", "en": "Pantheon" },
+      { "ko": "조이", "en": "Zoe" },
+      { "ko": "타릭", "en": "Taric" },
+      { "ko": "아펠리오스", "en": "Aphelios" },
+      { "ko": "아우솔", "en": "AurelionSol" },
+      { "ko": "키아나", "en": "Qiyana" },
+      { "ko": "밀리오", "en": "Milio" },
+      { "ko": "니코", "en": "Neeko" },
+      { "ko": "렝가", "en": "Rengar" },
+      { "ko": "니달리", "en": "Nidalee" },
+      { "ko": "자이라", "en": "Zyra" }
+    ]
+  },
+  {
+    "name": "그림자 군도",
+    "champs": [
+      { "ko": "비에고", "en": "Viego" },
+      { "ko": "쓰레쉬", "en": "Thresh" },
+      { "ko": "칼리스타", "en": "Kalista" },
+      { "ko": "헤카림", "en": "Hecarim" },
+      { "ko": "요릭", "en": "Yorick" },
+      { "ko": "엘리스", "en": "Elise" }
+    ]
+  },
+  {
+    "name": "공허 & 밴들시티",
+    "champs": [
+      { "ko": "카이사", "en": "Kaisa" },
+      { "ko": "카직스", "en": "Khazix" },
+      { "ko": "벨코즈", "en": "Velkoz" },
+      { "ko": "초가스", "en": "Chogath" },
+      { "ko": "코그모", "en": "KogMaw" },
+      { "ko": "벨베스", "en": "Belveth" },
+      { "ko": "말자하", "en": "Malzahar" },
+      { "ko": "렉사이", "en": "RekSai" },
+      { "ko": "카사딘", "en": "Kassadin" },
+      { "ko": "티모", "en": "Teemo" },
+      { "ko": "트리스타나", "en": "Tristana" },
+      { "ko": "룰루", "en": "Lulu" },
+      { "ko": "베이가", "en": "Veigar" },
+      { "ko": "코르키", "en": "Corki" },
+      { "ko": "유미", "en": "Yuumi" },
+      { "ko": "럼블", "en": "Rumble" }
+    ]
+  }
+];
         const wrapper = document.getElementById('main-wrapper');
         const itemHeight = 180;
 
