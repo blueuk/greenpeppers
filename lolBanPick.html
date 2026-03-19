@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>LoL Fearless Draft v1.1.1</title>
+    <title>LoL Fearless Draft v1.2.0</title>
     <style>
         :root {
             --lol-gold: #c8aa6e;
@@ -14,7 +14,7 @@
         body {
             background: radial-gradient(circle, #091428 0%, #010a13 100%);
             color: white;
-            font-family: 'Malgun Gothic', sans-serif;
+            font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
             margin: 0; padding: 10px;
             display: flex; flex-direction: column; align-items: center;
         }
@@ -24,13 +24,11 @@
         .reset-btn { background: transparent; color: #ff4d4d; border: 1px solid #ff4d4d; cursor: pointer; padding: 4px 10px; border-radius: 4px; font-size: 12px; }
         .reset-btn:hover { background: #ff4d4d; color: white; }
 
-        /* 밴 영역 (실시간 드래프트) */
         .ban-container { display: flex; justify-content: center; gap: 50px; margin: 10px 0; }
         .ban-group { display: flex; gap: 4px; }
         .ban-slot { width: 35px; height: 35px; border: 1px solid #444; background: #000; position: relative; }
-        .ban-slot img { width: 100%; filter: grayscale(1); } /* 드래프트 중 밴은 항상 흑백 */
+        .ban-slot img { width: 100%; filter: grayscale(1); }
         
-        /* 픽 영역 (실시간 드래프트) */
         .draft-main { display: grid; grid-template-columns: 220px 1fr 220px; gap: 15px; width: 100%; max-width: 1300px; }
         .side-panel { display: flex; flex-direction: column; gap: 8px; }
         .pick-slot {
@@ -40,9 +38,8 @@
         .pick-slot.blue { border-left: 4px solid var(--blue-team); }
         .pick-slot.red { border-right: 4px solid var(--red-team); flex-direction: row-reverse; }
         .pick-slot img { height: 100%; position: absolute; right: 0; opacity: 0.6; z-index: 0; }
-        .pick-name { padding: 0 15px; font-weight: bold; z-index: 1; text-shadow: 2px 2px 4px #000; }
+        .pick-name { padding: 0 15px; font-weight: bold; z-index: 1; text-shadow: 2px 2px 4px #000; font-size: 14px; }
 
-        /* 현재 순서 강조 */
         @keyframes glow {
             0% { box-shadow: 0 0 5px var(--lol-gold); border-color: var(--lol-gold); }
             50% { box-shadow: 0 0 20px var(--lol-gold); border-color: #fff; }
@@ -50,18 +47,24 @@
         }
         .active-turn { animation: glow 1.5s infinite ease-in-out; z-index: 2; border: 2px solid var(--lol-gold) !important; }
 
-        /* 중앙 챔피언 그리드 */
         .center-area { display: flex; flex-direction: column; align-items: center; }
+        
+        /* 검색창 스타일 추가 */
+        #searchBar {
+            background: #010a13; border: 1px solid var(--lol-gold); color: white;
+            padding: 8px; width: 80%; margin-bottom: 10px; text-align: center;
+        }
+
         .champ-grid {
             display: grid; grid-template-columns: repeat(10, 1fr); gap: 5px;
             max-height: 480px; overflow-y: auto; padding: 10px; border: 1px solid #222; background: rgba(0,0,0,0.3);
         }
-        .champ-item { width: 55px; cursor: pointer; transition: 0.1s; border: 1px solid transparent; }
+        .champ-item { width: 55px; cursor: pointer; transition: 0.1s; border: 1px solid transparent; text-align: center; }
         .champ-item:hover { border-color: var(--lol-gold); transform: scale(1.1); }
         .champ-item.disabled { filter: grayscale(1); opacity: 0.15; pointer-events: none; }
-        .champ-item img { width: 100%; }
+        .champ-item img { width: 100%; border-radius: 2px; }
+        .champ-label { font-size: 10px; color: #ccc; margin-top: 2px; overflow: hidden; white-space: nowrap; }
 
-        /* 히스토리 영역 (이미지 포함) */
         .history-area { margin-top: 30px; width: 100%; max-width: 1300px; border-top: 1px solid #333; padding-top: 10px; }
         .history-item { background: rgba(255,255,255,0.03); padding: 15px; margin-bottom: 10px; border-radius: 4px; display: flex; flex-direction: column; gap: 10px; }
         .history-set-title { font-weight: bold; color: var(--lol-gold); border-bottom: 1px solid #444; padding-bottom: 5px; }
@@ -69,8 +72,7 @@
         .history-row:last-child { border-bottom: none; }
         .history-champs { display: flex; gap: 5px; align-items: center; }
         .history-champs img { width: 35px; height: 35px; border: 1px solid #555; border-radius: 2px; }
-        /* 히스토리 내 밴 초상화 흑백 처리 */
-        .history-champs img.history-ban-img { filter: grayscale(1); border-color: #333; opacity: 0.6; } 
+        .history-ban-img { filter: grayscale(1); border-color: #333; opacity: 0.6; } 
         
         .team-label { width: 80px; font-weight: bold; font-size: 13px; }
         .section-label { font-size: 11px; color: #777; font-weight: bold; margin-right: 5px; }
@@ -82,7 +84,7 @@
 
 <div class="header-controls">
     <button class="reset-btn" onclick="confirmReset()">전체 데이터 초기화</button>
-    <div class="version-tag">ver 1.1.1</div>
+    <div class="version-tag">ver 1.2.0</div>
 </div>
 
 <h3 style="color: var(--lol-gold); margin: 0 0 10px 0;">FEARLESS DRAFT SYSTEM</h3>
@@ -96,7 +98,8 @@
 <div class="draft-main">
     <div class="side-panel" id="bluePicks"></div>
     <div class="center-area">
-        <div id="statusText" style="margin-bottom: 10px; color: var(--lol-gold); font-weight: bold;">대기 중...</div>
+        <input type="text" id="searchBar" placeholder="챔피언 검색 (한글)" onkeyup="renderChamps()">
+        <div id="statusText" style="margin-bottom: 10px; color: var(--lol-gold); font-weight: bold;">로딩 중...</div>
         <div class="champ-grid" id="champGrid"></div>
         <button class="complete-btn" id="finishBtn" onclick="finishSet()" style="display:none;">SET 완료 및 기록</button>
     </div>
@@ -109,8 +112,9 @@
 </div>
 
 <script>
-    const champions = ["Aatrox", "Ahri", "Akali", "Alistar", "Amumu", "Anivia", "Ashe", "Azir", "Bard", "Blitzcrank", "Brand", "Braum", "Caitlyn", "Camille", "Cassiopeia", "Darius", "Diana", "Ezreal", "Fiora", "Fizz", "Garen", "Gnar", "Gragas", "Graves", "Gwen", "Hecarim", "Irelia", "Jax", "Jhin", "KaiSa", "Karma", "Kassadin", "Katarina", "LeeSin", "Leona", "Lux", "Malphite", "Nautilus", "Orianna", "Ornn", "Pyke", "Riven", "Sett", "Sylas", "Thresh", "Vayne", "Yone", "Yuumi", "Zed"];
-
+    let championData = {}; // Riot API 데이터 저장
+    let sortedChampKeys = []; 
+    
     const sequence = [
         {t:'ban', side:'blue', i:0}, {t:'ban', side:'red', i:0}, {t:'ban', side:'blue', i:1}, {t:'ban', side:'red', i:1}, {t:'ban', side:'blue', i:2}, {t:'ban', side:'red', i:2},
         {t:'pick', side:'blue', i:0}, {t:'pick', side:'red', i:0}, {t:'pick', side:'red', i:1}, {t:'pick', side:'blue', i:1}, {t:'pick', side:'blue', i:2}, {t:'pick', side:'red', i:2},
@@ -129,6 +133,33 @@
     let fearlessBans = JSON.parse(sessionStorage.getItem('fearlessBans')) || [];
     let history = JSON.parse(sessionStorage.getItem('draftHistory')) || [];
     let currentDraft = { bluePicks: [], redPicks: [], blueBans: [], redBans: [] };
+
+    // Riot API에서 최신 챔피언 데이터 가져오기 (한국어)
+    async function fetchChampions() {
+        try {
+            // 최신 버전 확인
+            const versionRes = await fetch('https://ddragon.leagueoflegends.com/api/versions.json');
+            const versions = await versionRes.json();
+            const latestVersion = versions[0];
+
+            // 한국어 데이터 가져오기
+            const res = await fetch(`https://ddragon.leagueoflegends.com/cdn/${latestVersion}/data/ko_KR/champion.json`);
+            const data = await res.json();
+            championData = data.data;
+            
+            // 한글 이름 기준 가나다순 정렬
+            sortedChampKeys = Object.keys(championData).sort((a, b) => 
+                championData[a].name.localeCompare(championData[b].name)
+            );
+
+            document.getElementById('statusText').innerText = "챔피언 로드 완료!";
+            initBoard();
+            renderHistory();
+        } catch (err) {
+            document.getElementById('statusText').innerText = "데이터 로드 실패";
+            console.error(err);
+        }
+    }
 
     function initBoard() {
         createSlots('blueBans', 5, 'ban-slot');
@@ -152,22 +183,31 @@
 
     function renderChamps() {
         const grid = document.getElementById('champGrid');
+        const query = document.getElementById('searchBar').value.toLowerCase();
         grid.innerHTML = '';
-        champions.sort().forEach(champ => {
-            const isDisabled = fearlessBans.includes(champ) || Object.values(currentDraft).flat().includes(champ);
+        
+        sortedChampKeys.forEach(key => {
+            const champ = championData[key];
+            // 검색 필터 (한글 이름 또는 영문 키워드)
+            if(!champ.name.includes(query) && !key.toLowerCase().includes(query)) return;
+
+            const isDisabled = fearlessBans.includes(key) || Object.values(currentDraft).flat().includes(key);
             const div = document.createElement('div');
             div.className = `champ-item ${isDisabled ? 'disabled' : ''}`;
-            div.innerHTML = `<img src="https://ddragon.leagueoflegends.com/cdn/13.24.1/img/champion/${champ}.png">`;
-            div.onclick = () => selectChamp(champ);
+            div.innerHTML = `
+                <img src="https://ddragon.leagueoflegends.com/cdn/13.24.1/img/champion/${key}.png">
+                <div class="champ-label">${champ.name}</div>
+            `;
+            div.onclick = () => selectChamp(key);
             grid.appendChild(div);
         });
     }
 
-    function selectChamp(name) {
+    function selectChamp(key) {
         if(step >= sequence.length) return;
         const turn = sequence[step];
         const targetList = turn.side + (turn.t === 'ban' ? 'Bans' : 'Picks');
-        currentDraft[targetList][turn.i] = name;
+        currentDraft[targetList][turn.i] = key;
         
         sfx[turn.t].currentTime = 0;
         sfx[turn.t].play();
@@ -179,13 +219,14 @@
 
     function updateUI() {
         ['blueBans', 'redBans', 'bluePicks', 'redPicks'].forEach(key => {
-            currentDraft[key].forEach((name, i) => {
+            currentDraft[key].forEach((champKey, i) => {
                 const slot = document.getElementById(`${key}-${i}`);
-                if(name) {
+                if(champKey) {
+                    const champName = championData[champKey].name;
                     const imgUrl = key.includes('Picks') 
-                        ? `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${name}_0.jpg`
-                        : `https://ddragon.leagueoflegends.com/cdn/13.24.1/img/champion/${name}.png`;
-                    slot.innerHTML = `<img src="${imgUrl}"><div class="pick-name">${name}</div>`;
+                        ? `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${champKey}_0.jpg`
+                        : `https://ddragon.leagueoflegends.com/cdn/13.24.1/img/champion/${champKey}.png`;
+                    slot.innerHTML = `<img src="${imgUrl}"><div class="pick-name">${champName}</div>`;
                 }
             });
         });
@@ -218,35 +259,34 @@
         currentSet++;
         initBoard();
         renderHistory();
+        document.getElementById('searchBar').value = ''; // 검색어 초기화
     }
 
     function renderHistory() {
         const log = document.getElementById('historyLog');
         log.innerHTML = history.slice().reverse().map(h => `
             <div class="history-item">
-                <div class="history-set-title">SET ${h.set} SUMMARY</div>
-                
+                <div class="history-set-title">SET ${h.set} 결과</div>
                 <div class="history-row">
-                    <div class="team-label blue-text" style="color:var(--blue-team)">BLUE TEAM</div>
+                    <div class="team-label" style="color:var(--blue-team)">BLUE</div>
                     <div class="history-champs">
                         <span class="section-label">PICKS:</span>
-                        ${h.bluePicks.map(c => `<img src="https://ddragon.leagueoflegends.com/cdn/13.24.1/img/champion/${c}.png" title="${c}">`).join('')}
+                        ${h.bluePicks.map(c => `<img src="https://ddragon.leagueoflegends.com/cdn/13.24.1/img/champion/${c}.png" title="${championData[c]?.name}">`).join('')}
                     </div>
                     <div class="history-champs" style="margin-left:15px;">
                         <span class="section-label">BANS:</span>
-                        ${h.blueBans.map(c => `<img src="https://ddragon.leagueoflegends.com/cdn/13.24.1/img/champion/${c}.png" class="history-ban-img" title="${c}">`).join('')}
+                        ${h.blueBans.map(c => `<img src="https://ddragon.leagueoflegends.com/cdn/13.24.1/img/champion/${c}.png" class="history-ban-img" title="${championData[c]?.name}">`).join('')}
                     </div>
                 </div>
-
                 <div class="history-row">
-                    <div class="team-label red-text" style="color:var(--red-team)">RED TEAM</div>
+                    <div class="team-label" style="color:var(--red-team)">RED</div>
                     <div class="history-champs">
                         <span class="section-label">PICKS:</span>
-                        ${h.redPicks.map(c => `<img src="https://ddragon.leagueoflegends.com/cdn/13.24.1/img/champion/${c}.png" title="${c}">`).join('')}
+                        ${h.redPicks.map(c => `<img src="https://ddragon.leagueoflegends.com/cdn/13.24.1/img/champion/${c}.png" title="${championData[c]?.name}">`).join('')}
                     </div>
                     <div class="history-champs" style="margin-left:15px;">
                         <span class="section-label">BANS:</span>
-                        ${h.redBans.map(c => `<img src="https://ddragon.leagueoflegends.com/cdn/13.24.1/img/champion/${c}.png" class="history-ban-img" title="${c}">`).join('')}
+                        ${h.redBans.map(c => `<img src="https://ddragon.leagueoflegends.com/cdn/13.24.1/img/champion/${c}.png" class="history-ban-img" title="${championData[c]?.name}">`).join('')}
                     </div>
                 </div>
             </div>
@@ -254,14 +294,14 @@
     }
 
     function confirmReset() {
-        if(confirm("모든 밴픽 히스토리와 피어리스 데이터를 초기화할까요? 이 작업은 되돌릴 수 없습니다.")) {
+        if(confirm("모든 데이터를 초기화할까요?")) {
             sessionStorage.clear();
             location.reload();
         }
     }
 
-    initBoard();
-    renderHistory();
+    // 앱 시작
+    fetchChampions();
 </script>
 </body>
 </html>
