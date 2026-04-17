@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>GreenPeppers 참여율 조회</title>
+    <style>
+        :root { --primary: #4a90e2; --bg: #f8f9fa; }
+        body { font-family: 'Pretendard', sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 20px; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+        .stat-box { background: #f1f3f5; padding: 15px; border-radius: 8px; text-align: center; }
+        .stat-label { font-size: 12px; color: #666; display: block; }
+        .stat-value { font-size: 18px; font-weight: bold; color: var(--primary); }
+        .rate-box { grid-column: span 2; background: var(--primary); color: white; }
+        .rate-box .stat-label { color: #e0e0e0; }
+        .rate-box .stat-value { color: white; font-size: 24px; }
+        select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>📊 멤버 참여 통계</h2>
+    <p style="font-size: 12px; color: #888;">* 오늘 이전 토요일까지, 경기 미진행(R) 제외 집계</p>
+    
+    <select id="memberSelect" onchange="getStats()">
+        <option value="">멤버를 불러오는 중...</option>
+    </select>
+
+    <div id="result" class="stat-grid" style="display: none;">
+        <div class="stat-box rate-box">
+            <span class="stat-label">참여율</span>
+            <span id="rate" class="stat-value">0%</span>
+        </div>
+        <div class="stat-box">
+            <span class="stat-label">총 경기</span>
+            <span id="total" class="stat-value">0</span>
+        </div>
+        <div class="stat-box">
+            <span class="stat-label">참석(O)</span>
+            <span id="att" class="stat-value">0</span>
+        </div>
+        <div class="stat-box">
+            <span class="stat-label">불참(X)</span>
+            <span id="abs" class="stat-value">0</span>
+        </div>
+    </div>
+    <div id="status" style="margin-top:15px; text-align:center; color:#999;">멤버를 선택해주세요.</div>
+</div>
+
+<script>
+    const WEB_APP_URL = "본인의_배포_URL_입력";
+
+    window.onload = loadMembers;
+
+    async function loadMembers() {
+        const response = await fetch(`${WEB_APP_URL}?action=getMembers`);
+        const data = await response.text();
+        const members = data.split('|').filter(n => n.trim() !== "");
+        const select = document.getElementById('memberSelect');
+        select.innerHTML = '<option value="">-- 멤버 선택 --</option>';
+        members.forEach(name => {
+            const opt = document.createElement('option');
+            opt.value = opt.innerText = name;
+            select.appendChild(opt);
+        });
+    }
+
+    async function getStats() {
+        const name = document.getElementById('memberSelect').value;
+        const resultDiv = document.getElementById('result');
+        const status = document.getElementById('status');
+        if (!name) { resultDiv.style.display = 'none'; return; }
+
+        status.innerText = "계산 중...";
+        try {
+            const response = await fetch(`${WEB_APP_URL}?action=getStats&name=${encodeURIComponent(name)}`);
+            const res = await response.json();
+            
+            if (res.error) {
+                alert(res.error);
+                return;
+            }
+
+            document.getElementById('total').innerText = res.totalMatches;
+            document.getElementById('att').innerText = res.attendanceCount;
+            document.getElementById('abs').innerText = res.absenceCount;
+            document.getElementById('rate').innerText = res.attendanceRate;
+
+            resultDiv.style.display = 'grid';
+            status.innerText = "";
+        } catch (e) {
+            status.innerText = "오류 발생";
+        }
+    }
+</script>
+</body>
+</html>
