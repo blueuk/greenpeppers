@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Green Pepper FC DashBoard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #0095f6;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+            --dark: #1a1a1a;
+            --gray: #f4f7f6;
+            --pepper-green: #27ae60;
+        }
+
+        body { font-family: 'Pretendard', sans-serif; background: var(--gray); margin: 0; padding-bottom: 50px; color: #333; overflow-x: hidden; }
+        
+        /* 로딩 프로그레스 */
+        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 4px; background: #ddd; z-index: 9999; display: none; }
+        #progress { height: 100%; background: var(--primary); width: 0%; transition: width 0.3s; }
+
+        header { background: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .logo-area { display: flex; align-items: center; gap: 10px; }
+        .logo-area img { width: 40px; }
+
+        /* 통계 카드 슬라이드 */
+        .stat-container { padding: 20px; }
+        .stat-card { 
+            background: linear-gradient(135deg, #00c6ff, #0072ff); 
+            border-radius: 20px; padding: 25px; color: white; 
+            position: relative; min-height: 150px;
+            box-shadow: 0 10px 20px rgba(0,114,255,0.3);
+            display: none; animation: fadeEffect 0.5s;
+        }
+        .stat-card.active { display: block; }
+        .stat-name { font-size: 1.5rem; font-weight: bold; }
+        .stat-info { position: absolute; right: 25px; top: 25px; text-align: right; }
+        .stat-row { font-size: 1.1rem; margin-bottom: 5px; opacity: 0.9; }
+        .stat-rate { font-size: 2rem; font-weight: 800; margin-top: 15px; }
+
+        /* 메뉴 그리드 */
+        .menu-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; padding: 0 20px; margin-bottom: 20px; }
+        .menu-item { 
+            background: white; border-radius: 12px; padding: 15px 5px; text-align: center; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); cursor: pointer; transition: 0.2s;
+        }
+        .menu-item:active { transform: scale(0.95); }
+        .menu-item i { display: block; font-size: 1.5rem; margin-bottom: 8px; color: #555; }
+        .menu-item span { font-size: 12px; font-weight: bold; color: #333; white-space: nowrap; }
+        .menu-item.active { background: #333; }
+        .menu-item.active i, .menu-item.active span { color: white; }
+
+        /* 유튜브 버튼 */
+        .yt-btn { 
+            margin: 0 20px 25px; background: #ff0000; color: white; 
+            padding: 12px; border-radius: 10px; text-align: center; 
+            text-decoration: none; display: flex; justify-content: center; align-items: center; gap: 8px;
+            font-weight: bold; box-shadow: 0 4px 10px rgba(255,0,0,0.2);
+        }
+
+        /* 가로 달력 */
+        .calendar-nav { 
+            display: flex; overflow-x: auto; padding: 10px 20px; gap: 15px; 
+            scrollbar-width: none; background: white; border-top: 1px solid #eee;
+        }
+        .calendar-nav::-webkit-scrollbar { display: none; }
+        .day-item { 
+            min-width: 50px; text-align: center; padding: 10px 5px; border-radius: 15px; 
+            color: #888; cursor: pointer; transition: 0.3s;
+        }
+        .day-item.active { background: var(--primary); color: white; font-weight: bold; }
+        .day-item span { display: block; font-size: 12px; }
+        .day-item strong { font-size: 18px; }
+
+        /* 참석자 리스트 영역 */
+        .attendance-area { padding: 25px 20px; background: #eee; min-height: 200px; }
+        .member-tag { 
+            display: inline-block; background: white; padding: 8px 15px; 
+            border-radius: 8px; margin: 5px; font-weight: bold; color: var(--pepper-green);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05); animation: popUp 0.3s;
+        }
+
+        /* 하단 배너 */
+        .footer-banner { 
+            position: fixed; bottom: 0; width: 100%; height: 60px;
+            background: url('https://images.unsplash.com/photo-1551958219-acbc608c6377?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60') center/cover;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .footer-banner::after { content: "GREEN PEPPER FC"; color: #adff2f; font-weight: 900; letter-spacing: 2px; text-shadow: 1px 1px 5px black; }
+
+        /* 모달 스타일 */
+        .modal { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 1000;
+        }
+        .modal-content { background: white; width: 90%; max-width: 400px; border-radius: 20px; padding: 25px; position: relative; max-height: 80vh; overflow-y: auto; }
+        .close-modal { position: absolute; right: 20px; top: 20px; font-size: 20px; cursor: pointer; }
+
+        /* 애니메이션 */
+        @keyframes fadeEffect { from {opacity: 0; transform: translateY(10px);} to {opacity: 1; transform: translateY(0);} }
+        @keyframes popUp { from {transform: scale(0.8); opacity: 0;} to {transform: scale(1); opacity: 1;} }
+    </style>
+</head>
+<body>
+
+<div id="loader"><div id="progress"></div></div>
+
+<header>
+    <div class="logo-area">
+        <img src="https://cdn-icons-png.flaticon.com/512/532/532161.png" alt="Logo">
+        <div style="font-weight: 900; font-size: 1.1rem;">플랩위크<br><span style="font-size: 0.7rem; color: #888;">한강 꿈의 운동장</span></div>
+    </div>
+    <i class="fa fa-search" style="font-size: 1.2rem; color: #555;"></i>
+</header>
+
+<div class="stat-container" id="statSlider">
+    <div class="stat-card active">
+        <div class="stat-name">데이터 로딩중...</div>
+    </div>
+</div>
+
+<div class="menu-grid">
+    <div class="menu-item active" onclick="openModal('modalMemberList')"><i class="fa fa-users"></i><span>멤버보기</span></div>
+    <div class="menu-item" onclick="openModal('modalAddMember')"><i class="fa fa-user-plus"></i><span>멤버추가</span></div>
+    <div class="menu-item" onclick="alert('기능 개발 중입니다!')"><i class="fa fa-layer-group"></i><span>팀배정</span></div>
+    <div class="menu-item" onclick="alert('기능 개발 중입니다!')"><i class="fa fa-file-signature"></i><span>점수입력</span></div>
+    <div class="menu-item" onclick="openModal('modalVote')"><i class="fa fa-check-to-slot"></i><span>투표입력</span></div>
+</div>
+
+<a href="https://youtube.com/@fc_green_pepper?si=pcmvE6Msb2iINPNR" class="yt-btn" target="_blank">
+    <i class="fab fa-youtube"></i> YouTube 바로가기
+</a>
+
+<div class="calendar-nav" id="horizontalCalendar"></div>
+
+<div class="attendance-area" id="attendanceList">
+    <div style="text-align: center; color: #999; margin-top: 50px;">날짜를 선택해 주세요.</div>
+</div>
+
+<div class="footer-banner"></div>
+
+<div id="modalMemberList" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeModal()">×</span>
+        <h3>🏃 멤버 명단</h3>
+        <div id="memberFullList" style="display: flex; flex-wrap: wrap; gap: 5px;"></div>
+    </div>
+</div>
+
+<div id="modalAddMember" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeModal()">×</span>
+        <h3>👤 멤버 추가</h3>
+        <textarea id="multiNames" placeholder="이름을 입력하세요 (여러 명은 띄어쓰기 또는 줄바꿈)" style="width:100%; height:100px; padding:10px; border-radius:10px; border:1px solid #ddd;"></textarea>
+        <button onclick="submitAddMembers()" style="width:100%; background:var(--primary); color:white; border:none; padding:15px; border-radius:10px; margin-top:10px; font-weight:bold;">등록하기</button>
+    </div>
+</div>
+
+<div id="modalVote" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeModal()">×</span>
+        <h3>🗳️ 투표 진행</h3>
+        <div id="voteArea">투표 대상을 선택하는 로직이 들어갑니다.</div>
+    </div>
+</div>
+
+<script>
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzSTViZcvoCjeHcTcfmdA68wOPYiQKUvOxbHCTI_Ak-tb7JQ6KQq-XXwM7cpV-qagGX/exec";
+    let allMembers = [];
+    let statsData = [];
+    let currentCardIndex = 0;
+
+    // 초기 실행
+    window.onload = () => {
+        initCalendar();
+        loadInitialData();
+    };
+
+    // 1. 초기 데이터 로드 (멤버리스트 + 전체 통계)
+    async function loadInitialData() {
+        showProgress(true);
+        try {
+            const resp = await fetch(`${WEB_APP_URL}?action=getMembers`);
+            const text = await resp.text();
+            allMembers = text.split('|').filter(n => n.trim() !== "");
+            
+            renderMemberList(); // 모달용
+            
+            // 모든 멤버 통계 가져오기 (비동기로 병렬 처리 권장하나 여기서는 순차 샘플)
+            // 실제 상용시에는 GAS에서 전체 통계를 한번에 주는 action을 만드는게 좋음
+            for(let name of allMembers.slice(0, 5)) { // 일단 상위 5명만 시연용으로 가져옴
+                const sResp = await fetch(`${WEB_APP_URL}?action=getStats&name=${encodeURIComponent(name)}`);
+                const sJson = await sResp.json();
+                statsData.push(sJson);
+            }
+            startStatRotation();
+        } catch(e) { console.error(e); }
+        showProgress(false);
+    }
+
+    // 2. 카드 로테이션 (1초마다)
+    function startStatRotation() {
+        const slider = document.getElementById('statSlider');
+        if(statsData.length === 0) return;
+
+        setInterval(() => {
+            currentCardIndex = (currentCardIndex + 1) % statsData.length;
+            const data = statsData[currentCardIndex];
+            slider.innerHTML = `
+                <div class="stat-card active">
+                    <div class="stat-name">${data.name}</div>
+                    <div class="stat-info">
+                        <div class="stat-row">총 경기: ${data.totalMatches}</div>
+                        <div class="stat-row">참석: ${data.attendanceCount}</div>
+                    </div>
+                    <div class="stat-rate">참석률 ${data.attendanceRate}</div>
+                    <div style="position:absolute; bottom:20px; left:25px; font-size:12px; opacity:0.7;">Green Pepper FC Member Stats</div>
+                </div>
+            `;
+        }, 1500);
+    }
+
+    // 3. 달력 초기화
+    function initCalendar() {
+        const cal = document.getElementById('horizontalCalendar');
+        const days = ['일','월','화','수','목','금','토'];
+        const today = new Date();
+        
+        for(let i = -3; i < 7; i++) {
+            const d = new Date();
+            d.setDate(today.getDate() + i);
+            const dateStr = d.toISOString().split('T')[0];
+            const activeClass = i === 0 ? 'active' : '';
+            
+            cal.innerHTML += `
+                <div class="day-item ${activeClass}" id="date-${dateStr}" onclick="fetchAttendance('${dateStr}')">
+                    <span>${days[d.getDay()]}</span>
+                    <strong>${d.getDate()}</strong>
+                </div>
+            `;
+        }
+    }
+
+    // 4. 특정 날짜 참석자 가져오기
+    async function fetchAttendance(date) {
+        // UI 선택 효과
+        document.querySelectorAll('.day-item').forEach(el => el.classList.remove('active'));
+        document.getElementById(`date-${date}`).classList.add('active');
+
+        const listArea = document.getElementById('attendanceList');
+        listArea.innerHTML = '<div style="text-align:center; color:#888;">조회 중...</div>';
+        
+        try {
+            const resp = await fetch(`${WEB_APP_URL}?action=getAttending&date=${date}`);
+            const data = await resp.text();
+            listArea.innerHTML = "";
+            
+            if(!data || data.includes("오류")) {
+                listArea.innerHTML = '<div style="text-align:center; color:#999;">데이터가 없습니다.</div>';
+                return;
+            }
+
+            data.split('|').forEach(name => {
+                listArea.innerHTML += `<div class="member-tag">${name}</div>`;
+            });
+        } catch(e) { listArea.innerHTML = "데이터 로드 실패"; }
+    }
+
+    // 5. 모달 제어
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeModal() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
+
+    function renderMemberList() {
+        const area = document.getElementById('memberFullList');
+        area.innerHTML = allMembers.map(m => `<div class="member-tag" style="background:#f0f0f0; color:#333;">${m}</div>`).join('');
+    }
+
+    // 6. 멤버 추가 로직
+    async function submitAddMembers() {
+        const val = document.getElementById('multiNames').value;
+        const names = val.split(/[\s\n,]+/).filter(n => n.trim() !== "");
+        if(names.length === 0) return;
+
+        showProgress(true);
+        for(let name of names) {
+            await fetch(WEB_APP_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify({ name: name })
+            });
+        }
+        alert('추가가 완료되었습니다.');
+        location.reload();
+    }
+
+    function showProgress(show) {
+        const loader = document.getElementById('loader');
+        const bar = document.getElementById('progress');
+        loader.style.display = show ? 'block' : 'none';
+        if(show) {
+            bar.style.width = '30%';
+            setTimeout(() => bar.style.width = '70%', 500);
+        }
+    }
+</script>
+
+</body>
+</html>
