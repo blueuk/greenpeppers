@@ -24,7 +24,6 @@
             display: flex; flex-direction: column; height: 100vh;
         }
 
-        /* 헤더 스타일 수정 */
         header { 
             padding: 15px 20px; 
             background: #fff; 
@@ -35,10 +34,10 @@
         .header-container {
             display: flex;
             align-items: center;
-            gap: 8px; /* 로고와 텍스트 사이 간격 */
+            gap: 8px;
         }
         .header-logo {
-            height: 28px; /* 헤더 글자 크기에 맞춘 로고 높이 */
+            height: 28px;
             width: auto;
             object-fit: contain;
         }
@@ -103,11 +102,19 @@
             border-left: 3px solid var(--toss-blue);
         }
 
-        .calendar-wrapper { display: flex; overflow-x: auto; gap: 10px; padding: 10px 0; scrollbar-width: none; }
+        .calendar-wrapper { 
+            display: flex; 
+            overflow-x: auto; 
+            gap: 10px; 
+            padding: 10px 0; 
+            scrollbar-width: none; 
+            scroll-behavior: smooth; 
+        }
         .calendar-wrapper::-webkit-scrollbar { display: none; }
         .date-item { 
-            min-width: 60px; padding: 15px 10px; background: #fff; border-radius: 15px; 
+            min-width: 65px; padding: 15px 10px; background: #fff; border-radius: 15px; 
             text-align: center; cursor: pointer; border: 2px solid transparent; transition: 0.2s;
+            flex-shrink: 0;
         }
         .date-item.selected { border-color: var(--toss-blue); color: var(--toss-blue); font-weight: bold; background: var(--toss-light-blue); }
 
@@ -208,9 +215,9 @@
             <div class="card-title">투표 관리</div>
             <input type="date" id="vote-date">
             <div id="vote-step-container">
-                <p id="vote-step-msg">참석자를 선택해 주세요.</p>
+                <p id="vote-step-msg">참석자를 모두 선택해 주세요.</p>
                 <div id="vote-member-chips" style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:15px;"></div>
-                <button class="btn" id="vote-next-btn" onclick="processVoteStep()">다음 단계 (참석)</button>
+                <button class="btn" id="vote-next-btn" onclick="processVoteStep()">다음 단계 (참석 선택 완료)</button>
                 <button class="btn btn-outline" onclick="submitNoGame()">경기 미진행(R) 처리</button>
             </div>
         </div>
@@ -233,7 +240,6 @@
     let voteData = { attend: [], absent: [] };
 
     const statLabels = ["골레이", "아라", "피보", "픽소", "몸싸움", "균형감", "체력", "스피드", "리더십", "의사소통", "집중력", "대담성", "침착성", "일대일수비", "수비지원", "수비위치선정", "대인마크", "가로채기", "반사신경", "공중볼처리", "일대일돌파", "연계플레이", "공격위치선정", "슛", "슛정확도", "패스", "롱패스", "드리블"];
-
     const statGroups = [
         { title: "⚽ 포지션 적합도", indices: [0, 1, 2, 3] },
         { title: "🏃 신체적 능력", indices: [4, 5, 6, 7] },
@@ -248,6 +254,65 @@
         startRollingCard();
     };
 
+    function getLocalDateString(date) {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    }
+
+    // 캘린더 생성
+    function initCalendar() {
+        const wrapper = document.getElementById('horizontal-calendar');
+        const now = new Date();
+        const year = now.getFullYear();
+
+        wrapper.innerHTML = ""; 
+
+        for (let month = 0; month < 12; month++) {
+            let d = new Date(year, month, 1);
+            while (d.getDay() !== 6) d.setDate(d.getDate() + 1); 
+            while (d.getFullYear() === year) {
+                const dateStr = getLocalDateString(d);
+                const item = document.createElement('div');
+                item.className = 'date-item';
+                // 데이터 속성에 날짜 정보 저장 (포커스 로직용)
+                item.dataset.date = dateStr;
+                item.innerHTML = `<span style="font-size:10px;">${d.getMonth()+1}월</span><br>${d.getDate()}`;
+                
+                const currentStr = dateStr;
+                item.onclick = () => selectDate(currentStr, item);
+                wrapper.appendChild(item);
+                d.setDate(d.getDate() + 7);
+            }
+        }
+        scrollToClosestSaturday();
+    }
+
+    // 오늘 날짜 기준 가장 가까운 토요일로 스크롤 및 선택
+    function scrollToClosestSaturday() {
+        const now = new Date();
+        const dateItems = document.querySelectorAll('.date-item');
+        let closestDist = Infinity;
+        let closestEl = null;
+
+        dateItems.forEach(item => {
+            const itemDate = new Date(item.dataset.date);
+            const dist = Math.abs(itemDate - now);
+            if(dist < closestDist) {
+                closestDist = dist;
+                closestEl = item;
+            }
+        });
+
+        if(closestEl) {
+            closestEl.click(); // 자동 선택
+            setTimeout(() => {
+                closestEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }, 300);
+        }
+    }
+
     async function apiCall(data) {
         document.getElementById('loading').style.display = 'flex';
         try {
@@ -260,7 +325,7 @@
             return result.data;
         } catch (e) {
             console.error(e);
-            alert("통신 에러가 발생했습니다.");
+            alert("통신 오류가 발생했습니다.");
         } finally {
             document.getElementById('loading').style.display = 'none';
         }
@@ -271,8 +336,8 @@
             apiCall({ action: 'getMemberList' }),
             apiCall({ action: 'getAttendanceRates' })
         ]);
-        memberList = list.sort();
-        attendanceRates = rates;
+        memberList = (list || []).sort();
+        attendanceRates = rates || [];
         
         const select = document.getElementById('member-select');
         memberList.forEach(name => {
@@ -283,109 +348,17 @@
         });
     }
 
-    function startRollingCard() {
-        let groupIdx = 0;
-        const groupSize = 5;
-
-        setInterval(() => {
-            if (attendanceRates && attendanceRates.length > 0) {
-                const sortedRates = [...attendanceRates].sort((a, b) => a.rank - b.rank);
-                const start = groupIdx * groupSize;
-                const currentGroup = sortedRates.slice(start, start + groupSize);
-
-                if (currentGroup.length === 0 && groupIdx !== 0) {
-                    groupIdx = 0;
-                    return;
-                }
-
-                let htmlContent = "";
-                for (let i = 0; i < groupSize; i++) {
-                    const m = currentGroup[i];
-                    if (m) {
-                        const crown = (m.rank === 1) ? '<span class="crown">👑</span>' : '';
-                        htmlContent += `
-                            <div class="rank-item">
-                                <div class="rank-info">
-                                    <span class="rank-num">${m.rank}위</span>
-                                    <span class="rank-name">${m.name}${crown}</span>
-                                </div>
-                                <div class="rank-stat">
-                                    <span style="color: var(--toss-blue); font-weight:700;">${m.rate}</span>
-                                    <span style="font-size:11px; color: var(--toss-gray); margin-left:4px;">
-                                        (참석: ${m.attend}회, 불참: ${m.absent}회)
-                                    </span>
-                                </div>
-                            </div>`;
-                    } else {
-                        htmlContent += `<div class="rank-item" style="border:none;"></div>`;
-                    }
-                }
-
-                const contentEl = document.getElementById('rolling-content');
-                contentEl.style.opacity = 0;
-                
-                setTimeout(() => {
-                    contentEl.innerHTML = htmlContent;
-                    contentEl.style.opacity = 1;
-                }, 300);
-
-                groupIdx = (start + groupSize >= sortedRates.length) ? 0 : groupIdx + 1;
-            }
-        }, 4000);
-    }
-
-    function showSection(id) {
-        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        const tabs = document.querySelectorAll('.tab');
-        if (id === 'home') tabs[0].classList.add('active');
-        else if (id === 'member-view') tabs[1].classList.add('active');
-        else if (id === 'member-add') tabs[2].classList.add('active');
-        else if (id === 'vote-input') { tabs[3].classList.add('active'); resetVoteStep(); }
-    }
-
-    function getLocalDateString(date) {
-        const y = date.getFullYear();
-        const m = String(date.getMonth() + 1).padStart(2, '0');
-        const d = String(date.getDate()).padStart(2, '0');
-        return `${y}-${m}-${d}`;
-    }
-
-    function initCalendar() {
-        const wrapper = document.getElementById('horizontal-calendar');
-        const now = new Date();
-        const year = now.getFullYear();
-        let closestDist = Infinity;
-        let closestEl = null;
-
-        for (let month = 0; month < 12; month++) {
-            let d = new Date(year, month, 1);
-            while (d.getDay() !== 6) d.setDate(d.getDate() + 1); 
-            while (d.getFullYear() === year) {
-                const dateStr = getLocalDateString(d);
-                const item = document.createElement('div');
-                item.className = 'date-item';
-                item.innerHTML = `<span style="font-size:10px;">${d.getMonth()+1}월</span><br>${d.getDate()}`;
-                const currentStr = dateStr;
-                item.onclick = () => selectDate(currentStr, item);
-                const dist = Math.abs(d - now);
-                if(dist < closestDist) { closestDist = dist; closestEl = item; }
-                wrapper.appendChild(item);
-                d.setDate(d.getDate() + 7);
-            }
-        }
-        if(closestEl) closestEl.click();
-    }
-
     async function selectDate(date, el) {
         document.querySelectorAll('.date-item').forEach(i => i.classList.remove('selected'));
         el.classList.add('selected');
+        
         const listContainer = document.getElementById('attendee-list');
         const countBadge = document.getElementById('attendee-count-badge');
+        
         listContainer.innerHTML = `<div style="color: var(--toss-gray); font-size: 14px;">조회 중...</div>`;
         const attendees = await apiCall({ action: 'getVoteStatus', date: date });
         listContainer.innerHTML = "";
+        
         if (attendees && attendees.length > 0) {
             countBadge.innerText = `${attendees.length}명`;
             attendees.forEach(name => {
@@ -415,10 +388,12 @@
             groupHeader.className = 'category-title';
             groupHeader.innerText = group.title;
             grid.appendChild(groupHeader);
+            
             group.indices.forEach(i => {
                 const val = info.stats[i];
                 let displayVal = (val === null || val === undefined || val === '') ? '-' : val;
                 if (i < 4 && !isNaN(val) && val !== '' && val !== '-') displayVal = parseFloat(val).toFixed(2);
+                
                 const isMax = (i < 4 && parseFloat(val) === maxScore && maxScore > 0);
                 const item = document.createElement('div');
                 item.className = `info-item ${isMax ? 'highlight' : ''}`;
@@ -427,6 +402,8 @@
             });
         });
         document.getElementById('edit-btn').style.display = 'block';
+        document.getElementById('edit-btn').innerText = "정보 수정하기";
+        document.getElementById('edit-btn').onclick = toggleEditMode;
         document.getElementById('cancel-btn').style.display = 'none';
     }
 
@@ -434,10 +411,11 @@
         const grid = document.getElementById('member-detail');
         const vals = grid.querySelectorAll('.stat-val');
         let totalIdx = 0;
+        
         statGroups.forEach(group => {
             group.indices.forEach(i => {
+                const valDiv = vals[totalIdx];
                 if (i >= 4) { 
-                    const valDiv = vals[totalIdx];
                     const currentRawVal = valDiv.getAttribute('data-raw');
                     const options = [5, 10, 13, 16, 18];
                     let selectHtml = `<select class="edit-stat">`;
@@ -460,10 +438,22 @@
 
     async function saveMemberInfo() {
         const name = document.getElementById('member-select').value;
-        const selects = document.querySelectorAll('.edit-stat');
-        const statsToSave = Array(statLabels.length).fill(""); 
-        let selectIdx = 0;
-        for(let i=4; i<statLabels.length; i++) statsToSave[i] = selects[selectIdx++].value;
+        const grid = document.getElementById('member-detail');
+        const items = grid.querySelectorAll('.info-item');
+        const statsToSave = Array(statLabels.length).fill("");
+        
+        let itemIdx = 0;
+        statGroups.forEach(group => {
+            group.indices.forEach(i => {
+                if (i < 4) {
+                    statsToSave[i] = items[itemIdx].querySelector('.stat-val').getAttribute('data-raw');
+                } else {
+                    statsToSave[i] = items[itemIdx].querySelector('.edit-stat').value;
+                }
+                itemIdx++;
+            });
+        });
+
         await apiCall({ action: 'updateMemberInfo', memberName: name, stats: statsToSave });
         alert("수정 완료!");
         loadMemberInfo();
@@ -514,6 +504,7 @@
                             .map(c => c.innerText);
         const date = document.getElementById('vote-date').value;
         if(!date) return alert("날짜를 선택하세요.");
+
         if(currentVoteStep === 0) { 
             voteData.attend = selected;
             const remaining = memberList.filter(m => !selected.includes(m)).sort();
@@ -525,6 +516,7 @@
             voteData.absent = selected;
             const allSelected = [...voteData.attend, ...voteData.absent];
             const notVoted = memberList.filter(m => !allSelected.includes(m));
+            
             const promises = [
                 ...voteData.attend.map(name => apiCall({ action: 'submitVote', date: date, memberName: name, status: 'O' })),
                 ...voteData.absent.map(name => apiCall({ action: 'submitVote', date: date, memberName: name, status: 'X' })),
@@ -543,6 +535,47 @@
             await apiCall({ action: 'setNoGame', date: date });
             alert("처리 완료");
         }
+    }
+
+    function startRollingCard() {
+        let groupIdx = 0;
+        const groupSize = 5;
+        setInterval(() => {
+            if (attendanceRates && attendanceRates.length > 0) {
+                const sortedRates = [...attendanceRates].sort((a, b) => a.rank - b.rank);
+                const start = groupIdx * groupSize;
+                const currentGroup = sortedRates.slice(start, start + groupSize);
+                if (currentGroup.length === 0 && groupIdx !== 0) { groupIdx = 0; return; }
+
+                let htmlContent = "";
+                for (let i = 0; i < groupSize; i++) {
+                    const m = currentGroup[i];
+                    if (m) {
+                        const crown = (m.rank === 1) ? '<span class="crown">👑</span>' : '';
+                        htmlContent += `<div class="rank-item"><div class="rank-info"><span class="rank-num">${m.rank}위</span><span class="rank-name">${m.name}${crown}</span></div><div class="rank-stat"><span style="color: var(--toss-blue); font-weight:700;">${m.rate}</span><span style="font-size:11px; color: var(--toss-gray); margin-left:4px;">(참석: ${m.attend}회)</span></div></div>`;
+                    }
+                }
+                const contentEl = document.getElementById('rolling-content');
+                contentEl.style.opacity = 0;
+                setTimeout(() => { contentEl.innerHTML = htmlContent; contentEl.style.opacity = 1; }, 300);
+                groupIdx = (start + groupSize >= sortedRates.length) ? 0 : groupIdx + 1;
+            }
+        }, 4000);
+    }
+
+    function showSection(id) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        
+        const tabs = document.querySelectorAll('.tab');
+        if (id === 'home') {
+            tabs[0].classList.add('active');
+            scrollToClosestSaturday(); // 홈 탭 클릭 시 오늘 기준 토요일로 포커스
+        }
+        else if (id === 'member-view') tabs[1].classList.add('active');
+        else if (id === 'member-add') tabs[2].classList.add('active');
+        else if (id === 'vote-input') { tabs[3].classList.add('active'); resetVoteStep(); }
     }
 </script>
 
