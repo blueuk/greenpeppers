@@ -13,6 +13,8 @@
             --toss-text: #191f28;
             --toss-gray: #8b95a1;
             --toss-light-blue: #e8f3ff;
+            --toss-red: #f04452;
+            --toss-green: #2ecc71;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -84,79 +86,69 @@
         .crown { margin-left: 4px; font-size: 14px; }
         .rank-stat { text-align: right; font-size: 14px; font-weight: 500; }
 
-        .info-item.highlight {
-            background: var(--toss-blue) !important;
-            color: #ffffff !important;
-            border: none;
-        }
-        .info-item.highlight .info-label { color: rgba(255, 255, 255, 0.8) !important; }
-        .info-item.highlight .stat-val { color: #ffffff !important; font-weight: 700; }
-
-        .category-title {
-            grid-column: span 2;
-            font-size: 13px;
-            font-weight: 700;
-            color: var(--toss-text);
-            margin: 15px 0 5px 0;
-            padding-left: 8px;
-            border-left: 3px solid var(--toss-blue);
-        }
-
-        .calendar-wrapper { 
-            display: flex; 
-            overflow-x: auto; 
-            gap: 10px; 
-            padding: 10px 0; 
-            scrollbar-width: none; 
-            scroll-behavior: smooth; 
-        }
-        .calendar-wrapper::-webkit-scrollbar { display: none; }
-        .date-item { 
-            min-width: 65px; padding: 15px 10px; background: #fff; border-radius: 15px; 
-            text-align: center; cursor: pointer; border: 2px solid transparent; transition: 0.2s;
-            flex-shrink: 0;
-        }
-        .date-item.selected { border-color: var(--toss-blue); color: var(--toss-blue); font-weight: bold; background: var(--toss-light-blue); }
-
+        /* 참석자 리스트 및 추가 버튼 */
         .attendee-container { display: flex; flex-wrap: wrap; gap: 8px; }
         .attendee-chip {
             background: #f2f4f6; color: #4e5968; padding: 8px 14px;
             border-radius: 12px; font-size: 14px; font-weight: 600;
         }
+        .add-chip {
+            background: var(--toss-light-blue); color: var(--toss-blue); padding: 8px 14px;
+            border-radius: 12px; font-size: 14px; font-weight: 700;
+            cursor: pointer; border: 1px dashed var(--toss-blue);
+        }
         .attend-count { font-size: 12px; color: var(--toss-blue); background: var(--toss-light-blue); padding: 2px 8px; border-radius: 10px; }
 
-        footer { 
-            position: fixed; bottom: 0; width: 100%; background: #fff; 
-            display: flex; justify-content: space-around; padding: 10px 0;
-            border-top: 1px solid #eee; box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+        /* 모달 스타일 */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5); z-index: 2000;
+            display: none; justify-content: center; align-items: center; padding: 20px;
         }
+        .modal-content {
+            background: #fff; width: 100%; max-width: 320px;
+            border-radius: 24px; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            animation: modalPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes modalPop { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        /* 일정 캘린더 */
+        .calendar-wrapper { display: flex; overflow-x: auto; gap: 10px; padding: 10px 0; scrollbar-width: none; }
+        .date-item { min-width: 65px; padding: 15px 10px; background: #fff; border-radius: 15px; text-align: center; cursor: pointer; border: 2px solid transparent; flex-shrink: 0; }
+        .date-item.selected { border-color: var(--toss-blue); color: var(--toss-blue); font-weight: bold; background: var(--toss-light-blue); }
+
+        footer { position: fixed; bottom: 0; width: 100%; background: #fff; display: flex; justify-content: space-around; padding: 10px 0; border-top: 1px solid #eee; }
         .tab { text-align: center; color: var(--toss-gray); font-size: 12px; cursor: pointer; flex: 1; }
         .tab.active { color: var(--toss-blue); }
         .tab-icon { font-size: 20px; display: block; margin-bottom: 4px; }
 
-        input, select { 
-            width: 100%; padding: 12px; border: 1px solid #eee; border-radius: 12px; 
-            background: #f9fafb; font-size: 16px; margin-bottom: 10px;
-        }
-        .btn { 
-            background: var(--toss-blue); color: #fff; border: none; padding: 15px; 
-            border-radius: 12px; font-weight: 600; width: 100%; cursor: pointer;
-        }
+        .btn { background: var(--toss-blue); color: #fff; border: none; padding: 15px; border-radius: 12px; font-weight: 600; width: 100%; cursor: pointer; }
         .btn-outline { background: #e8f3ff; color: var(--toss-blue); margin-top: 10px; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #eee; border-radius: 12px; background: #f9fafb; font-size: 16px; margin-bottom: 10px; }
 
-        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
-        .info-item { background: #f9fafb; padding: 10px; border-radius: 10px; font-size: 14px; transition: 0.2s; }
-        .info-label { color: var(--toss-gray); font-size: 11px; margin-bottom: 2px; }
-
-        #loading {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255,255,255,0.8); display: none; justify-content: center; align-items: center; z-index: 1000;
-        }
+        #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); display: none; justify-content: center; align-items: center; z-index: 3000; }
     </style>
 </head>
 <body>
 
 <div id="loading">로딩 중...</div>
+
+<div id="quick-vote-modal" class="modal-overlay">
+    <div class="modal-content">
+        <div style="font-size: 14px; color: var(--toss-gray); margin-bottom: 8px;">개별 투표 상태 변경</div>
+        <div id="modal-date-display" style="font-size: 13px; font-weight: 600; color: var(--toss-blue); margin-bottom: 12px;">2026-04-18</div>
+        
+        <select id="modal-member-select">
+            <option value="">멤버 선택</option>
+        </select>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; margin-top: 10px;">
+            <button class="btn" style="background: var(--toss-green);" onclick="submitQuickVote('O')">참석 (O)</button>
+            <button class="btn" style="background: var(--toss-red);" onclick="submitQuickVote('X')">불참 (X)</button>
+        </div>
+        <button class="btn btn-outline" style="background: #f2f4f6; color: var(--toss-text); margin-top: 0;" onclick="closeModal()">취소</button>
+    </div>
+</div>
 
 <header>
     <div class="header-container">
@@ -181,8 +173,7 @@
                 <span id="attendee-count-badge" class="attend-count">0명</span>
             </div>
             <div id="attendee-list" class="attendee-container">
-                <div style="color: var(--toss-gray); font-size: 14px;">날짜를 선택해 주세요.</div>
-            </div>
+                </div>
         </div>
     </div>
 
@@ -192,34 +183,15 @@
                 <option value="">멤버 선택</option>
             </select>
             <div id="member-detail" class="info-grid"></div>
-            <div id="edit-actions" style="display: flex; gap: 10px; margin-top: 10px;">
-                <button id="edit-btn" class="btn btn-outline" style="display:none; flex: 2;" onclick="toggleEditMode()">정보 수정하기</button>
-                <button id="cancel-btn" class="btn" style="display:none; flex: 1; background: var(--toss-gray);" onclick="cancelEdit()">취소</button>
-            </div>
         </div>
     </div>
 
     <div id="member-add" class="section">
         <div class="card">
             <div class="card-title">신규 멤버 추가</div>
-            <div id="name-inputs">
-                <input type="text" class="new-name" placeholder="이름 입력">
-            </div>
-            <button class="btn btn-outline" onclick="addNameField()" style="margin-bottom:10px;">+ 이름 추가</button>
-            <button class="btn" onclick="submitNewMembers()">멤버 저장하기</button>
-        </div>
-    </div>
-
-    <div id="vote-input" class="section">
-        <div class="card">
-            <div class="card-title">투표 관리</div>
-            <input type="date" id="vote-date">
-            <div id="vote-step-container">
-                <p id="vote-step-msg">참석자를 모두 선택해 주세요.</p>
-                <div id="vote-member-chips" style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:15px;"></div>
-                <button class="btn" id="vote-next-btn" onclick="processVoteStep()">다음 단계 (참석 선택 완료)</button>
-                <button class="btn btn-outline" onclick="submitNoGame()">경기 미진행(R) 처리</button>
-            </div>
+            <div id="name-inputs"><input type="text" class="new-name" placeholder="이름 입력"></div>
+            <button class="btn btn-outline" onclick="addNameField()">+ 이름 추가</button>
+            <button class="btn" style="margin-top:10px;" onclick="submitNewMembers()">멤버 저장하기</button>
         </div>
     </div>
 </main>
@@ -228,7 +200,6 @@
     <div class="tab active" onclick="showSection('home')"><span class="tab-icon">🏠</span>홈</div>
     <div class="tab" onclick="showSection('member-view')"><span class="tab-icon">👤</span>멤버조회</div>
     <div class="tab" onclick="showSection('member-add')"><span class="tab-icon">➕</span>멤버추가</div>
-    <div class="tab" onclick="showSection('vote-input')"><span class="tab-icon">🗳️</span>투표입력</div>
     <div class="tab" onclick="window.open('https://www.youtube.com/@FC_GreeN_PeppeR', '_blank')"><span class="tab-icon">▶️</span>유튜브</div>
 </footer>
 
@@ -236,17 +207,7 @@
     const API_URL = "https://script.google.com/macros/s/AKfycbwLJH9iSYhYJ-kj9x6j45WhF7NgbW2az9Ua0w2RBdbKa-lTn3UXGtmttTS1KjAFCb2X/exec";
     let memberList = [];
     let attendanceRates = [];
-    let currentVoteStep = 0; 
-    let voteData = { attend: [], absent: [] };
-
-    const statLabels = ["골레이", "아라", "피보", "픽소", "몸싸움", "균형감", "체력", "스피드", "리더십", "의사소통", "집중력", "대담성", "침착성", "일대일수비", "수비지원", "수비위치선정", "대인마크", "가로채기", "반사신경", "공중볼처리", "일대일돌파", "연계플레이", "공격위치선정", "슛", "슛정확도", "패스", "롱패스", "드리블"];
-    const statGroups = [
-        { title: "⚽ 포지션 적합도", indices: [0, 1, 2, 3] },
-        { title: "🏃 신체적 능력", indices: [4, 5, 6, 7] },
-        { title: "🧠 정신적 능력", indices: [8, 9, 10, 11, 12] },
-        { title: "🛡️ 기술적 능력 (수비)", indices: [13, 14, 15, 16, 17, 18, 19] },
-        { title: "🎯 기술적 능력 (공격)", indices: [20, 21, 22, 23, 24, 25, 26, 27] }
-    ];
+    let selectedDateGlobal = ""; 
 
     window.onload = () => {
         initCalendar();
@@ -261,14 +222,25 @@
         return `${y}-${m}-${d}`;
     }
 
-    // 캘린더 생성
+    async function apiCall(data) {
+        document.getElementById('loading').style.display = 'flex';
+        try {
+            const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(data) });
+            const result = await response.json();
+            if (!result.success) throw new Error(result.error);
+            return result.data;
+        } catch (e) {
+            console.error(e);
+        } finally {
+            document.getElementById('loading').style.display = 'none';
+        }
+    }
+
+    // 캘린더 및 초기 데이터
     function initCalendar() {
         const wrapper = document.getElementById('horizontal-calendar');
         const now = new Date();
         const year = now.getFullYear();
-
-        wrapper.innerHTML = ""; 
-
         for (let month = 0; month < 12; month++) {
             let d = new Date(year, month, 1);
             while (d.getDay() !== 6) d.setDate(d.getDate() + 1); 
@@ -276,12 +248,9 @@
                 const dateStr = getLocalDateString(d);
                 const item = document.createElement('div');
                 item.className = 'date-item';
-                // 데이터 속성에 날짜 정보 저장 (포커스 로직용)
                 item.dataset.date = dateStr;
                 item.innerHTML = `<span style="font-size:10px;">${d.getMonth()+1}월</span><br>${d.getDate()}`;
-                
-                const currentStr = dateStr;
-                item.onclick = () => selectDate(currentStr, item);
+                item.onclick = () => selectDate(dateStr, item);
                 wrapper.appendChild(item);
                 d.setDate(d.getDate() + 7);
             }
@@ -289,46 +258,16 @@
         scrollToClosestSaturday();
     }
 
-    // 오늘 날짜 기준 가장 가까운 토요일로 스크롤 및 선택
     function scrollToClosestSaturday() {
         const now = new Date();
         const dateItems = document.querySelectorAll('.date-item');
-        let closestDist = Infinity;
-        let closestEl = null;
-
+        let closestDist = Infinity; let closestEl = null;
         dateItems.forEach(item => {
             const itemDate = new Date(item.dataset.date);
             const dist = Math.abs(itemDate - now);
-            if(dist < closestDist) {
-                closestDist = dist;
-                closestEl = item;
-            }
+            if(dist < closestDist) { closestDist = dist; closestEl = item; }
         });
-
-        if(closestEl) {
-            closestEl.click(); // 자동 선택
-            setTimeout(() => {
-                closestEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-            }, 300);
-        }
-    }
-
-    async function apiCall(data) {
-        document.getElementById('loading').style.display = 'flex';
-        try {
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                body: JSON.stringify(data)
-            });
-            const result = await response.json();
-            if (!result.success) throw new Error(result.error);
-            return result.data;
-        } catch (e) {
-            console.error(e);
-            alert("통신 오류가 발생했습니다.");
-        } finally {
-            document.getElementById('loading').style.display = 'none';
-        }
+        if(closestEl) closestEl.click();
     }
 
     async function fetchInitialData() {
@@ -339,16 +278,20 @@
         memberList = (list || []).sort();
         attendanceRates = rates || [];
         
-        const select = document.getElementById('member-select');
+        // 메인 선택 및 모달 선택창에 멤버 채우기
+        const mainSelect = document.getElementById('member-select');
+        const modalSelect = document.getElementById('modal-member-select');
+        
         memberList.forEach(name => {
-            const opt = document.createElement('option');
-            opt.value = name;
-            opt.innerText = name;
-            select.appendChild(opt);
+            const opt1 = new Option(name, name);
+            const opt2 = new Option(name, name);
+            mainSelect.add(opt1);
+            modalSelect.add(opt2);
         });
     }
 
     async function selectDate(date, el) {
+        selectedDateGlobal = date;
         document.querySelectorAll('.date-item').forEach(i => i.classList.remove('selected'));
         el.classList.add('selected');
         
@@ -369,94 +312,76 @@
             });
         } else {
             countBadge.innerText = `0명`;
-            listContainer.innerHTML = `<div style="color: var(--toss-gray); font-size: 14px;">참석 인원 없음</div>`;
         }
+        
+        // 리스트 끝에 + 버튼 추가 (항상 표시)
+        const addBtn = document.createElement('div');
+        addBtn.className = 'add-chip';
+        addBtn.innerText = "+ 추가/수정";
+        addBtn.onclick = openQuickVoteModal;
+        listContainer.appendChild(addBtn);
     }
 
-    async function loadMemberInfo() {
-        const name = document.getElementById('member-select').value;
-        if(!name) return;
-        const info = await apiCall({ action: 'getMemberInfo', memberName: name });
-        const grid = document.getElementById('member-detail');
-        grid.innerHTML = "";
-        
-        const positionScores = info.stats.slice(0, 4).map(v => parseFloat(v) || 0);
-        const maxScore = Math.max(...positionScores);
-
-        statGroups.forEach(group => {
-            const groupHeader = document.createElement('div');
-            groupHeader.className = 'category-title';
-            groupHeader.innerText = group.title;
-            grid.appendChild(groupHeader);
-            
-            group.indices.forEach(i => {
-                const val = info.stats[i];
-                let displayVal = (val === null || val === undefined || val === '') ? '-' : val;
-                if (i < 4 && !isNaN(val) && val !== '' && val !== '-') displayVal = parseFloat(val).toFixed(2);
-                
-                const isMax = (i < 4 && parseFloat(val) === maxScore && maxScore > 0);
-                const item = document.createElement('div');
-                item.className = `info-item ${isMax ? 'highlight' : ''}`;
-                item.innerHTML = `<div class="info-label">${statLabels[i]}</div><div class="stat-val" data-raw="${val}">${displayVal}</div>`;
-                grid.appendChild(item);
-            });
-        });
-        document.getElementById('edit-btn').style.display = 'block';
-        document.getElementById('edit-btn').innerText = "정보 수정하기";
-        document.getElementById('edit-btn').onclick = toggleEditMode;
-        document.getElementById('cancel-btn').style.display = 'none';
+    // 모달 관련 함수
+    function openQuickVoteModal() {
+        if(!selectedDateGlobal) { alert("날짜를 먼저 선택해주세요."); return; }
+        document.getElementById('modal-date-display').innerText = `선택된 날짜: ${selectedDateGlobal}`;
+        document.getElementById('quick-vote-modal').style.display = 'flex';
     }
 
-    function toggleEditMode() {
-        const grid = document.getElementById('member-detail');
-        const vals = grid.querySelectorAll('.stat-val');
-        let totalIdx = 0;
-        
-        statGroups.forEach(group => {
-            group.indices.forEach(i => {
-                const valDiv = vals[totalIdx];
-                if (i >= 4) { 
-                    const currentRawVal = valDiv.getAttribute('data-raw');
-                    const options = [5, 10, 13, 16, 18];
-                    let selectHtml = `<select class="edit-stat">`;
-                    options.forEach(opt => {
-                        const isSelected = (parseInt(currentRawVal) === opt) ? 'selected' : '';
-                        selectHtml += `<option value="${opt}" ${isSelected}>${opt}</option>`;
-                    });
-                    valDiv.innerHTML = selectHtml + `</select>`;
-                }
-                totalIdx++;
-            });
-        });
-        const btn = document.getElementById('edit-btn');
-        btn.innerText = "저장하기";
-        btn.onclick = saveMemberInfo;
-        document.getElementById('cancel-btn').style.display = 'block';
+    function closeModal() {
+        document.getElementById('quick-vote-modal').style.display = 'none';
+        document.getElementById('modal-member-select').value = "";
     }
 
-    function cancelEdit() { if(confirm("수정을 취소하시겠습니까?")) loadMemberInfo(); }
+    async function submitQuickVote(status) {
+        const name = document.getElementById('modal-member-select').value;
+        if(!name) { alert("멤버를 선택해주세요."); return; }
 
-    async function saveMemberInfo() {
-        const name = document.getElementById('member-select').value;
-        const grid = document.getElementById('member-detail');
-        const items = grid.querySelectorAll('.info-item');
-        const statsToSave = Array(statLabels.length).fill("");
-        
-        let itemIdx = 0;
-        statGroups.forEach(group => {
-            group.indices.forEach(i => {
-                if (i < 4) {
-                    statsToSave[i] = items[itemIdx].querySelector('.stat-val').getAttribute('data-raw');
-                } else {
-                    statsToSave[i] = items[itemIdx].querySelector('.edit-stat').value;
-                }
-                itemIdx++;
-            });
+        await apiCall({ 
+            action: 'submitVote', 
+            date: selectedDateGlobal, 
+            memberName: name, 
+            status: status 
         });
 
-        await apiCall({ action: 'updateMemberInfo', memberName: name, stats: statsToSave });
-        alert("수정 완료!");
-        loadMemberInfo();
+        alert(`${name}님 ${status === 'O' ? '참석' : '불참'} 처리 완료!`);
+        closeModal();
+        
+        // 명단 새로고침
+        const activeDateEl = document.querySelector('.date-item.selected');
+        if(activeDateEl) selectDate(selectedDateGlobal, activeDateEl);
+    }
+
+    // 섹션 전환 및 롤링 카드 (기존 로직)
+    function showSection(id) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        const tabs = document.querySelectorAll('.tab');
+        if (id === 'home') tabs[0].classList.add('active');
+        else if (id === 'member-view') tabs[1].classList.add('active');
+        else if (id === 'member-add') tabs[2].classList.add('active');
+    }
+
+    function startRollingCard() {
+        let groupIdx = 0; const groupSize = 5;
+        setInterval(() => {
+            if (attendanceRates.length > 0) {
+                const sortedRates = [...attendanceRates].sort((a, b) => a.rank - b.rank);
+                const start = groupIdx * groupSize;
+                const currentGroup = sortedRates.slice(start, start + groupSize);
+                if (currentGroup.length === 0 && groupIdx !== 0) { groupIdx = 0; return; }
+                let html = "";
+                currentGroup.forEach(m => {
+                    html += `<div class="rank-item"><div class="rank-info"><span class="rank-num">${m.rank}위</span><span class="rank-name">${m.name}</span></div><div class="rank-stat"><span style="color:var(--toss-blue); font-weight:700;">${m.rate}</span></div></div>`;
+                });
+                const el = document.getElementById('rolling-content');
+                el.style.opacity = 0;
+                setTimeout(() => { el.innerHTML = html; el.style.opacity = 1; }, 300);
+                groupIdx = (start + groupSize >= sortedRates.length) ? 0 : groupIdx + 1;
+            }
+        }, 4000);
     }
 
     function addNameField() {
@@ -471,111 +396,6 @@
         await apiCall({ action: 'addMember', names: names });
         alert("추가 완료");
         location.reload();
-    }
-
-    function resetVoteStep() {
-        currentVoteStep = 0;
-        voteData = { attend: [], absent: [] };
-        document.getElementById('vote-date').value = getLocalDateString(new Date());
-        document.getElementById('vote-step-msg').innerText = "참석자를 모두 선택해 주세요.";
-        document.getElementById('vote-next-btn').innerText = "다음 단계 (참석 선택 완료)";
-        renderVoteChips(memberList);
-    }
-
-    function renderVoteChips(list) {
-        const container = document.getElementById('vote-member-chips');
-        container.innerHTML = "";
-        list.forEach(name => {
-            const chip = document.createElement('div');
-            chip.innerText = name;
-            chip.style.cssText = "padding:8px 15px; background:#eee; border-radius:20px; font-size:14px; cursor:pointer; transition:0.2s;";
-            chip.onclick = () => {
-                const isSelected = chip.style.background === 'rgb(49, 130, 246)';
-                chip.style.background = isSelected ? '#eee' : '#3182f6';
-                chip.style.color = isSelected ? '#000' : '#fff';
-            };
-            container.appendChild(chip);
-        });
-    }
-
-    async function processVoteStep() {
-        const selected = Array.from(document.getElementById('vote-member-chips').children)
-                            .filter(c => c.style.background === 'rgb(49, 130, 246)')
-                            .map(c => c.innerText);
-        const date = document.getElementById('vote-date').value;
-        if(!date) return alert("날짜를 선택하세요.");
-
-        if(currentVoteStep === 0) { 
-            voteData.attend = selected;
-            const remaining = memberList.filter(m => !selected.includes(m)).sort();
-            currentVoteStep = 1;
-            document.getElementById('vote-step-msg').innerText = "남은 리스트 중 불참자(X)를 선택해 주세요.";
-            document.getElementById('vote-next-btn').innerText = "최종 투표 완료";
-            renderVoteChips(remaining);
-        } else { 
-            voteData.absent = selected;
-            const allSelected = [...voteData.attend, ...voteData.absent];
-            const notVoted = memberList.filter(m => !allSelected.includes(m));
-            
-            const promises = [
-                ...voteData.attend.map(name => apiCall({ action: 'submitVote', date: date, memberName: name, status: 'O' })),
-                ...voteData.absent.map(name => apiCall({ action: 'submitVote', date: date, memberName: name, status: 'X' })),
-                ...notVoted.map(name => apiCall({ action: 'submitVote', date: date, memberName: name, status: 'N' }))
-            ];
-            await Promise.all(promises);
-            alert("투표가 저장되었습니다.");
-            location.reload();
-        }
-    }
-
-    async function submitNoGame() {
-        const date = document.getElementById('vote-date').value;
-        if(!date) return alert("날짜를 선택하세요.");
-        if(confirm("해당 날짜를 경기 미진행(R)으로 처리하시겠습니까?")) {
-            await apiCall({ action: 'setNoGame', date: date });
-            alert("처리 완료");
-        }
-    }
-
-    function startRollingCard() {
-        let groupIdx = 0;
-        const groupSize = 5;
-        setInterval(() => {
-            if (attendanceRates && attendanceRates.length > 0) {
-                const sortedRates = [...attendanceRates].sort((a, b) => a.rank - b.rank);
-                const start = groupIdx * groupSize;
-                const currentGroup = sortedRates.slice(start, start + groupSize);
-                if (currentGroup.length === 0 && groupIdx !== 0) { groupIdx = 0; return; }
-
-                let htmlContent = "";
-                for (let i = 0; i < groupSize; i++) {
-                    const m = currentGroup[i];
-                    if (m) {
-                        const crown = (m.rank === 1) ? '<span class="crown">👑</span>' : '';
-                        htmlContent += `<div class="rank-item"><div class="rank-info"><span class="rank-num">${m.rank}위</span><span class="rank-name">${m.name}${crown}</span></div><div class="rank-stat"><span style="color: var(--toss-blue); font-weight:700;">${m.rate}</span><span style="font-size:11px; color: var(--toss-gray); margin-left:4px;">(참석: ${m.attend}회, 불참:  ${m.absent}회)</span></div></div>`;
-                    }
-                }
-                const contentEl = document.getElementById('rolling-content');
-                contentEl.style.opacity = 0;
-                setTimeout(() => { contentEl.innerHTML = htmlContent; contentEl.style.opacity = 1; }, 300);
-                groupIdx = (start + groupSize >= sortedRates.length) ? 0 : groupIdx + 1;
-            }
-        }, 4000);
-    }
-
-    function showSection(id) {
-        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        
-        const tabs = document.querySelectorAll('.tab');
-        if (id === 'home') {
-            tabs[0].classList.add('active');
-            scrollToClosestSaturday(); // 홈 탭 클릭 시 오늘 기준 토요일로 포커스
-        }
-        else if (id === 'member-view') tabs[1].classList.add('active');
-        else if (id === 'member-add') tabs[2].classList.add('active');
-        else if (id === 'vote-input') { tabs[3].classList.add('active'); resetVoteStep(); }
     }
 </script>
 
