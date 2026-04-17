@@ -1,227 +1,305 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GreenPeppers 통합 관리</title>
-    <style>
-        :root {
-            --primary: #4a90e2;
-            --success: #28a745;
-            --danger: #dc3545;
-            --warning: #f39c12;
-            --gray: #6c757d;
-        }
-        body { font-family: 'Pretendard', sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; margin: 0; }
-        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
-        h2 { margin-top: 0; font-size: 1.2rem; color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px; }
-        
-        .tab-menu { display: flex; gap: 5px; margin-bottom: 20px; border-bottom: 1px solid #ddd; }
-        .tab-btn { flex: 1; padding: 10px; border: none; background: none; cursor: pointer; color: #666; font-weight: bold; border-bottom: 3px solid transparent; }
-        .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+  <base target="_top">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap');
+    :root { --toss-blue: #3182f6; --toss-gray: #f2f4f6; --toss-dark-gray: #8b95a1; --toss-text: #191f28; }
+    body { background-color: var(--toss-gray); color: var(--toss-text); font-family: 'Noto Sans KR', sans-serif; padding-bottom: 90px; }
+    
+    .toss-card { background: white; border-radius: 24px; padding: 20px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); border: none; }
+    .page { display: none; animation: fadeIn 0.3s ease-in-out; }
+    .page.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .section { display: none; }
-        .section.active { display: block; }
+    /* 랭킹 카드 스타일 */
+    .rank-item { display: flex; align-items: center; justify-content: space-between; }
+    .rank-info { display: flex; flex-direction: column; }
+    .rank-number { font-size: 1.2rem; font-weight: 700; color: var(--toss-blue); margin-right: 15px; }
 
-        .step-title { font-weight: bold; color: var(--primary); margin: 15px 0; font-size: 1.1rem; }
-        .member-container { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; min-height: 80px; padding: 10px; border: 1px dashed #ccc; border-radius: 8px; }
-        
-        .m-btn { border: 2px solid #ddd; background: white; padding: 8px 15px; border-radius: 20px; cursor: pointer; transition: 0.2s; font-weight: 500; }
-        .m-btn.selected { background: var(--primary); color: white; border-color: var(--primary); }
+    /* 달력 스타일 */
+    .horizontal-cal { display: flex; overflow-x: auto; gap: 10px; padding: 10px 0; -webkit-overflow-scrolling: touch; }
+    .horizontal-cal::-webkit-scrollbar { display: none; }
+    .cal-item { min-width: 70px; background: white; padding: 12px; border-radius: 18px; text-align: center; cursor: pointer; transition: 0.2s; }
+    .cal-item.active { background: var(--toss-blue); color: white; }
 
-        .action-btn { width: 100%; padding: 15px; border: none; border-radius: 8px; color: white; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 10px; }
-        .btn-blue { background: var(--primary); }
-        .btn-red { background: var(--danger); }
-        .btn-orange { background: var(--warning); }
-        
-        select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; margin-bottom: 10px; }
-        .vote-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    /* 푸터 내비게이션 */
+    .footer-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); display: flex; justify-content: space-around; padding: 10px 0 25px 0; border-top: 1px solid #eee; z-index: 1000; }
+    .nav-item { text-align: center; font-size: 11px; color: var(--toss-dark-gray); text-decoration: none; cursor: pointer; flex: 1; }
+    .nav-item.active { color: var(--toss-blue); font-weight: 700; }
+    .nav-icon { font-size: 20px; margin-bottom: 4px; }
 
-        #status { margin-top: 20px; padding: 12px; border-radius: 8px; text-align: center; font-size: 14px; background: #f8f9fa; line-height: 1.6; min-height: 24px; }
-    </style>
+    /* 버튼 및 인풋 */
+    .btn-toss { background: var(--toss-blue); color: white; border-radius: 16px; padding: 14px; width: 100%; border: none; font-weight: 700; }
+    .form-control { border-radius: 12px; background: var(--toss-gray); border: none; padding: 12px; }
+    .member-btn { border: 1px solid #ddd; background: white; padding: 10px 15px; border-radius: 20px; margin: 4px; font-size: 14px; }
+    .member-btn.selected { background: var(--toss-blue); color: white; border-color: var(--toss-blue); }
+  </style>
 </head>
 <body>
 
-<div class="card">
-    <h2>⚽ GreenPeppers 투표 관리</h2>
-
-    <div class="tab-menu">
-        <button class="tab-btn active" onclick="openTab('multi')">다수 투표</button>
-        <button class="tab-btn" onclick="openTab('single')">개별 투표</button>
-        <button class="tab-btn" onclick="openTab('admin')">설정</button>
+<div class="container mt-4">
+  <div id="home" class="page active">
+    <h4 class="fw-bold mb-3">올해의 랭킹 🏆</h4>
+    <div id="rankList"></div>
+    
+    <h5 class="fw-bold mt-4">경기 일정</h5>
+    <div class="horizontal-cal" id="calendar"></div>
+    <div class="toss-card mt-2">
+      <div id="selectedDateTitle" class="fw-bold mb-2">날짜를 선택하세요</div>
+      <div id="attendeesList" class="text-muted small"></div>
     </div>
+  </div>
 
-    <div id="multi" class="section active">
-        <div id="step1">
-            <div class="step-title">1단계: 참석 멤버 선택</div>
-            <div id="container1" class="member-container">명단 로딩 중...</div>
-            <button class="action-btn btn-blue" onclick="goToStep2()">참석자 선택 완료 (다음)</button>
-        </div>
-        <div id="step2" style="display:none;">
-            <div class="step-title">2단계: 불참 멤버 선택</div>
-            <div id="container2" class="member-container"></div>
-            <button class="action-btn btn-blue" onclick="finalSubmit()">최종 결과 전송 (미선택은 미투표)</button>
-            <button class="action-btn" style="background:#ccc;" onclick="resetMulti()">처음으로</button>
-        </div>
+  <div id="memberList" class="page">
+    <h4 class="fw-bold mb-3">멤버 목록</h4>
+    <div id="fullMemberList"></div>
+  </div>
+
+  <div id="addMember" class="page">
+    <h4 class="fw-bold mb-3">멤버 추가</h4>
+    <div class="toss-card">
+      <div id="nameInputs">
+        <input type="text" class="form-control mb-2 member-name-input" placeholder="멤버 이름 입력">
+      </div>
+      <button class="btn btn-outline-primary btn-sm w-100 mt-2" onclick="addNameField()">+ 추가 입력</button>
+      <button class="btn-toss mt-4" onclick="submitMembers()">멤버 등록하기</button>
     </div>
+  </div>
 
-    <div id="single" class="section">
-        <div class="step-title">멤버별 투표 업데이트</div>
-        <select id="singleMemberSelect">
-            <option value="">멤버를 불러오는 중...</option>
-        </select>
-        <div class="vote-grid">
-            <button onclick="sendSingleVote('참석')" class="m-btn" style="border-color:var(--success)">참석(O)</button>
-            <button onclick="sendSingleVote('불참')" class="m-btn" style="border-color:var(--danger)">불참(X)</button>
-            <button onclick="sendSingleVote('미투표')" class="m-btn" style="border-color:var(--gray)">미투표(N)</button>
-        </div>
+  <div id="voteInput" class="page">
+    <h4 class="fw-bold mb-3" id="voteStepTitle">1. 참석자 선택</h4>
+    <div class="toss-card">
+      <div id="voteMemberContainer"></div>
+      <div id="voteSelectionCount" class="mt-3 text-primary fw-bold">선택: 0명</div>
+      <button class="btn-toss mt-3" id="nextVoteBtn" onclick="nextVoteStep()">확인</button>
     </div>
+  </div>
 
-    <div id="admin" class="section">
-        <div class="step-title">특수 상황 관리</div>
-        <p style="font-size: 13px; color: #666;">전원을 대상으로 경기 미진행(R) 값을 입력합니다.</p>
-        <button class="action-btn btn-orange" onclick="cancelMatch()">경기 미진행 처리 (전원 R)</button>
+  <div id="scoreInput" class="page">
+    <h4 class="fw-bold mb-3">점수 입력</h4>
+    <div class="toss-card">
+      <select id="scoreMemberSelect" class="form-control mb-3" onchange="loadMemberScores()">
+        <option value="">멤버를 선택하세요</option>
+      </select>
+      <div id="scoreItems"></div>
+      <button class="btn-toss mt-3" onclick="submitScores()">점수 저장</button>
     </div>
-
-    <div id="status">명단을 불러오는 중입니다...</div>
+  </div>
 </div>
 
+<nav class="footer-nav">
+  <div class="nav-item active" onclick="switchPage('home')"><div class="nav-icon">🏠</div>홈</div>
+  <div class="nav-item" onclick="switchPage('memberList')"><div class="nav-icon">👥</div>목록</div>
+  <div class="nav-item" onclick="switchPage('addMember')"><div class="nav-icon">➕</div>추가</div>
+  <div class="nav-item" onclick="switchPage('scoreInput')"><div class="nav-icon">🎯</div>점수</div>
+  <div class="nav-item" onclick="switchPage('voteInput')"><div class="nav-icon">✅</div>투표</div>
+  <div class="nav-item" onclick="window.open('https://youtube.com/@fc_green_pepper?si=pcmvE6Msb2iINPNR')"><div class="nav-icon">📺</div>유튜브</div>
+</nav>
+
+<div class="modal fade" id="abilityModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0" style="border-radius: 24px;">
+      <div class="modal-body p-4">
+        <h5 id="modalMemberName" class="fw-bold mb-3">멤버 정보</h5>
+        <div id="abilityContent" class="small"></div>
+        <button class="btn-toss mt-4" data-bs-dismiss="modal">닫기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzSTViZcvoCjeHcTcfmdA68wOPYiQKUvOxbHCTI_Ak-tb7JQ6KQq-XXwM7cpV-qagGX/exec";
+  let appData = { stats: [], members: [] };
+  let selectedVoteDate = "";
+  let voteStep = 1; // 1: 참석, 2: 불참
+  let tempVotes = {};
+
+  window.onload = () => {
+    loadData();
+    renderCalendar();
+  };
+
+  function loadData() {
+    google.script.run.withSuccessHandler(data => {
+      appData = data;
+      renderHome();
+      updateDropdowns();
+    }).getAppData();
+  }
+
+  function renderHome() {
+    const list = document.getElementById('rankList');
+    list.innerHTML = appData.stats.map(s => `
+      <div class="toss-card" onclick="showAbility('${s.name}')">
+        <div class="rank-item">
+          <div class="d-flex align-items-center">
+            <span class="rank-number">${s.rank}위</span>
+            <div class="rank-info">
+              <span class="fw-bold">${s.name}</span>
+              <span class="text-muted small">참석: ${s.attended}회 / 게임: ${s.totalMatches}회</span>
+            </div>
+          </div>
+          <div class="text-end">
+            <div class="fw-bold text-primary">${s.rate}%</div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function renderCalendar() {
+    const cal = document.getElementById('calendar');
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    let saturdays = [];
     
-    let allMembers = [];
-    let attending = [];
-
-    window.onload = loadMembers;
-
-    function openTab(tabId) {
-        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById(tabId).classList.add('active');
-        event.currentTarget.classList.add('active');
+    for (let month = 0; month < 12; month++) {
+      let d = new Date(currentYear, month, 1);
+      while (d.getDay() !== 6) d.setDate(d.getDate() + 1);
+      while (d.getFullYear() === currentYear) {
+        saturdays.push(new Date(d));
+        d.setDate(d.getDate() + 7);
+      }
     }
 
-    async function loadMembers() {
-        const status = document.getElementById('status');
-        try {
-            const response = await fetch(`${WEB_APP_URL}?action=getMembers`);
-            const data = await response.text();
-            allMembers = data.split('|').filter(n => n.trim() !== "");
-            
-            // 탭별 렌더링
-            renderMultiStep(1, allMembers, 'container1');
-            updateSingleSelect();
-            
-            status.innerText = "명단 로드 완료.";
-        } catch (e) {
-            status.innerText = "명단 로드 실패.";
-        }
+    cal.innerHTML = saturdays.map(d => {
+      const dStr = d.toISOString().split('T')[0];
+      const isToday = Math.abs(d - today) < 7 * 24 * 60 * 60 * 1000 && d.getDay() === 6;
+      return `<div class="cal-item ${isToday ? 'active' : ''}" onclick="selectDate(this, '${dStr}')">
+                <div style="font-size:10px">${d.getMonth()+1}월</div>
+                <div class="fw-bold">${d.getDate()}</div>
+              </div>`;
+    }).join('');
+    
+    // 초기 날짜 자동 선택
+    const activeItem = cal.querySelector('.active');
+    if(activeItem) activeItem.click();
+  }
+
+  function selectDate(el, dateStr) {
+    document.querySelectorAll('.cal-item').forEach(i => i.classList.remove('active'));
+    el.classList.add('active');
+    selectedVoteDate = dateStr;
+    document.getElementById('selectedDateTitle').innerText = dateStr + " 명단";
+    google.script.run.withSuccessHandler(list => {
+      document.getElementById('attendeesList').innerText = list.length > 0 ? list.join(', ') : "참석자 정보 없음";
+    }).getVoteStatusByDate(dateStr);
+  }
+
+  function switchPage(pageId) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(pageId).classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+    
+    if(pageId === 'memberList') renderFullList();
+    if(pageId === 'voteInput') startVoteProcess();
+  }
+
+  function renderFullList() {
+    const list = document.getElementById('fullMemberList');
+    list.innerHTML = appData.members.map(m => `
+      <div class="toss-card py-2 px-3 fw-medium">${m}</div>
+    `).join('');
+  }
+
+  // 멤버 추가 로직
+  function addNameField() {
+    const input = document.createElement('input');
+    input.className = "form-control mb-2 member-name-input";
+    input.placeholder = "멤버 이름 입력";
+    document.getElementById('nameInputs').appendChild(input);
+  }
+
+  function submitMembers() {
+    const names = Array.from(document.querySelectorAll('.member-name-input')).map(i => i.value).filter(v => v);
+    if(names.length === 0) return alert("이름을 입력하세요.");
+    google.script.run.withSuccessHandler(() => {
+      alert("등록 완료!");
+      location.reload();
+    }).addMembers(names);
+  }
+
+  // 투표 프로세스
+  function startVoteProcess() {
+    voteStep = 1;
+    tempVotes = {};
+    appData.members.forEach(m => tempVotes[m] = 'N');
+    document.getElementById('voteStepTitle').innerText = "1. 참석자 선택";
+    renderVoteButtons();
+  }
+
+  function renderVoteButtons() {
+    const container = document.getElementById('voteMemberContainer');
+    container.innerHTML = appData.members.map(m => `
+      <button class="member-btn ${tempVotes[m] === 'O' || tempVotes[m] === 'X' ? 'selected' : ''}" 
+              onclick="toggleVote('${m}')">${m}</button>
+    `).join('');
+    updateVoteCount();
+  }
+
+  function toggleVote(name) {
+    if(voteStep === 1) tempVotes[name] = (tempVotes[name] === 'O' ? 'N' : 'O');
+    else if(voteStep === 2 && tempVotes[name] !== 'O') tempVotes[name] = (tempVotes[name] === 'X' ? 'N' : 'X');
+    renderVoteButtons();
+  }
+
+  function nextVoteStep() {
+    if(voteStep === 1) {
+      voteStep = 2;
+      document.getElementById('voteStepTitle').innerText = "2. 불참자 선택";
+    } else {
+      if(!selectedVoteDate) return alert("달력에서 날짜를 먼저 선택하세요.");
+      google.script.run.withSuccessHandler(() => {
+        alert("투표가 저장되었습니다.");
+        switchPage('home');
+      }).saveVotes(selectedVoteDate, tempVotes);
     }
+  }
 
-    // --- 다수 투표 로직 ---
-    function renderMultiStep(step, list, containerId) {
-        const container = document.getElementById(containerId);
-        container.innerHTML = "";
-        list.forEach(name => {
-            const btn = document.createElement('button');
-            btn.innerText = name;
-            btn.className = 'm-btn';
-            btn.onclick = () => btn.classList.toggle('selected');
-            container.appendChild(btn);
-        });
-    }
+  function updateVoteCount() {
+    const count = Object.values(tempVotes).filter(v => (voteStep === 1 ? v === 'O' : v === 'X')).length;
+    document.getElementById('voteSelectionCount').innerText = `선택: ${count}명`;
+  }
 
-    function goToStep2() {
-        const btns = document.querySelectorAll('#container1 .m-btn');
-        attending = Array.from(btns).filter(b => b.classList.contains('selected')).map(b => b.innerText);
-        const remaining = allMembers.filter(m => !attending.includes(m));
-        
-        document.getElementById('step1').style.display = 'none';
-        document.getElementById('step2').style.display = 'block';
-        renderMultiStep(2, remaining, 'container2');
-    }
+  // 점수 입력
+  function updateDropdowns() {
+    const select = document.getElementById('scoreMemberSelect');
+    select.innerHTML = '<option value="">멤버를 선택하세요</option>' + 
+      appData.members.map(m => `<option value="${m}">${m}</option>`).join('');
+  }
 
-    async function finalSubmit() {
-        const btns = document.querySelectorAll('#container2 .m-btn');
-        const absent = Array.from(btns).filter(b => b.classList.contains('selected')).map(b => b.innerText);
-        const noVote = allMembers.filter(m => !attending.includes(m) && !absent.includes(m));
+  const scoreLabels = ["골레이", "아라", "피보", "픽소", "몸싸움", "균형감", "체력", "스피드", "리더십", "의사소통", "집중력", "대담성", "침착성", "일대일수비", "수비지원", "수비위치선정", "대인마크", "가로채기", "반사신경", "공중볼처리", "일대일돌파", "연계플레이", "공격위치선정", "슛파워"];
 
-        if (!confirm('전송하시겠습니까?')) return;
-        
-        await processBatch([
-            { list: attending, type: '참석' },
-            { list: absent, type: '불참' },
-            { list: noVote, type: '미투표' }
-        ]);
-        resetMulti();
-    }
+  function loadMemberScores() {
+    const container = document.getElementById('scoreItems');
+    container.innerHTML = scoreLabels.map(label => `
+      <div class="mb-2 small fw-bold">${label}</div>
+      <select class="form-control mb-3 score-val">
+        <option value="5">5</option><option value="10">10</option><option value="13">13</option>
+        <option value="16">16</option><option value="18">18</option>
+      </select>
+    `).join('');
+  }
 
-    function resetMulti() {
-        document.getElementById('step1').style.display = 'block';
-        document.getElementById('step2').style.display = 'none';
-        renderMultiStep(1, allMembers, 'container1');
-    }
+  function submitScores() {
+    const name = document.getElementById('scoreMemberSelect').value;
+    const scores = Array.from(document.querySelectorAll('.score-val')).map(s => s.value);
+    if(!name) return alert("멤버를 선택하세요.");
+    google.script.run.withSuccessHandler(() => alert("점수 저장 완료!")).saveScores(name, scores);
+  }
 
-    // --- 개별 투표 로직 ---
-    function updateSingleSelect() {
-        const select = document.getElementById('singleMemberSelect');
-        select.innerHTML = '<option value="">-- 멤버 선택 --</option>';
-        allMembers.forEach(name => {
-            const opt = document.createElement('option');
-            opt.value = opt.innerText = name;
-            select.appendChild(opt);
-        });
-    }
-
-    async function sendSingleVote(type) {
-        const name = document.getElementById('singleMemberSelect').value;
-        if (!name) return alert("멤버를 선택하세요");
-        
-        document.getElementById('status').innerText = `${name}님 ${type} 전송 중...`;
-        await postVote(name, type);
-        document.getElementById('status').innerText = `${name}님 완료!`;
-    }
-
-    // --- 경기 미진행 (전원 R) ---
-    async function cancelMatch() {
-        if (!confirm("모든 멤버의 오늘 투표를 '경기 미진행(R)'으로 처리하시겠습니까?")) return;
-        
-        await processBatch([{ list: allMembers, type: '경기 미진행' }]);
-    }
-
-    // --- 공통 전송 엔진 ---
-    async function processBatch(groups) {
-        const status = document.getElementById('status');
-        let total = 0;
-        groups.forEach(g => total += g.list.length);
-        let count = 0;
-
-        for (let group of groups) {
-            for (let name of group.list) {
-                count++;
-                status.innerText = `전송 중... (${count}/${total}) - ${name}`;
-                await postVote(name, group.type);
-            }
-        }
-        status.innerText = "🎉 모든 처리가 완료되었습니다!";
-    }
-
-    async function postVote(name, voteStatus) {
-        // GAS doPost에서 status가 '경기 미진행'이면 R을 입력하도록 처리되어야 함
-        let statusChar = voteStatus;
-        if (voteStatus === '경기 미진행') statusChar = 'R';
-
-        return fetch(WEB_APP_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            body: JSON.stringify({
-                action: 'vote',
-                name: name,
-                status: statusChar
-            })
-        });
-    }
+  function showAbility(name) {
+    document.getElementById('modalMemberName').innerText = name;
+    google.script.run.withSuccessHandler(data => {
+      const content = document.getElementById('abilityContent');
+      content.innerHTML = data.map((val, i) => `<div class="d-flex justify-content-between border-bottom py-1"><span>항목 ${i+1}</span><b>${val}</b></div>`).join('');
+      new bootstrap.Modal(document.getElementById('abilityModal')).show();
+    }).getMemberAbilities(name);
+  }
 </script>
-
 </body>
 </html>
