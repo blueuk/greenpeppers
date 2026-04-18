@@ -274,47 +274,85 @@
 
     // --- 멤버 조회 로직 ---
     async function loadMemberInfo() {
-        const name = document.getElementById('member-select').value;
-        if(!name) return;
-        
-        const info = await apiCall({ action: 'getMemberInfo', memberName: name });
-        originalStatsBeforeEdit = [...info.stats];
-        const grid = document.getElementById('member-detail');
-        grid.innerHTML = "";
+    const name = document.getElementById('member-select').value;
+    if(!name) return;
+    
+    const info = await apiCall({ action: 'getMemberInfo', memberName: name });
+    originalStatsBeforeEdit = [...info.stats];
+    const grid = document.getElementById('member-detail');
+    grid.innerHTML = "";
 
-        const posValues = info.stats.slice(0, 4).map(v => parseFloat(v) || 0);
-        const maxPosVal = Math.max(...posValues);
+    // 1. 포지션 값들을 가져와서 숫자로 변환
+    const posValues = info.stats.slice(0, 4).map(v => parseFloat(v) || 0);
+    
+    // 2. 최대값을 구한 뒤 소수점 2자리 문자열로 변환 (비교용)
+    const maxPosValStr = Math.max(...posValues).toFixed(2);
 
-        groupDefinitions.forEach(group => {
-            const titleDiv = document.createElement('div');
-            titleDiv.className = 'group-title';
-            titleDiv.innerText = group.name;
-            grid.appendChild(titleDiv);
+    groupDefinitions.forEach(group => {
+        const titleDiv = document.createElement('div');
+        titleDiv.className = 'group-title';
+        titleDiv.innerText = group.name;
+        grid.appendChild(titleDiv);
 
-            group.indices.forEach(idx => {
-                if(idx >= labels.length) return;
-                let val = info.stats[idx];
-                const isPosStat = idx < 4;
-                if(isPosStat && val !== null) val = parseFloat(val).toFixed(2);
-                const item = document.createElement('div');
-                item.className = 'info-item';
-                if(isPosStat && maxPosVal > 0 && parseFloat(val) === maxPosVal) item.classList.add('highlight');
-                item.innerHTML = `<div class="info-label">${labels[idx]}</div><div class="stat-val" data-idx="${idx}">${val || '-'}</div>`;
-                grid.appendChild(item);
-            });
+        group.indices.forEach(idx => {
+            if(idx >= labels.length) return;
+            let val = info.stats[idx];
+            const isPosStat = idx < 4;
+            
+            let displayVal = val || '-';
+            let isHighlight = false;
+
+            if(isPosStat && val !== null) {
+                // 3. 현재 스탯 값을 소수점 2자리 문자열로 변환
+                const currentValStr = parseFloat(val).toFixed(2);
+                displayVal = currentValStr;
+
+                // 4. 소수점 2자리까지 변환된 값끼리 비교하여 하이라이트 결정
+                if(parseFloat(maxPosValStr) > 0 && currentValStr === maxPosValStr) {
+                    isHighlight = true;
+                }
+            }
+
+            const item = document.createElement('div');
+            item.className = 'info-item';
+            if(isHighlight) item.classList.add('highlight');
+            
+            item.innerHTML = `<div class="info-label">${labels[idx]}</div><div class="stat-val" data-idx="${idx}">${displayVal}</div>`;
+            grid.appendChild(item);
         });
-        document.getElementById('edit-btn').style.display = 'block';
-    }
+    });
+    document.getElementById('edit-btn').style.display = 'block';
+}
 
-    function toggleEditMode() {
+function toggleEditMode() {
         const btn = document.getElementById('edit-btn');
         const statDivs = document.querySelectorAll('.stat-val');
+        const options = [5, 10, 13, 16, 18]; // 선택 가능한 옵션들
+
         if (btn.innerText === "정보 수정하기") {
             statDivs.forEach(div => {
                 const idx = parseInt(div.dataset.idx);
+                // 핵심 포지션(0~3)을 제외한 나머지 능력치만 수정 가능
                 if (idx > 3) {
                     const currentVal = div.innerText === '-' ? '' : div.innerText;
-                    div.innerHTML = `<input type="number" value="${currentVal}" style="margin:0; padding:4px; font-size:14px; width:100%; border-radius:4px;">`;
+                    
+                    // select 태그 생성 및 옵션 추가
+                    let selectHtml = `<select style="margin:0; padding:4px; font-size:14px; width:100%; border-radius:4px; background:#fff; border:1px solid #ccc;">`;
+                    
+                    // 현재 값이 옵션에 없을 경우를 위해 빈 옵션 또는 현재값 옵션 추가 가능
+                    if (!options.includes(Number(currentVal)) && currentVal !== '') {
+                        selectHtml += `<option value="${currentVal}" selected>${currentVal}</option>`;
+                    } else if (currentVal === '') {
+                        selectHtml += `<option value="" selected disabled>선택</option>`;
+                    }
+
+                    options.forEach(opt => {
+                        const isSelected = Number(currentVal) === opt ? 'selected' : '';
+                        selectHtml += `<option value="${opt}" ${isSelected}>${opt}</option>`;
+                    });
+                    
+                    selectHtml += `</select>`;
+                    div.innerHTML = selectHtml;
                 }
             });
             btn.innerText = "저장하기";
@@ -324,20 +362,26 @@
         }
     }
 
+
+
     function cancelEdit() {
         loadMemberInfo();
         document.getElementById('edit-btn').innerText = "정보 수정하기";
         document.getElementById('cancel-btn').style.display = 'none';
     }
 
+// 저장 함수도 함께 수정 (input -> select 로 변경되었으므로 선택자 수정 필요)
     async function submitEditedInfo() {
         const name = document.getElementById('member-select').value;
-        const inputs = document.querySelectorAll('.stat-val input');
+        // .stat-val 내부의 select 요소를 모두 찾음
+        const selects = document.querySelectorAll('.stat-val select');
         let newStats = [...originalStatsBeforeEdit];
-        inputs.forEach(input => {
-            const idx = parseInt(input.parentElement.dataset.idx);
-            newStats[idx] = input.value;
+        
+        selects.forEach(select => {
+            const idx = parseInt(select.parentElement.dataset.idx);
+            newStats[idx] = select.value;
         });
+        
         await apiCall({ action: 'updateMemberInfo', memberName: name, stats: newStats });
         alert("수정되었습니다.");
         document.getElementById('edit-btn').innerText = "정보 수정하기";
