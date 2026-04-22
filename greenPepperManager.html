@@ -800,11 +800,15 @@
                 listContainer.appendChild(chip);
             });
         } else {
-            // 인원이 0명일 때: 메시지 대신 '투표입력' 버튼 생성
+        // 인원이 0명일 때: 메시지 대신 '투표입력' 버튼 생성
         countBadge.innerText = `0명`;
+        
+        // 버튼 컨테이너(팀배정, 추가버튼 전체) 숨기기
+        addBtn.style.display = 'none'; 
+        
         listContainer.innerHTML = `
             <div style="text-align: center; padding: 20px 0;">
-                <div style="color: var(--toss-gray); font-size: 14px; margin-bottom: 12px;">참석 인원이 없습니다.</div>
+                <div style="color: var(--toss-gray); font-size: 14px; margin-bottom: 12px;">참석 인원이 없습니다.😭</div>
                 <button class="add-member-chip" 
                         onclick="showSection('vote-input')" 
                         style="background-color: var(--toss-blue); color: white; border: none; cursor: pointer;">
