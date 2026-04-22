@@ -121,10 +121,16 @@
 <div id="loading">로딩 중...</div>
 
 <header>
-    <div class="header-container">
-        <img src="greenpeppers_logo.png" alt="Logo" class="header-logo">
-        <span id="header-title">풋고추 FC</span>
+   <div class="header-container" style="position: relative; display: flex; align-items: center; justify-content: center; min-height: 60px;">
+    <img src="greenpeppers_logo.png" alt="Logo" class="header-logo">
+    <span id="header-title">풋고추 FC</span>
+
+    <div id="admin-indicator" style="display: none; position: absolute; right: 16px; align-items: center; gap: 8px;">
+        <span id="auth-timer" style="color: #4e5968; font-size: 13px; font-variant-numeric: tabular-nums; font-weight: 500;">30:00</span>
+        <button onclick="extendAdminSession()" style="background: #e5e8eb; border: none; padding: 4px 8px; border-radius: 6px; font-size: 12px; cursor: pointer; color: #4e5968; font-weight: 600;">연장</button>
+        <span style="background-color: #ffd400; color: #191f28; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 12px; margin-left: 4px;">관리자</span>
     </div>
+</div>
 </header>
 
 <main>
@@ -273,6 +279,49 @@ function checkAdminAuth() {
 function logoutAdmin() {
     sessionStorage.removeItem('isAdminAuthenticated');
     location.reload();
+}
+
+// 페이지 로드 시 관리자 여부 확인
+window.addEventListener('DOMContentLoaded', () => {
+    const isAdmin = sessionStorage.getItem('isAdminAuthenticated');
+    if (isAdmin === 'true') {
+        document.getElementById('admin-indicator').style.display = 'flex';
+        // 세션 만료 시간이 없으면 새로 설정 (30분)
+        if (!sessionStorage.getItem('adminExpiry')) {
+            extendAdminSession();
+        } else {
+            startTimer();
+        }
+    }
+});
+
+// 세션 연장 로직
+function extendAdminSession() {
+    const duration = 30 * 60 * 1000; // 30분
+    sessionStorage.setItem('adminExpiry', Date.now() + duration);
+    startTimer();
+}
+
+// 1초마다 실행되는 타이머
+function startTimer() {
+    if (window.adminInterval) clearInterval(window.adminInterval);
+    
+    window.adminInterval = setInterval(() => {
+        const expiry = parseInt(sessionStorage.getItem('adminExpiry'));
+        const remaining = expiry - Date.now();
+
+        if (remaining <= 0) {
+            clearInterval(window.adminInterval);
+            sessionStorage.clear(); // 인증 정보 삭제
+            alert("관리자 세션이 만료되었습니다.");
+            window.location.href = "https://blueuk.github.io/greenpeppers/greenPepperManagerAdmin.html";
+        } else {
+            const m = Math.floor(remaining / 60000);
+            const s = Math.floor((remaining % 60000) / 1000);
+            document.getElementById('auth-timer').innerText = 
+                `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
+    }, 1000);
 }
 
 
