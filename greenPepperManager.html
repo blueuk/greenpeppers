@@ -410,23 +410,25 @@
     });
     document.getElementById('edit-btn').style.display = 'block';
    
-         // --- 8개 핵심 지표 데이터 가공 ---
-    // info.stats[idx] 값을 숫자로 변환하는 헬퍼 함수
+
+    //차트 로직
+    // --- 8개 핵심 지표 데이터 가공 (순서 조정: 피지컬 -> 체력 -> 공격 -> 슛 -> 커뮤니케이션 -> 스피드 -> 수비 -> 패스) ---
     const getVal = (idx) => parseFloat(info.stats[idx]) || 0;
     const avg = (arr) => arr.reduce((a, b) => a + b, 0) / arr.length;
 
+    // 항목별 계산 및 배치 순서 (12시 방향부터 시계방향)
     const summaryData = [
-        avg([getVal(4), getVal(5)]),                         // 피지컬 (몸싸움, 균형감)
-        getVal(6),                                          // 체력
-        avg([getVal(20), getVal(21), getVal(22), getVal(27)]), // 공격 (1:1돌파, 연계, 위치선정, 드리블)
-        avg([getVal(13), getVal(14), getVal(15), getVal(16), getVal(17), getVal(18), getVal(19)]), // 수비
-        avg([getVal(25), getVal(26)]),                       // 패스 (패스, 롱패스) ※기존 라벨 기준 25, 26번
-        avg([getVal(23), getVal(24)]),                       // 슛 (슛, 슛정확도)
-        avg([getVal(8), getVal(9)]),                         // 커뮤니케이션 (리더십, 의사소통)
-        getVal(7)                                           // 스피드
+        avg([getVal(4), getVal(5)]),                         // 1. 피지컬 (몸싸움, 균형감)
+        getVal(6),                                          // 2. 체력
+        avg([getVal(20), getVal(21), getVal(22), getVal(27)]), // 3. 공격 (1:1돌파, 연계, 위치선정, 드리블)
+        avg([getVal(23), getVal(24)]),                       // 4. 슛 (슛, 슛정확도)
+        avg([getVal(8), getVal(9)]),                         // 5. 커뮤니케이션 (리더십, 의사소통)
+        getVal(7),                                          // 6. 스피드
+        avg([getVal(13), getVal(14), getVal(15), getVal(16), getVal(17), getVal(18), getVal(19)]), // 7. 수비
+        avg([getVal(25), getVal(26)])                        // 8. 패스 (패스, 롱패스)
     ];
 
-    const summaryLabels = ["피지컬", "체력", "공격", "수비", "패스", "슛", "커뮤니케이션", "스피드"];
+    const summaryLabels = ["피지컬", "체력", "공격", "슛", "커뮤니케이션", "스피드", "수비", "패스"];
 
     // --- 차트 생성 ---
     const chartContainer = document.getElementById('chart-container');
@@ -444,7 +446,7 @@
             labels: summaryLabels,
             datasets: [{
                 label: `${name} 능력치 요약`,
-                data: summaryData.map(v => v.toFixed(1)), // 소수점 첫째자리까지 표시
+                data: summaryData.map(v => v.toFixed(1)),
                 backgroundColor: 'rgba(54, 162, 235, 0.2)',
                 borderColor: 'rgba(54, 162, 235, 1)',
                 borderWidth: 2,
@@ -455,9 +457,11 @@
         options: {
             scales: {
                 r: {
+                    // 12시 방향 시작 설정 (기본값이 0이나 명시적으로 확인)
+                    startAngle: 0, 
                     angleLines: { display: true },
                     suggestedMin: 0,
-                    suggestedMax: 20, // 20점 만점 기준
+                    suggestedMax: 20,
                     ticks: { 
                         stepSize: 5,
                         display: false 
@@ -481,7 +485,6 @@
         }
     });
 
-    
     }
 
 	function toggleEditMode() {
