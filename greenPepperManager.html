@@ -257,8 +257,7 @@
 </footer>
 
 <script>
-	let myChart = null; // 차트 객체를 저장할 변수
-
+	
 	window.addEventListener('DOMContentLoaded', (event) => {
     		checkAdminAuth();
 	});
@@ -283,55 +282,54 @@
     		}
 	}
 
-/=/ (선택사항) 로그아웃 기능이 필요하다면
-function logoutAdmin() {
-    sessionStorage.removeItem('isAdminAuthenticated');
-    location.reload();
-}
+	// (선택사항) 로그아웃 기능이 필요하다면
+	function logoutAdmin() {
+    		sessionStorage.removeItem('isAdminAuthenticated');
+    		location.reload();
+	}
 
-// 페이지 로드 시 관리자 여부 확인
-window.addEventListener('DOMContentLoaded', () => {
-    const isAdmin = sessionStorage.getItem('isAdminAuthenticated');
-    if (isAdmin === 'true') {
-        document.getElementById('admin-indicator').style.display = 'flex';
-        // 세션 만료 시간이 없으면 새로 설정 (30분)
-        if (!sessionStorage.getItem('adminExpiry')) {
-            extendAdminSession();
-        } else {
-            startTimer();
-        }
-    }
-});
+	// 페이지 로드 시 관리자 여부 확인
+	window.addEventListener('DOMContentLoaded', () => {
+    		const isAdmin = sessionStorage.getItem('isAdminAuthenticated');
+    		if (isAdmin === 'true') {
+        		document.getElementById('admin-indicator').style.display = 'flex';
+        		// 세션 만료 시간이 없으면 새로 설정 (30분)
+        		if (!sessionStorage.getItem('adminExpiry')) {
+            		extendAdminSession();
+        		} else {
+         		startTimer();
+        		}
+    		}
+	});
 
-// 세션 연장 로직
-function extendAdminSession() {
-    const duration = 30 * 60 * 1000; // 30분
-    sessionStorage.setItem('adminExpiry', Date.now() + duration);
-    startTimer();
-}
+	// 세션 연장 로직
+	function extendAdminSession() {
+    		const duration = 30 * 60 * 1000; // 30분
+    		sessionStorage.setItem('adminExpiry', Date.now() + duration);
+    		startTimer();
+	}
 
-// 1초마다 실행되는 타이머
-function startTimer() {
-    if (window.adminInterval) clearInterval(window.adminInterval);
+	// 1초마다 실행되는 타이머
+	function startTimer() {
+    		if (window.adminInterval) clearInterval(window.adminInterval);
     
-    window.adminInterval = setInterval(() => {
-        const expiry = parseInt(sessionStorage.getItem('adminExpiry'));
-        const remaining = expiry - Date.now();
+    		window.adminInterval = setInterval(() => {
+        		const expiry = parseInt(sessionStorage.getItem('adminExpiry'));
+        		const remaining = expiry - Date.now();
 
-        if (remaining <= 0) {
-            clearInterval(window.adminInterval);
-            sessionStorage.clear(); // 인증 정보 삭제
-            alert("관리자 세션이 만료되었습니다.");
-            window.location.href = "https://blueuk.github.io/greenpeppers/greenPepperManagerAdmin.html";
-        } else {
-            const m = Math.floor(remaining / 60000);
-            const s = Math.floor((remaining % 60000) / 1000);
-            document.getElementById('auth-timer').innerText = 
-                `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-        }
-    }, 1000);
-}
-
+        		if (remaining <= 0) {
+            		clearInterval(window.adminInterval);
+            		sessionStorage.clear(); // 인증 정보 삭제
+            		alert("관리자 세션이 만료되었습니다.");
+            		window.location.href = "https://blueuk.github.io/greenpeppers/greenPepperManagerAdmin.html";
+        		} else {
+            		const m = Math.floor(remaining / 60000);
+            		const s = Math.floor((remaining % 60000) / 1000);
+            		document.getElementById('auth-timer').innerText = 
+                		`${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        		}
+    		}, 1000);
+	}
 
     const API_URL = "https://script.google.com/macros/s/AKfycbwLJH9iSYhYJ-kj9x6j45WhF7NgbW2az9Ua0w2RBdbKa-lTn3UXGtmttTS1KjAFCb2X/exec";
     let memberList = [];
@@ -343,6 +341,7 @@ function startTimer() {
     let originalStatsBeforeEdit = [];
     let currentVoteStep = 0;
     let voteData = { attend: [], absent: [] };
+	let myChart = null; // 차트 객체를 저장할 변수
 
     const labels = ["골레이", "아라", "피보", "픽소", "몸싸움", "균형감", "체력", "스피드", "리더십", "의사소통", "집중력", "대담성", "침착성", "일대일수비", "수비지원", "수비위치선정", "대인마크", "가로채기", "반사신경", "공중볼처리", "일대일돌파", "연계플레이", "공격위치선정", "슛", "슛정확도", "패스", "롱패스", "드리블"];
     
@@ -456,17 +455,16 @@ function startTimer() {
     
     }
 
-function toggleEditMode() {
-    // 1. 관리자 권한 체크 (sessionStorage 확인)
-    const isAdmin = sessionStorage.getItem('isAdminAuthenticated');
+	function toggleEditMode() {
+    		// 1. 관리자 권한 체크 (sessionStorage 확인)
+    		const isAdmin = sessionStorage.getItem('isAdminAuthenticated');
 
-    if (isAdmin !== 'true') {
-        // 관리자가 아닐 경우 경고창을 띄우고 함수 종료
-        alert("관리자만 가능합니다.");
-        return; 
-    }
+	    if (isAdmin !== 'true') {
+ 	        // 관리자가 아닐 경우 경고창을 띄우고 함수 종료
+  		    alert("관리자만 가능합니다.");
+        		return; 
+    		}
 
-    
         const btn = document.getElementById('edit-btn');
         const statDivs = document.querySelectorAll('.stat-val');
         const options = [5, 10, 13, 16, 18]; // 선택 가능한 옵션들
@@ -504,15 +502,13 @@ function toggleEditMode() {
         }
     }
 
-
-
     function cancelEdit() {
         loadMemberInfo();
         document.getElementById('edit-btn').innerText = "정보 수정하기";
         document.getElementById('cancel-btn').style.display = 'none';
     }
 
-// 저장 함수도 함께 수정 (input -> select 로 변경되었으므로 선택자 수정 필요)
+	// 저장 함수도 함께 수정 (input -> select 로 변경되었으므로 선택자 수정 필요)
     async function submitEditedInfo() {
         const name = document.getElementById('member-select').value;
         // .stat-val 내부의 select 요소를 모두 찾음
