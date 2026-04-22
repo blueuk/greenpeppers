@@ -627,6 +627,16 @@
                             .map(c => c.innerText);
         const date = document.getElementById('vote-date').value;
         if(!date) return alert("날짜를 선택하세요.");
+        
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const selectedDate = new Date(date);
+        selectedDate.setHours(0, 0, 0, 0);
+        
+        if (selectedDate < today) {
+            alert("투표할 날짜를 확인하세요.");
+        }
 
         if(currentVoteStep === 0) { 
             voteData.attend = selected;
