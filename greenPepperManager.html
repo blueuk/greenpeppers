@@ -629,13 +629,25 @@
         if(!date) return alert("날짜를 선택하세요.");
         
         const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        const currentDay = today.getDay();
+    
+        // 토요일(6)까지 남은 일수 계산
+        // 오늘이 토요일이면 0일, 오늘이 일요일(0)이면 6일이 더해짐
+       const daysUntilSaturday = (6 - currentDay + 7) % 7;
+    
+       // 현재 날짜에 남은 일수를 더함
+       const nextSaturday = new Date(today);
+       nextSaturday.setDate(today.getDate() + daysUntilSaturday);
+    
+       // 시간 정보를 00:00:00으로 초기화 (필요한 경우)
+       nextSaturday.setHours(0, 0, 0, 0);
+    
         
         const selectedDate = new Date(date);
         selectedDate.setHours(0, 0, 0, 0);
         
-        if (selectedDate < today) {
-            alert("투표할 날짜를 확인하세요.");
+        if (selectedDate != nextSaturday) {
+           return alert("투표 입력 날짜를 확인하세요.");
         }
 
         if(currentVoteStep === 0) { 
