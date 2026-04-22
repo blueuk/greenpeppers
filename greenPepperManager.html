@@ -122,18 +122,16 @@
 
 <header>
  <div class="header-container" style="display: flex; align-items: center; justify-content: space-between; min-height: 60px; padding: 0 16px; background-color: #ffffff;">
-    
     <div style="display: flex; align-items: center; gap: 8px;">
         <img src="greenpeppers_logo.png" alt="Logo" class="header-logo" style="height: 24px; width: auto;">
         <span id="header-title" style="font-weight: bold; font-size: 18px; color: #191f28;">풋고추 FC</span>
     </div>
 
-    <div id="admin-indicator" style="display: none; align-items: center; gap: 6px; white-space: nowrap;">
-        <span id="auth-timer" style="color: #4e5968; font-size: 12px; font-variant-numeric: tabular-nums; font-weight: 500;">30:00</span>
-        <button onclick="extendAdminSession()" style="background: #e5e8eb; border: none; padding: 4px 8px; border-radius: 6px; font-size: 11px; cursor: pointer; color: #4e5968; font-weight: 600;">연장</button>
+    <div id="admin-indicator" style="display: none; align-items: center; gap: 6px; white-space: nowrap;">        
         <span style="background-color: #ffd400; color: #191f28; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 11px;">관리자</span>
+        <button onclick="extendAdminSession()" style="background: #e5e8eb; border: none; padding: 4px 8px; border-radius: 6px; font-size: 11px; cursor: pointer; color: #4e5968; font-weight: 600;">연장</button>
+ 		<span id="auth-timer" style="color: #4e5968; font-size: 12px; font-variant-numeric: tabular-nums; font-weight: 500;">30:00</span>
     </div>
-
 </div>
 </header>
 
