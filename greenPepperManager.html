@@ -739,14 +739,35 @@
         document.querySelectorAll('.date-item').forEach(i => i.classList.remove('selected'));
         el.classList.add('selected');
         selectedDateForQuickVote = date; 
+        
         const listContainer = document.getElementById('attendee-list');
         const countBadge = document.getElementById('attendee-count-badge');
         const addBtn = document.getElementById('attendee-add-btn-container');
+        const addMemberBtn = document.querySelector('.add-member-chip');
+
         listContainer.innerHTML = `<div style="color: var(--toss-gray); font-size: 14px;">조회 중...</div>`;
         addBtn.style.display = 'none';
+        
         const attendees = await apiCall({ action: 'getVoteStatus', date: date });
+        
         listContainer.innerHTML = "";
+        
         addBtn.style.display = 'flex';
+        
+        //오늘날짜
+		const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        // 선택된 날짜
+        const selectedDate = new Date(date);
+        seletedDate.setHours(0, 0, 0, 0);
+        
+        if(selectedDate < today) {
+            addMemberBtn.style.display = 'none';
+        } else {
+            addMemberBtn.style.display = 'inline-flex';
+        } 
+        
         currentAttendees = attendees || []; 
         if (currentAttendees.length > 0) {
             countBadge.innerText = `${currentAttendees.length}명`;
@@ -848,6 +869,7 @@
     }
 
     function copyTeamResult() {
+        
         let copyStr = `⚽ 풋고추 FC 팀 배정\n📅 경기일: ${selectedDateForQuickVote}\n\n`;
         const teamNames = ["[형광팀]", "[주황팀]", "[조끼X팀]"];
         lastAssignedTeams.forEach((t, i) => {
