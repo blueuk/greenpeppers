@@ -776,22 +776,22 @@
         
         addBtn.style.display = 'flex';
         
-        //오늘날짜
-		const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        
-        // 선택된 날짜
-        const selectedDate = new Date(date);
-        selectedDate.setHours(0, 0, 0, 0);
-        
-        if(selectedDate < today) {
-            addMemberBtn.style.display = 'none';
-        } else {
-            addMemberBtn.style.display = 'inline-flex';
-        } 
-        
         currentAttendees = attendees || []; 
         if (currentAttendees.length > 0) {
+            //오늘날짜
+		    const today = new Date();
+            today.setHours(0, 0, 0, 0);
+        
+            // 선택된 날짜
+            const selectedDate = new Date(date);
+            selectedDate.setHours(0, 0, 0, 0);
+        
+            if(selectedDate < today) {
+                addMemberBtn.style.display = 'none';
+            } else {
+                addMemberBtn.style.display = 'inline-flex';
+            } 
+            
             countBadge.innerText = `${currentAttendees.length}명`;
             currentAttendees.forEach(name => {
                 const chip = document.createElement('div');
