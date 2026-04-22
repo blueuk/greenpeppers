@@ -724,20 +724,37 @@
     }
 
     function scrollToClosestSaturday() {
-        const now = new Date();
-        const dateItems = document.querySelectorAll('.date-item');
-        let closestDist = Infinity;
-        let closestEl = null;
-        dateItems.forEach(item => {
-            const itemDate = new Date(item.dataset.date);
-            const dist = Math.abs(itemDate - now);
-            if(dist < closestDist) { closestDist = dist; closestEl = item; }
-        });
-        if(closestEl) {
-            closestEl.click();
-            setTimeout(() => { closestEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' }); }, 300);
-        }
-    }
+    		const now = new Date();
+    		const dateItems = document.querySelectorAll('.date-item');
+    		let closestDist = Infinity;
+    		let closestEl = null;
+
+    		dateItems.forEach(item => {
+        		const itemDate = new Date(item.dataset.date);
+        		const dist = Math.abs(itemDate - now);
+        		
+                if(dist < closestDist) { 
+            		closestDist = dist; 
+         		closestEl = item; 
+        		}
+	    });
+
+ 	   if(closestEl) {
+	        // 이미 선택된 상태라면 스크롤만, 아니라면 클릭 이벤트 발생
+	        if (!closestEl.classList.contains('selected')) {
+	            closestEl.click();
+	        }
+        
+	        // 애니메이션 완료 후 정확한 위치로 스크롤하기 위해 시간차를 둠
+	        setTimeout(() => { 
+	            closestEl.scrollIntoView({ 
+	                behavior: 'smooth', 
+	                block: 'nearest', 
+	                inline: 'center' 
+	            }); 
+	        }, 100); 
+	    }
+	}
 
     async function fetchInitialData() {
         const [list, rates] = await Promise.all([
