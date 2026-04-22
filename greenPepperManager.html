@@ -646,10 +646,7 @@
         const selectedDate = new Date(date);
         selectedDate.setHours(0, 0, 0, 0);
         
-        alert(selectedDate);
-        alert(nextSaturday);
-        
-        if (selectedDate != nextSaturday) {
+        if (selectedDate.getTime() != nextSaturday.getTime()) {
            return alert("투표 입력 날짜를 확인하세요.");
         }
 
