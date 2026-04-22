@@ -869,8 +869,13 @@
     }
 
     function copyTeamResult() {
-        
-        let copyStr = `⚽ 풋고추 FC 팀 배정\n📅 경기일: ${selectedDateForQuickVote}\n\n`;
+        // 1. 현재 날짜와 시간 생성 (조회일시용)
+    		const now = new Date();
+    		const nowStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+    		// 2. 문자열 구성 (조회일시 추가)
+    		let copyStr = `⚽ 풋고추 FC 팀 배정\n📅 경기일: ${selectedDateForQuickVote}\n🕒 조회일시: ${nowStr}\n\n`;
+
         const teamNames = ["[형광팀]", "[주황팀]", "[조끼X팀]"];
         lastAssignedTeams.forEach((t, i) => {
             copyStr += `${teamNames[i]} ${t.map(p => p.name).join(", ")}\n`;
