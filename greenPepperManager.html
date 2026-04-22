@@ -774,10 +774,10 @@
         
         listContainer.innerHTML = "";
         
-        addBtn.style.display = 'flex';
-        
         currentAttendees = attendees || []; 
         if (currentAttendees.length > 0) {
+            addBtn.style.display = 'flex';
+            
             //오늘날짜
 		    const today = new Date();
             today.setHours(0, 0, 0, 0);
