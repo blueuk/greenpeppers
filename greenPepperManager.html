@@ -800,8 +800,18 @@
                 listContainer.appendChild(chip);
             });
         } else {
-            countBadge.innerText = `0명`;
-            listContainer.innerHTML = `<div style="color: var(--toss-gray); font-size: 14px;">참석 인원 없음</div>`;
+            // 인원이 0명일 때: 메시지 대신 '투표입력' 버튼 생성
+        countBadge.innerText = `0명`;
+        listContainer.innerHTML = `
+            <div style="text-align: center; padding: 20px 0;">
+                <div style="color: var(--toss-gray); font-size: 14px; margin-bottom: 12px;">참석 인원이 없습니다.</div>
+                <button class="add-member-chip" 
+                        onclick="showSection('vote-input')" 
+                        style="background-color: var(--toss-blue); color: white; border: none; cursor: pointer;">
+                    🗳️ 투표 입력하러 가기
+                </button>
+            </div>
+        `;
         }
     }
 
