@@ -115,71 +115,58 @@
         /* 로딩 화면 전체 컨테이너 */
 #loading {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(255, 255, 255, 0.9);
-    display: none; /* 기본은 숨김 */
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(255, 255, 255, 0.8);
+    display: none; /* JS에서 flex로 변경 */
     justify-content: center;
     align-items: center;
     z-index: 9999;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px); /* iOS 지원 */
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
 }
 
 .loading-container {
-    text-align: center;
     display: flex;
     flex-direction: column;
     align-items: center;
+    gap: 15px;
 }
 
-.loading-animation {
-    display: flex;
-    align-items: flex-end;
-    gap: 10px;
-    margin-bottom: 20px;
-    height: 100px; /* 애니메이션 공간 확보 */
+/* 뱅글뱅글 도는 애니메이션 */
+.spinner {
+    animation: rotate 2s linear infinite;
+    width: 50px;
+    height: 50px;
 }
 
-/* 축구공 애니메이션 */
-.loading-ball {
-    font-size: 40px;
-    will-change: transform;
-    animation: ballBounce 0.8s infinite alternate cubic-bezier(0.45, 0.05, 0.55, 0.95);
+.spinner .path {
+    stroke: var(--toss-blue); /* 기존 코드의 토스 블루 색상 사용 */
+    stroke-linecap: round;
+    animation: dash 1.5s ease-in-out infinite;
 }
 
-/* 왼쪽 선수 */
-.player-left {
-    font-size: 40px;
-    animation: playerMove 0.8s infinite alternate ease-in-out;
+@keyframes rotate {
+    100% { transform: rotate(360deg); }
 }
 
-/* 오른쪽 선수 */
-.player-right {
-    font-size: 40px;
-    animation: playerMove 0.8s infinite alternate-reverse ease-in-out;
+@keyframes dash {
+    0% { stroke-dasharray: 1, 150; stroke-dashoffset: 0; }
+    50% { stroke-dasharray: 90, 150; stroke-dashoffset: -35; }
+    100% { stroke-dasharray: 90, 150; stroke-dashoffset: -124; }
 }
 
-/* 공이 튀어오르는 효과 */
-@keyframes ballBounce {
-    0% { transform: translateY(0) rotate(0deg); }
-    100% { transform: translateY(-50px) rotate(180deg); }
-}
-
-/* 선수들이 공을 따라 움직이는 미세한 효과 */
-@keyframes playerMove {
-    0% { transform: translateX(-5px); }
-    100% { transform: translateX(5px); }
+/* 모바일을 위한 가속 프리픽스 */
+@-webkit-keyframes rotate {
+    100% { -webkit-transform: rotate(360deg); }
 }
 
 .loading-text {
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--toss-blue);
-    letter-spacing: -0.5px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #4e5968; /* 토스 그레이 색상 */
 }
+
 
 
         
@@ -189,15 +176,12 @@
 
 <div id="loading">
     <div class="loading-container">
-        <div class="loading-animation">
-            <span class="player-left">🏃</span>
-            <span class="loading-ball">⚽</span>
-            <span class="player-right">🏃‍♂️</span>
-        </div>
-        <div class="loading-text">경기장 입장 중...</div>
+        <svg class="spinner" viewBox="0 0 50 50">
+            <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
+        </svg>
+        <div class="loading-text">잠시만 기다려주세요</div>
     </div>
 </div>
-
 
 
 <header>
@@ -769,31 +753,38 @@
     }
 
     async function apiCall(data, silent = false) {
-    const loadingEl = document.getElementById('loading');
-    
-    if(!silent) {
-        loadingEl.style.display = 'flex'; // 중앙 정렬을 위해 flex 사용
-    }
-
-    // 모바일 브라우저가 화면을 그릴 시간을 줍니다 (0.05초)
-    await new Promise(resolve => setTimeout(resolve, 50));
-
-    try {
-        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(data) });
-        const result = await response.json();
-        return result.data;
-    } catch (e) {
-        console.error(e);
-    } finally {
+        const loadingEl = document.getElementById('loading');
+        
         if(!silent) {
-            loadingEl.style.display = 'none';
+            loadingEl.style.display = 'flex';
+        }
+    
+        // 모바일 브라우저에게 "로딩창을 먼저 그려라"라고 지시
+        await new Promise(resolve => {
+            requestAnimationFrame(() => {
+                setTimeout(resolve, 30); // 30ms 정도 여유를 주면 모바일에서 확실히 뜹니다.
+            });
+        });
+    
+        try {
+            const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(data) });
+            const result = await response.json();
+            if (!result.success) throw new Error(result.error);
+            return result.data;
+        } catch (e) {
+            console.error(e);
+            alert("데이터를 가져오는 데 실패했습니다.");
+        } finally {
+            if(!silent) {
+                loadingEl.style.display = 'none';
+            }
         }
     }
-}
+
 
 
     let minDate = null; // 현재 렌더링된 가장 과거 날짜
-let maxDate = null; // 현재 렌더링된 가장 미래 날짜
+    let maxDate = null; // 현재 렌더링된 가장 미래 날짜
 
 function initCalendar() {
     const wrapper = document.getElementById('horizontal-calendar');
