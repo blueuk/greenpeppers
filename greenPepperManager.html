@@ -119,39 +119,44 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(255, 255, 255, 0.9); /* 배경을 조금 더 밝고 불투명하게 */
-    display: none;
-    flex-direction: column; /* 아이콘과 텍스트를 세로로 배치 */
+    background: rgba(255, 255, 255, 0.85);
+    display: none; /* 기본은 숨김 */
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    z-index: 3000;
-    backdrop-filter: blur(4px); /* 배경 살짝 흐리게 처리 (고급스러운 느낌) */
+    z-index: 9999; /* 가장 위에 오도록 */
+    backdrop-filter: blur(5px);
 }
 
 /* 축구공 아이콘 애니메이션 */
 .loading-ball {
-    font-size: 50px;
-    margin-bottom: 15px;
-    animation: bounceRoll 1.2s infinite ease-in-out;
+    font-size: 60px;
+    margin-bottom: 20px;
     display: inline-block;
+    animation: tossBounce 1.2s infinite ease-in-out;
 }
 
-/* 축구공이 튀면서 회전하는 효과 */
-@keyframes bounceRoll {
+/* 토스 스타일의 부드러운 튀기기 + 회전 애니메이션 */
+@keyframes tossBounce {
     0%, 100% {
         transform: translateY(0) rotate(0deg);
     }
     50% {
-        transform: translateY(-30px) rotate(180deg); /* 위로 튀어오르며 회전 */
+        transform: translateY(-40px) rotate(180deg);
     }
 }
 
-/* 로딩 텍스트 스타일 */
 .loading-text {
     font-size: 16px;
     font-weight: 600;
     color: var(--toss-blue);
-    letter-spacing: -0.5px;
+    /* 텍스트가 깜빡이는 애니메이션 추가 */
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
 }
 
         
@@ -734,15 +739,31 @@
     }
 
     async function apiCall(data, silent = false) {
-        if(!silent) document.getElementById('loading').style.display = 'flex';
-        try {
-            const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(data) });
-            const result = await response.json();
-            if (!result.success) throw new Error(result.error);
-            return result.data;
-        } catch (e) { console.error(e); alert("통신 오류가 발생했습니다."); } 
-        finally { if(!silent) document.getElementById('loading').style.display = 'none'; }
+    const loadingEl = document.getElementById('loading');
+    
+    if(!silent) {
+        loadingEl.style.display = 'flex'; // 애니메이션 시작
     }
+
+    try {
+        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(data) });
+        const result = await response.json();
+        if (!result.success) throw new Error(result.error);
+        return result.data;
+    } catch (e) { 
+        console.error(e); 
+        alert("통신 오류가 발생했습니다."); 
+    } finally { 
+        if(!silent) {
+            // 통신이 너무 빨리 끝나면 애니메이션이 안 보이므로 
+            // 아주 짧은 지연(0.3초) 후 닫히게 하면 시각적으로 더 자연스럽습니다.
+            setTimeout(() => {
+                loadingEl.style.display = 'none';
+            }, 300);
+        }
+    }
+}
+
 
     let minDate = null; // 현재 렌더링된 가장 과거 날짜
 let maxDate = null; // 현재 렌더링된 가장 미래 날짜
