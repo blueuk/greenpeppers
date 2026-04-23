@@ -150,52 +150,49 @@
     }
     
     /* 축구공 애니메이션 */
+    /* 공이 오른쪽에서 왼쪽으로 굴러가는 애니메이션 */
     .soccer-ball {
         font-size: 50px;
-        animation: bounce-rotate 1.2s ease-in-out infinite;
         display: inline-block;
         line-height: 1;
+        /* 2초 동안 전체 화면을 굴러가며 무한 반복 */
+        animation: roll-left 2s linear infinite;
+        position: absolute; 
     }
     
-    /* 공 아래 그림자 */
+    @keyframes roll-left {
+        0% {
+            left: 110%; /* 화면 오른쪽 밖에서 시작 */
+            transform: rotate(0deg);
+        }
+        100% {
+            left: -20%; /* 화면 왼쪽 밖으로 사라짐 */
+            transform: rotate(-720deg); /* 왼쪽으로 가니까 마이너스 방향으로 회전 */
+        }
+    }
+    
+    /* 굴러가는 공에는 그림자가 필요 없으므로 그림자 코드는 삭제하거나 숨김 처리 */
     .ball-shadow {
-        width: 30px;
-        height: 5px;
-        background: rgba(0, 0, 0, 0.1);
-        border-radius: 50%;
-        margin-top: 5px;
-        animation: shadow-scale 1.2s ease-in-out infinite;
-    }
-    
-    /* 튀어오르며 회전하는 효과 */
-    @keyframes bounce-rotate {
-        0%, 100% { transform: translateY(0) rotate(0deg); }
-        50% { transform: translateY(-30px) rotate(180deg); } /* 위로 30px 점프 */
-    }
-    
-    /* 공 높이에 따른 그림자 크기 변화 */
-    @keyframes shadow-scale {
-        0%, 100% { transform: scale(1); opacity: 1; }
-        50% { transform: scale(0.5); opacity: 0.3; } /* 공이 높이 뜨면 그림자가 작고 흐려짐 */
+        display: none;
     }
     
     .loading-text {
-        margin-top: 20px;
+        margin-top: 80px; /* 공이 지나가는 길 아래에 텍스트 배치 */
         font-size: 15px;
         font-weight: 600;
         color: #4e5968;
+        z-index: 1;
     }
+
     </style>
 </head>
 <body>
-
-<div id="loading">
-    <div class="loading-container">
-        <div class="soccer-ball">⚽</div>
-        <div class="ball-shadow"></div>
-        <div class="loading-text">잠시만 기다려주세요</div>
+    <div id="loading">
+        <div class="loading-container" style="position: relative; width: 100%; overflow: hidden; height: 150px; display: flex; justify-content: center; align-items: center;">
+            <div class="soccer-ball">⚽</div>
+            <div class="loading-text">데이터를 불러오고 있어요</div>
+        </div>
     </div>
-</div>
 
 <header>
  <div class="header-container" style="display: flex; align-items: center; justify-content: space-between; min-height: 30px; padding: 0 16px; background-color: #ffffff;">
