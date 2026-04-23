@@ -72,12 +72,3 @@ function startTimer() {
             }
         }, 1000);
 }
-
-async function loadAllSections() {
-    // 작성한 순서대로 화면에 나타납니다.
-    await loadSection('home');
-    await loadSection('member-add');
-    await loadSection('member-view');
-    await loadSection('team-modal');
-    await loadSection('vote-input');
-}

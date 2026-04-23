@@ -32,24 +32,3 @@ window.onload = () => {
         scrollToClosestSaturday();
     }, 100); 
 };
-
-
-// 특정 파일을 불러와서 main에 넣어주는 함수
-async function loadSection(sectionName) {
-    const mainContent = document.getElementById('main-content');
-    
-    try {
-        const response = await fetch(`web/${sectionName}.html`);
-        if (!response.ok) throw new Error('파일을 찾을 수 없습니다.');
-        
-        const html = await response.text();
-        mainContent.innerHTML = html;
-
-        // 파일 로드 후 실행해야 할 초기화 함수가 있다면 여기서 호출
-        if (sectionName === 'member-view') {
-            initMemberView(); // 예: 차트 로딩 등
-        }
-    } catch (error) {
-        console.error('Error loading section:', error);
-    }
-}

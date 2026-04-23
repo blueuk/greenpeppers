@@ -1,0 +1,11 @@
+<div id="vote-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-title">상태 수동 변경</div>
+        <select id="quick-member-select"><option value="">멤버 선택</option></select>
+        <div class="modal-btns" style="display: flex; gap:5px;">
+            <button class="btn" onclick="submitQuickVote('O')">참석(O)</button>
+            <button class="btn" style="background:var(--toss-gray)" onclick="submitQuickVote('X')">불참(X)</button>
+        </div>
+        <button style="width:100%; margin-top:12px; background:none; color:var(--toss-gray); border:none;" onclick="closeQuickVoteModal()">닫기</button>
+    </div>
+</div>

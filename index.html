@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="version" content="1.0.1">
+    <meta name="version" content="1.0.0">
     <meta name="last-updated" content="2026-04-23">
     <title>Green Peppers FC Manager</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
@@ -33,7 +33,118 @@
         </div>
     </header>
 
-    <main id="main-content"></main>
+    <main>
+        <div id="home" class="section active">
+            <div id="rate-card" class="card">
+                <div class="card-title">멤버 참석 현황</div>
+                <div id="rolling-content" class="card-value">데이터를 불러오는 중...</div>
+            </div>
+            
+            <div class="card-title" style="margin-left:5px;">경기 일정 (토요일 오전 7-9시 월문3리 풋살구장)</div>
+            <div class="calendar-wrapper" id="horizontal-calendar"></div>
+
+            <div class="card" style="margin-top:20px;">
+                <div class="card-title">
+                    <span>참석 확정 멤버</span>
+                    <span id="attendee-count-badge" class="attend-count">0명</span>
+                </div>
+                <div id="attendee-list" class="attendee-container">
+                    <div style="color: var(--toss-gray); font-size: 14px;">날짜를 선택해 주세요.</div>
+                </div>
+                <div id="attendee-add-btn-container" style="margin-top: 15px; display: none; justify-content: flex-end; align-items: center;">
+                    <button class="team-assign-chip" onclick="openTeamModal()">⚡ 팀 배정</button>
+                    <div class="add-member-chip" onclick="openQuickVoteModal()">+ 직접 추가/변경</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="member-view" class="section">
+            <div class="card">
+                <select id="member-select" onchange="loadMemberInfo()">
+                    <option value="">멤버 선택</option>
+                </select>
+                <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+                <div id="chart-container" style="width: 100%; max-width: 500px; margin: 20px auto; display: none;">
+                        <canvas id="memberChart"></canvas>
+                </div>
+                <div id="member-detail" class="info-grid"></div>
+                <div id="edit-actions" style="display: flex; gap: 10px; margin-top: 10px;">
+                    <button id="edit-btn" class="btn btn-outline" style="display:none; flex: 2;" onclick="toggleEditMode()">정보 수정하기</button>
+                    <button id="cancel-btn" class="btn" style="display:none; flex: 1; background: var(--toss-gray);" onclick="cancelEdit()">취소</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="team-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-title">팀 배정 설정</div>
+                <div id="team-input-form">
+                    <div class="info-label">용병 수 (0~12명)</div>
+                    <input type="number" id="merc-count" value="0" min="0" max="12">
+                    <div class="info-label">팀당 인원</div>
+                    <select id="team-size-select">
+                        <option value="6">6명 (픽소2, 아라2, 피보1)</option>
+                        <option value="5">5명 (픽소1, 아라2, 피보1)</option>
+                    </select>
+                    <div class="info-label">팀 수</div>
+                    <select id="team-count-select">
+                        <option value="2">2팀 (형광, 주황)</option>
+                        <option value="3">3팀 (형광, 주황, 조끼X)</option>
+                    </select>
+                    <button class="btn" onclick="fetchAndAssignTeams()">팀 배정 실행</button>
+                </div>
+                <div id="team-loading-view" style="display:none;">
+                    <div class="progress-wrapper">
+                        <div id="progress-msg">데이터를 가져오는 중...</div>
+                        <div class="progress-bg"><div id="progress-bar" class="progress-bar"></div></div>
+                    </div>
+                </div>
+                <div id="team-result-view" style="display:none;">
+                    <div id="assign-timestamp" style="font-size:11px; color:var(--toss-gray); text-align:right;"></div>
+                    <div id="team-result-text" class="result-box"></div>
+                    <button class="copy-btn" onclick="copyTeamResult()">내용 복사하기</button>
+                    <button class="re-assign-btn" onclick="executeAssignmentLogic()">팀 재배정 (데이터 유지)</button>
+                </div>
+                <button style="width:100%; margin-top:12px; background:none; color:var(--toss-gray); border:none; cursor:pointer;" onclick="closeTeamModal()">닫기</button>
+            </div>
+        </div>
+
+        <div id="vote-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-title">상태 수동 변경</div>
+                <select id="quick-member-select"><option value="">멤버 선택</option></select>
+                <div class="modal-btns" style="display: flex; gap:5px;">
+                    <button class="btn" onclick="submitQuickVote('O')">참석(O)</button>
+                    <button class="btn" style="background:var(--toss-gray)" onclick="submitQuickVote('X')">불참(X)</button>
+                </div>
+                <button style="width:100%; margin-top:12px; background:none; color:var(--toss-gray); border:none;" onclick="closeQuickVoteModal()">닫기</button>
+            </div>
+        </div>
+
+        <div id="member-add" class="section">
+            <div class="card">
+                <div class="card-title">신규 멤버 추가</div>
+                <div id="name-inputs">
+                    <input type="text" class="new-name" placeholder="이름 입력">
+                </div>
+                <button class="btn btn-outline" onclick="addNameField()" style="margin-bottom:10px;">+ 이름 추가</button>
+                <button class="btn" onclick="submitNewMembers()">멤버 저장하기</button>
+            </div>
+        </div>
+
+        <div id="vote-input" class="section">
+            <div class="card">
+                <div class="card-title">투표 관리</div>
+                <input type="date" id="vote-date">
+                <div id="vote-step-container">
+                    <p id="vote-step-msg">참석자를 모두 선택해 주세요.</p>
+                    <div id="vote-member-chips" style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:15px;"></div>
+                    <button class="btn" id="vote-next-btn" onclick="processVoteStep()">다음 단계 (참석 선택 완료)</button>
+                    <button class="btn btn-outline" onclick="submitNoGame()">경기 미진행(R) 처리</button>
+                </div>
+            </div>
+        </div>
+    </main>
 
     <footer>
         <div class="tab active" onclick="showSection('home')"><span class="tab-icon">🏠</span>홈</div>
