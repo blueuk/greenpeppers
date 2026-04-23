@@ -111,14 +111,59 @@
 
         /* 그룹 제목 스타일 */
         .group-title { grid-column: span 2; font-size: 14px; font-weight: 700; color: var(--toss-text); margin: 15px 0 5px 5px; display: flex; align-items: center; }
-        .group-title::before { content: ''; display: inline-block; width: 4px; height: 14px; background: var(--toss-blue); margin-right: 8px; border-radius: 2px; }
+        .group-title::before { content: ''; display: inline-block; width: 4px; height: 14px; background: var(--toss-blue); margin-right: 8px; border-radius: 
+        /* 로딩 화면 전체 컨테이너 */
+#loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.9); /* 배경을 조금 더 밝고 불투명하게 */
+    display: none;
+    flex-direction: column; /* 아이콘과 텍스트를 세로로 배치 */
+    justify-content: center;
+    align-items: center;
+    z-index: 3000;
+    backdrop-filter: blur(4px); /* 배경 살짝 흐리게 처리 (고급스러운 느낌) */
+}
 
-        #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); display: none; justify-content: center; align-items: center; z-index: 3000; }
+/* 축구공 아이콘 애니메이션 */
+.loading-ball {
+    font-size: 50px;
+    margin-bottom: 15px;
+    animation: bounceRoll 1.2s infinite ease-in-out;
+    display: inline-block;
+}
+
+/* 축구공이 튀면서 회전하는 효과 */
+@keyframes bounceRoll {
+    0%, 100% {
+        transform: translateY(0) rotate(0deg);
+    }
+    50% {
+        transform: translateY(-30px) rotate(180deg); /* 위로 튀어오르며 회전 */
+    }
+}
+
+/* 로딩 텍스트 스타일 */
+.loading-text {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--toss-blue);
+    letter-spacing: -0.5px;
+}
+
+        
     </style>
 </head>
 <body>
 
-<div id="loading">로딩 중...</div>
+<div id="loading">
+    <div class="loading-ball">⚽</div>
+    <div class="loading-text">데이터를 불러오고 있어요</div>
+</div>
+
 
 <header>
  <div class="header-container" style="display: flex; align-items: center; justify-content: space-between; min-height: 30px; padding: 0 16px; background-color: #ffffff;">
