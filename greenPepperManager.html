@@ -446,83 +446,82 @@
     // --- 멤버 조회 로직 ---
     async function loadMemberInfo() {
     const name = document.getElementById('member-select').value;
-    if(!name) return;
-    
+    if (!name) return;
+
     const info = await apiCall({ action: 'getMemberInfo', memberName: name });
     originalStatsBeforeEdit = [...info.stats];
     const grid = document.getElementById('member-detail');
     grid.innerHTML = "";
 
+    // --- 관리자 권한 확인 ---
+    const isAdmin = sessionStorage.getItem('isAdminAuthenticated') === 'true';
+
     // 1. 포지션 값들을 가져와서 숫자로 변환
     const posValues = info.stats.slice(0, 4).map(v => parseFloat(v) || 0);
-    
-    // 2. 최대값을 구한 뒤 소수점 2자리 문자열로 변환 (비교용)
     const maxPosValStr = Math.max(...posValues).toFixed(2);
 
     groupDefinitions.forEach(group => {
+        // --- 일반 사용자 필터링 로직 추가 ---
+        // 관리자가 아니고, 현재 그룹 이름이 "핵심 포지션"이 아니면 화면에 그리지 않고 넘어감
+        if (!isAdmin && group.name !== "핵심 포지션") {
+            return; 
+        }
+
         const titleDiv = document.createElement('div');
         titleDiv.className = 'group-title';
         titleDiv.innerText = group.name;
         grid.appendChild(titleDiv);
 
         group.indices.forEach(idx => {
-            if(idx >= labels.length) return;
+            if (idx >= labels.length) return;
             let val = info.stats[idx];
             const isPosStat = idx < 4;
-            
+
             let displayVal = val || '-';
             let isHighlight = false;
 
-            if(isPosStat && val !== null) {
-                // 3. 현재 스탯 값을 소수점 2자리 문자열로 변환
+            if (isPosStat && val !== null) {
                 const currentValStr = parseFloat(val).toFixed(2);
                 displayVal = currentValStr;
-
-                // 4. 소수점 2자리까지 변환된 값끼리 비교하여 하이라이트 결정
-                if(parseFloat(maxPosValStr) > 0 && currentValStr === maxPosValStr) {
+                if (parseFloat(maxPosValStr) > 0 && currentValStr === maxPosValStr) {
                     isHighlight = true;
                 }
             }
 
             const item = document.createElement('div');
             item.className = 'info-item';
-            if(isHighlight) item.classList.add('highlight');
-            
+            if (isHighlight) item.classList.add('highlight');
+
             item.innerHTML = `<div class="info-label">${labels[idx]}</div><div class="stat-val" data-idx="${idx}">${displayVal}</div>`;
             grid.appendChild(item);
         });
     });
-    document.getElementById('edit-btn').style.display = 'block';
-   
 
-    //차트 로직
-    // --- 8개 핵심 지표 데이터 가공 (순서 조정: 피지컬 -> 체력 -> 공격 -> 슛 -> 커뮤니케이션 -> 스피드 -> 수비 -> 패스) ---
+    // 수정 버튼은 관리자에게만 노출
+    document.getElementById('edit-btn').style.display = isAdmin ? 'block' : 'none';
+
+    // --- 차트 로직 (이 부분은 권한과 상관없이 항상 실행됨) ---
     const getVal = (idx) => parseFloat(info.stats[idx]) || 0;
     const avg = (arr) => arr.reduce((a, b) => a + b, 0) / arr.length;
 
-    // 항목별 계산 및 배치 순서 (12시 방향부터 시계방향)
     const summaryData = [
-        avg([getVal(4), getVal(5)]),                         // 1. 피지컬 (몸싸움, 균형감)
-        getVal(6),                                          // 2. 체력
-        avg([getVal(20), getVal(21), getVal(22), getVal(27)]), // 3. 공격 (1:1돌파, 연계, 위치선정, 드리블)
-        avg([getVal(23), getVal(24)]),                       // 4. 슛 (슛, 슛정확도)
-        avg([getVal(8), getVal(9)]),                         // 5. 커뮤니케이션 (리더십, 의사소통)
-        getVal(7),                                          // 6. 스피드
-        avg([getVal(13), getVal(14), getVal(15), getVal(16), getVal(17), getVal(18), getVal(19)]), // 7. 수비
-        avg([getVal(25), getVal(26)])                        // 8. 패스 (패스, 롱패스)
+        avg([getVal(4), getVal(5)]),
+        getVal(6),
+        avg([getVal(20), getVal(21), getVal(22), getVal(27)]),
+        avg([getVal(23), getVal(24)]),
+        avg([getVal(8), getVal(9)]),
+        getVal(7),
+        avg([getVal(13), getVal(14), getVal(15), getVal(16), getVal(17), getVal(18), getVal(19)]),
+        avg([getVal(25), getVal(26)])
     ];
 
     const summaryLabels = ["피지컬", "체력", "공격", "슛", "커뮤니케이션", "스피드", "수비", "패스"];
 
-    // --- 차트 생성 ---
     const chartContainer = document.getElementById('chart-container');
     chartContainer.style.display = 'block';
 
     const ctx = document.getElementById('memberChart').getContext('2d');
-
-    if (myChart) {
-        myChart.destroy();
-    }
+    if (myChart) { myChart.destroy(); }
 
     myChart = new Chart(ctx, {
         type: 'radar',
@@ -541,35 +540,25 @@
         options: {
             scales: {
                 r: {
-                    // 12시 방향 시작 설정 (기본값이 0이나 명시적으로 확인)
-                    startAngle: 0, 
+                    startAngle: 0,
                     angleLines: { display: true },
                     suggestedMin: 0,
                     suggestedMax: 20,
-                    ticks: { 
-                        stepSize: 5,
-                        display: false 
-                    },
-                    pointLabels: {
-                        font: { size: 13, weight: 'bold' },
-                        color: '#333'
-                    }
+                    ticks: { stepSize: 5, display: false },
+                    pointLabels: { font: { size: 13, weight: 'bold' }, color: '#333' }
                 }
             },
             plugins: {
                 legend: { display: false },
                 tooltip: {
                     callbacks: {
-                        label: function(context) {
-                            return ` 점수: ${context.raw}`;
-                        }
+                        label: function(context) { return ` 점수: ${context.raw}`; }
                     }
                 }
             }
         }
     });
-
-    }
+}
 
 	function toggleEditMode() {
     		// 1. 관리자 권한 체크 (sessionStorage 확인)
