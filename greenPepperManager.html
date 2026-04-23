@@ -117,53 +117,70 @@
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(255, 255, 255, 0.85);
+    width: 100vw;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.9);
     display: none; /* 기본은 숨김 */
-    flex-direction: column;
     justify-content: center;
     align-items: center;
-    z-index: 9999; /* 가장 위에 오도록 */
-    backdrop-filter: blur(5px);
+    z-index: 9999;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px); /* iOS 지원 */
 }
 
-/* 수정된 축구공 스타일 */
-.loading-ball {
-    font-size: 60px;
+.loading-container {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.loading-animation {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
     margin-bottom: 20px;
-    display: inline-block;
-    /* 모바일 하드웨어 가속 강제 */
+    height: 100px; /* 애니메이션 공간 확보 */
+}
+
+/* 축구공 애니메이션 */
+.loading-ball {
+    font-size: 40px;
     will-change: transform;
-    -webkit-transform: translate3d(0,0,0); 
-    transform: translate3d(0,0,0);
-    animation: tossBounce 1.2s infinite ease-in-out;
+    animation: ballBounce 0.8s infinite alternate cubic-bezier(0.45, 0.05, 0.55, 0.95);
 }
 
-@keyframes tossBounce {
-    0%, 100% {
-        transform: translateY(0) rotate(0deg);
-        -webkit-transform: translateY(0) rotate(0deg);
-    }
-    50% {
-        transform: translateY(-40px) rotate(180deg);
-        -webkit-transform: translateY(-40px) rotate(180deg);
-    }
+/* 왼쪽 선수 */
+.player-left {
+    font-size: 40px;
+    animation: playerMove 0.8s infinite alternate ease-in-out;
 }
 
+/* 오른쪽 선수 */
+.player-right {
+    font-size: 40px;
+    animation: playerMove 0.8s infinite alternate-reverse ease-in-out;
+}
+
+/* 공이 튀어오르는 효과 */
+@keyframes ballBounce {
+    0% { transform: translateY(0) rotate(0deg); }
+    100% { transform: translateY(-50px) rotate(180deg); }
+}
+
+/* 선수들이 공을 따라 움직이는 미세한 효과 */
+@keyframes playerMove {
+    0% { transform: translateX(-5px); }
+    100% { transform: translateX(5px); }
+}
 
 .loading-text {
     font-size: 16px;
-    font-weight: 600;
+    font-weight: 700;
     color: var(--toss-blue);
-    /* 텍스트가 깜빡이는 애니메이션 추가 */
-    animation: pulse 1.5s infinite;
+    letter-spacing: -0.5px;
 }
 
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-}
 
         
     </style>
@@ -171,9 +188,16 @@
 <body>
 
 <div id="loading">
-    <div class="loading-ball">⚽</div>
-    <div class="loading-text">데이터를 불러오고 있어요</div>
+    <div class="loading-container">
+        <div class="loading-animation">
+            <span class="player-left">🏃</span>
+            <span class="loading-ball">⚽</span>
+            <span class="player-right">🏃‍♂️</span>
+        </div>
+        <div class="loading-text">경기장 입장 중...</div>
+    </div>
 </div>
+
 
 
 <header>
@@ -745,29 +769,27 @@
     }
 
     async function apiCall(data, silent = false) {
-        const loadingEl = document.getElementById('loading');
-        
+    const loadingEl = document.getElementById('loading');
+    
+    if(!silent) {
+        loadingEl.style.display = 'flex'; // 중앙 정렬을 위해 flex 사용
+    }
+
+    // 모바일 브라우저가 화면을 그릴 시간을 줍니다 (0.05초)
+    await new Promise(resolve => setTimeout(resolve, 50));
+
+    try {
+        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(data) });
+        const result = await response.json();
+        return result.data;
+    } catch (e) {
+        console.error(e);
+    } finally {
         if(!silent) {
-            loadingEl.style.display = 'flex';
-        }
-    
-        // 모바일 브라우저가 화면을 그릴 최소한의 시간(약 10ms)을 벌어줍니다.
-        await new Promise(resolve => setTimeout(resolve, 10));
-    
-        try {
-            const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(data) });
-            const result = await response.json();
-            if (!result.success) throw new Error(result.error);
-            return result.data;
-        } catch (e) { 
-            console.error(e); 
-            alert("통신 오류가 발생했습니다."); 
-        } finally { 
-            if(!silent) {
-                loadingEl.style.display = 'none';
-            }
+            loadingEl.style.display = 'none';
         }
     }
+}
 
 
     let minDate = null; // 현재 렌더링된 가장 과거 날짜
