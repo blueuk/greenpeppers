@@ -354,10 +354,16 @@
     ];
 
     window.onload = () => {
-        initCalendar();
+        initCalendar(); // 날짜 렌더링
         fetchInitialData();
         startRollingCard();
+    
+        // DOM이 브라우저에 완전히 그려진 후 스크롤하기 위해 짧은 지연시간 부여
+        setTimeout(() => {
+            scrollToClosestSaturday();
+        }, 100); 
     };
+
 
     // --- 멤버 조회 로직 ---
     async function loadMemberInfo() {
@@ -795,32 +801,38 @@ function handleScroll(e) {
     }
 
     function scrollToClosestSaturday() {
-    const dateItems = document.querySelectorAll('.date-item');
-    const now = new Date();
-    now.setHours(0,0,0,0);
-
-    let closestEl = null;
-    let minDiff = Infinity;
-
-    dateItems.forEach(item => {
-        const itemDate = new Date(item.dataset.date);
-        const diff = Math.abs(itemDate - now);
-        if (diff < minDiff) {
-            minDiff = diff;
-            closestEl = item;
-        }
-    });
-
-    if (closestEl) {
-        // 클릭 이벤트 발생시켜서 데이터 불러오기
-        closestEl.click();
-        
-        // 스크롤 중앙 정렬
         const wrapper = document.getElementById('horizontal-calendar');
-        const offset = closestEl.offsetLeft - (wrapper.clientWidth / 2) + (closestEl.clientWidth / 2);
-        wrapper.scrollTo({ left: offset, behavior: 'smooth' });
+        const dateItems = document.querySelectorAll('.date-item');
+        if (!wrapper || dateItems.length === 0) return;
+    
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+    
+        let closestEl = null;
+        let minDiff = Infinity;
+    
+        dateItems.forEach(item => {
+            const itemDate = new Date(item.dataset.date);
+            const diff = Math.abs(itemDate - now);
+            if (diff < minDiff) {
+                minDiff = diff;
+                closestEl = item;
+            }
+        });
+    
+        if (closestEl) {
+            // 1. 해당 날짜 데이터 로드 (클릭 이벤트 처리)
+            selectDate(closestEl.dataset.date, closestEl);
+            
+            // 2. 스크롤 위치 계산 및 이동
+            const offset = closestEl.offsetLeft - (wrapper.clientWidth / 2) + (closestEl.clientWidth / 2);
+            wrapper.scrollTo({
+                left: offset,
+                behavior: 'smooth'
+            });
+        }
     }
-}
+
 
     
 
