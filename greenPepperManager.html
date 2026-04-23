@@ -128,23 +128,29 @@
     backdrop-filter: blur(5px);
 }
 
-/* 축구공 아이콘 애니메이션 */
+/* 수정된 축구공 스타일 */
 .loading-ball {
     font-size: 60px;
     margin-bottom: 20px;
     display: inline-block;
+    /* 모바일 하드웨어 가속 강제 */
+    will-change: transform;
+    -webkit-transform: translate3d(0,0,0); 
+    transform: translate3d(0,0,0);
     animation: tossBounce 1.2s infinite ease-in-out;
 }
 
-/* 토스 스타일의 부드러운 튀기기 + 회전 애니메이션 */
 @keyframes tossBounce {
     0%, 100% {
         transform: translateY(0) rotate(0deg);
+        -webkit-transform: translateY(0) rotate(0deg);
     }
     50% {
         transform: translateY(-40px) rotate(180deg);
+        -webkit-transform: translateY(-40px) rotate(180deg);
     }
 }
+
 
 .loading-text {
     font-size: 16px;
@@ -739,30 +745,29 @@
     }
 
     async function apiCall(data, silent = false) {
-    const loadingEl = document.getElementById('loading');
-    
-    if(!silent) {
-        loadingEl.style.display = 'flex'; // 애니메이션 시작
-    }
-
-    try {
-        const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(data) });
-        const result = await response.json();
-        if (!result.success) throw new Error(result.error);
-        return result.data;
-    } catch (e) { 
-        console.error(e); 
-        alert("통신 오류가 발생했습니다."); 
-    } finally { 
+        const loadingEl = document.getElementById('loading');
+        
         if(!silent) {
-            // 통신이 너무 빨리 끝나면 애니메이션이 안 보이므로 
-            // 아주 짧은 지연(0.3초) 후 닫히게 하면 시각적으로 더 자연스럽습니다.
-            setTimeout(() => {
+            loadingEl.style.display = 'flex';
+        }
+    
+        // 모바일 브라우저가 화면을 그릴 최소한의 시간(약 10ms)을 벌어줍니다.
+        await new Promise(resolve => setTimeout(resolve, 10));
+    
+        try {
+            const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(data) });
+            const result = await response.json();
+            if (!result.success) throw new Error(result.error);
+            return result.data;
+        } catch (e) { 
+            console.error(e); 
+            alert("통신 오류가 발생했습니다."); 
+        } finally { 
+            if(!silent) {
                 loadingEl.style.display = 'none';
-            }, 300);
+            }
         }
     }
-}
 
 
     let minDate = null; // 현재 렌더링된 가장 과거 날짜
