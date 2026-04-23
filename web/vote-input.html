@@ -1,0 +1,12 @@
+<div id="vote-input" class="section">
+    <div class="card">
+        <div class="card-title">투표 관리</div>
+        <input type="date" id="vote-date">
+        <div id="vote-step-container">
+            <p id="vote-step-msg">참석자를 모두 선택해 주세요.</p>
+            <div id="vote-member-chips" style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:15px;"></div>
+            <button class="btn" id="vote-next-btn" onclick="processVoteStep()">다음 단계 (참석 선택 완료)</button>
+            <button class="btn btn-outline" onclick="submitNoGame()">경기 미진행(R) 처리</button>
+        </div>
+    </div>
+</div>

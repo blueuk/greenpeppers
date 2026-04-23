@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="version" content="1.0.0">
+    <meta name="last-updated" content="2026-04-23">
+    <title>Green Peppers FC Manager</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+    <link rel="stylesheet" href="css/Style.css">
+</head>
+
+<body>
+     <div id="loading">
+        <div class="loading-container">
+            <div class="soccer-ball">⚽</div>
+            <div class="loading-text">데이터를 불러오고 있어요</div>
+        </div>
+    </div>
+
+    <header>
+        <div class="header-container" style="display: flex; align-items: center; justify-content: space-between; min-height: 30px; padding: 0 16px; background-color: #ffffff;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <img src="image/greenpeppers_logo.png" alt="Logo" class="header-logo" style="height: 24px; width: auto;">
+                <span id="header-title" style="font-weight: bold; font-size: 18px; color: #191f28;">풋고추 FC</span>
+            </div>
+
+            <div id="admin-indicator" style="display: none; align-items: center; gap: 6px; white-space: nowrap;">        
+                <span style="background-color: #ffd400; color: #191f28; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 11px;">관리자</span>
+                <button onclick="extendAdminSession()" style="background: #e5e8eb; border: none; padding: 4px 8px; border-radius: 6px; font-size: 11px; cursor: pointer; color: #4e5968; font-weight: 600;">연장</button>
+                <span id="auth-timer" style="color: #4e5968; font-size: 12px; font-variant-numeric: tabular-nums; font-weight: 500;">30:00</span>
+            </div>
+        </div>
+    </header>
+
+    <main id="main-content"></main>
+
+    <footer>
+        <div class="tab active" onclick="showSection('home')"><span class="tab-icon">🏠</span>홈</div>
+        <div class="tab" onclick="showSection('member-view')"><span class="tab-icon">👤</span>멤버조회</div>
+        <div class="tab" onclick="showSection('member-add')"><span class="tab-icon">➕</span>멤버추가</div>
+
+        <div class="tab" onclick="window.open('https://www.youtube.com/@FC_GreeN_PeppeR', '_blank')"><span class="tab-icon">▶️</span>유튜브</div>
+    </footer> 
+
+    <script src="js/adminAuthSession.js"></script>   
+    <script src="js/api.js"></script>
+    <script src="js/common.js"></script>
+    <script src="js/rank.js"></script>   
+    <script src="js/loadMemberInfo.js"></script>
+    <script src="js/submitNewMember.js"></script>
+    <script src="js/vote.js"></script>
+    <script src="js/calendar.js"></script>
+    <script src="js/selectedDateInfo.js"></script> 
+    <script src="js/suffleMembers.js"></script>
+    <script src="js/tab.js"></script>
+</body>
+</html>

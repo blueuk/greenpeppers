@@ -1,0 +1,33 @@
+<div id="team-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-title">팀 배정 설정</div>
+        <div id="team-input-form">
+            <div class="info-label">용병 수 (0~12명)</div>
+            <input type="number" id="merc-count" value="0" min="0" max="12">
+            <div class="info-label">팀당 인원</div>
+            <select id="team-size-select">
+                <option value="6">6명 (픽소2, 아라2, 피보1)</option>
+                <option value="5">5명 (픽소1, 아라2, 피보1)</option>
+            </select>
+            <div class="info-label">팀 수</div>
+            <select id="team-count-select">
+                <option value="2">2팀 (형광, 주황)</option>
+                <option value="3">3팀 (형광, 주황, 조끼X)</option>
+            </select>
+            <button class="btn" onclick="fetchAndAssignTeams()">팀 배정 실행</button>
+        </div>
+        <div id="team-loading-view" style="display:none;">
+            <div class="progress-wrapper">
+                <div id="progress-msg">데이터를 가져오는 중...</div>
+                <div class="progress-bg"><div id="progress-bar" class="progress-bar"></div></div>
+            </div>
+        </div>
+        <div id="team-result-view" style="display:none;">
+            <div id="assign-timestamp" style="font-size:11px; color:var(--toss-gray); text-align:right;"></div>
+            <div id="team-result-text" class="result-box"></div>
+            <button class="copy-btn" onclick="copyTeamResult()">내용 복사하기</button>
+            <button class="re-assign-btn" onclick="executeAssignmentLogic()">팀 재배정 (데이터 유지)</button>
+        </div>
+        <button style="width:100%; margin-top:12px; background:none; color:var(--toss-gray); border:none; cursor:pointer;" onclick="closeTeamModal()">닫기</button>
+    </div>
+</div>

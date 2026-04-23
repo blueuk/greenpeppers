@@ -1,0 +1,27 @@
+<div id="home" class="section active">
+
+    <div id="rate-card" class="card">
+        <div class="card-title">멤버 참석 현황</div>
+        <div id="rolling-content" class="card-value">데이터를 불러오는 중...</div>
+    </div>
+    
+    <div class="card-title" style="margin-left:5px;">경기 일정 (토요일 오전 7-9시 월문3리 풋살구장)</div>
+
+    <div class="calendar-wrapper" id="horizontal-calendar"></div>
+
+    <div class="card" style="margin-top:20px;">
+        <div class="card-title">
+            <span>참석 확정 멤버</span>
+            <span id="attendee-count-badge" class="attend-count">0명</span>
+        </div>
+
+        <div id="attendee-list" class="attendee-container">
+            <div style="color: var(--toss-gray); font-size: 14px;">날짜를 선택해 주세요.</div>
+        </div>
+
+        <div id="attendee-add-btn-container" style="margin-top: 15px; display: none; justify-content: flex-end; align-items: center;">
+            <button class="team-assign-chip" onclick="openTeamModal()">⚡ 팀 배정</button>
+            <div class="add-member-chip" onclick="openQuickVoteModal()">+ 직접 추가/변경</div>
+        </div>
+    </div>
+</div>
