@@ -118,12 +118,36 @@ myChart = new Chart(ctx, {
         ]
     },
     options: {
+        // 1. 클릭 이벤트 감지
+        onClick: (event, elements, chart) => {
+            const { x, y } = event;
+            const scale = chart.scales.r;
+            
+            // 클릭한 지점이 어느 라벨인지 확인하는 로직
+            for (let i = 0; i < scale._pointLabels.length; i++) {
+                const labelPos = scale._pointLabelItems[i];
+                // 라벨 주변의 클릭 영역 계산 (여유 공간 포함)
+                if (x >= labelPos.left - 20 && x <= labelPos.right + 20 &&
+                    y >= labelPos.top - 10 && y <= labelPos.bottom + 10) {
+                    
+                    const labelText = summaryLabels[i];
+                    const desc = labelDescriptions[labelText] || "설명이 없습니다.";
+                    alert(`[${labelText}] ${desc}`); // 실무에서는 커스텀 모달 추천
+                    break;
+                }
+            }
+        },
         scales: {
             r: {
                 suggestedMin: 0,
                 suggestedMax: 20,
                 ticks: { stepSize: 5, display: false },
-                pointLabels: { font: { size: 12, weight: 'bold' } }
+                pointLabels: { 
+                    font: { size: 12, weight: 'bold' },
+                    callback: function(label) {
+                        return label + ' ⓘ'; 
+                    }
+                }
             }
         },
         plugins: {
