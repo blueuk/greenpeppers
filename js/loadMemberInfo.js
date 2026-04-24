@@ -56,95 +56,93 @@ async function loadMemberInfo() {
     // 수정 버튼은 관리자에게만 노출
     document.getElementById('edit-btn').style.display = isAdmin ? 'block' : 'none';
 
-    // --- 차트 로직 (이 부분은 권한과 상관없이 항상 실행됨) ---
-    const getVal = (idx) => parseFloat(info.stats[idx]) || 0;
-    const avg = (arr) => arr.reduce((a, b) => a + b, 0) / arr.length;
+// 1. 차트 인스턴스를 저장할 변수는 함수 밖(전역)에 선언되어 있어야 합니다.
+const getVal = (idx) => parseFloat(info.stats[idx]) || 0;
+const avg = (arr) => arr.reduce((a, b) => a + b, 0) / arr.length;
 
-    const summaryData = [
-        avg([getVal(4), getVal(5)]),                                                                    // 피지컬
-        getVal(6),                                                                                      // 체력
-        avg([getVal(20), getVal(21), getVal(22), getVal(27)]),                                          // 공격
-        avg([getVal(23), getVal(24)]),                                                                  // 슛
-        avg([getVal(8), getVal(9)]),                                                                    // 커뮤니케이션
-        getVal(7),                                                                                      // 스피드
-        avg([getVal(13), getVal(14), getVal(15), getVal(16), getVal(17), getVal(18), getVal(19)]),      // 수비
-        avg([getVal(25), getVal(26)])                                                                   // 패스
-    ];
-    
-    const avgData = [
-        avg([15.5, 16]),                                                                    // 피지컬
-        14.5,                                                                                      // 체력
-        avg([14.5, 15.5, 14.5, 14.5]),                                          // 공격
-        avg([17, 14.5]),                                                                  // 슛
-        avg([10, 16]),                                                                    // 커뮤니케이션
-        14.5,                                                                                      // 스피드
-        avg([13, 14.5, 14.5, 13, 13, 14.5, 11.5]),      // 수비
-        avg([13, 13])                                                                   // 패스
-    ];
+// 데이터 계산 (데이터는 항상 '숫자' 상태를 유지하는 게 좋습니다)
+const summaryData = [
+    avg([getVal(4), getVal(5)]),
+    getVal(6),
+    avg([getVal(20), getVal(21), getVal(22), getVal(27)]),
+    avg([getVal(23), getVal(24)]),
+    avg([getVal(8), getVal(9)]),
+    getVal(7),
+    avg([getVal(13), getVal(14), getVal(15), getVal(16), getVal(17), getVal(18), getVal(19)]),
+    avg([getVal(25), getVal(26)])
+];
 
-    const summaryLabels = ["피지컬", "체력", "공격", "슛", "커뮤니케이션", "스피드", "수비", "패스"];
+const avgData = [
+    avg([15.5, 16]),
+    14.5,
+    avg([14.5, 15.5, 14.5, 14.5]),
+    avg([17, 14.5]),
+    avg([10, 16]),
+    14.5,
+    avg([13, 14.5, 14.5, 13, 13, 14.5, 11.5]),
+    avg([13, 13])
+];
 
-    const chartContainer = document.getElementById('chart-container');
-    chartContainer.style.display = 'block';
+const summaryLabels = ["피지컬", "체력", "공격", "슛", "커뮤니케이션", "스피드", "수비", "패스"];
 
-    const ctx = document.getElementById('memberChart').getContext('2d');
-    if (myChart) { myChart.destroy(); }
+const chartContainer = document.getElementById('chart-container');
+chartContainer.style.display = 'block';
 
-    myChart = new Chart(ctx, {
-        type: 'radar',
-        data: {
-            labels: summaryLabels,
-            datasets: [
-                {
-                    // 첫 번째 데이터: 개인 능력치
-                    label: `${name} 능력치 요약`,
-                    data: summaryData.map(v => v.toFixed(1)),
-                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 2,
-                    pointBackgroundColor: 'rgba(54, 162, 235, 1)',
-                    pointRadius: 3
-                },
-                {
-                    // 두 번째 데이터: 전체 평균 (avgData)
-                    label: `전체 평균`,
-                    data: avgData,
-                    backgroundColor: 'rgba(255, 99, 132, 0.2)', // 빨간색 계열
-                    borderColor: 'rgba(255, 99, 132, 1)',
-                    borderWidth: 2,
-                    pointBackgroundColor: 'rgba(255, 99, 132, 1)',
-                    pointRadius: 3,
-                    // 선이 너무 튀지 않게 점선으로 표현
-                    borderDash: [5, 5] 
-                }
-            ]
-        },
-        options: {
-            scales: {
-                r: {
-                    startAngle: 0,
-                    angleLines: { display: true },
-                    suggestedMin: 0,
-                    suggestedMax: 20,
-                    ticks: { stepSize: 5, display: false },
-                    pointLabels: { font: { size: 13, weight: 'bold' }, color: '#333' }
-                }
+const ctx = document.getElementById('memberChart').getContext('2d');
+if (typeof myChart !== 'undefined' && myChart) { myChart.destroy(); }
+
+myChart = new Chart(ctx, {
+    type: 'radar',
+    data: {
+        labels: summaryLabels,
+        datasets: [
+            {
+                label: `${name} 능력치`,
+                // .toFixed(1) 대신 숫자로 넣고, 필요하면 소수점 한자리 반올림
+                data: summaryData.map(v => Math.round(v * 10) / 10), 
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 2,
+                pointBackgroundColor: 'rgba(54, 162, 235, 1)',
+                pointRadius: 3
             },
-            plugins: {
-                legend: { 
-                    display: true, // 두 개가 겹치므로 구분을 위해 범례를 켜는 것이 좋습니다.
-                    position: 'top' 
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) { 
-                            return `${context.dataset.label}: ${context.raw}`; 
-                        }
+            {
+                label: `전체 평균`,
+                data: avgData.map(v => Math.round(v * 10) / 10), // 평균 데이터도 반올림 처리
+                backgroundColor: 'rgba(255, 99, 132, 0.1)', // 평균은 조금 더 연하게
+                borderColor: 'rgba(255, 99, 132, 0.8)',
+                borderWidth: 2,
+                borderDash: [5, 5], 
+                pointRadius: 2
+            }
+        ]
+    },
+    options: {
+        scales: {
+            r: {
+                suggestedMin: 0,
+                suggestedMax: 20,
+                ticks: { stepSize: 5, display: false },
+                pointLabels: { font: { size: 12, weight: 'bold' } }
+            }
+        },
+        plugins: {
+            legend: { display: true, position: 'top' },
+            tooltip: {
+                callbacks: {
+                    // 툴팁에서 값을 보여줄 때 단위를 붙이거나 포맷팅하기 좋습니다.
+                    label: function(context) {
+                        return ` ${context.dataset.label}: ${context.raw}점`;
                     }
                 }
             }
         }
-    });
+    }
+});
+
+
+
+    
 }
 
 function toggleEditMode() {
