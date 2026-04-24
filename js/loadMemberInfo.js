@@ -56,117 +56,123 @@ async function loadMemberInfo() {
     // 수정 버튼은 관리자에게만 노출
     document.getElementById('edit-btn').style.display = isAdmin ? 'block' : 'none';
 
-// 1. 차트 인스턴스를 저장할 변수는 함수 밖(전역)에 선언되어 있어야 합니다.
-const getVal = (idx) => parseFloat(info.stats[idx]) || 0;
-const avg = (arr) => arr.reduce((a, b) => a + b, 0) / arr.length;
-
-// 데이터 계산 (데이터는 항상 '숫자' 상태를 유지하는 게 좋습니다)
-const summaryData = [
-    avg([getVal(4), getVal(5)]),
-    getVal(6),
-    avg([getVal(20), getVal(21), getVal(22), getVal(27)]),
-    avg([getVal(23), getVal(24)]),
-    avg([getVal(8), getVal(9)]),
-    getVal(7),
-    avg([getVal(13), getVal(14), getVal(15), getVal(16), getVal(17), getVal(18), getVal(19)]),
-    avg([getVal(25), getVal(26)])
-];
-
-const avgData = [
-    avg([15.5, 16]),
-    14.5,
-    avg([14.5, 15.5, 14.5, 14.5]),
-    avg([17, 14.5]),
-    avg([10, 16]),
-    14.5,
-    avg([13, 14.5, 14.5, 13, 13, 14.5, 11.5]),
-    avg([13, 13])
-];
-
-const summaryLabels = ["피지컬", "체력", "공격", "슛", "커뮤니케이션", "스피드", "수비", "패스"];
-
-const chartContainer = document.getElementById('chart-container');
-chartContainer.style.display = 'block';
-
-const ctx = document.getElementById('memberChart').getContext('2d');
-if (typeof myChart !== 'undefined' && myChart) { myChart.destroy(); }
-
-myChart = new Chart(ctx, {
-    type: 'radar',
-    data: {
-        labels: summaryLabels,
-        datasets: [
-            {
-                label: `${name} 능력치`,
-                // .toFixed(1) 대신 숫자로 넣고, 필요하면 소수점 한자리 반올림
-                data: summaryData.map(v => Math.round(v * 10) / 10), 
-                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                borderColor: 'rgba(54, 162, 235, 1)',
-                borderWidth: 2,
-                pointBackgroundColor: 'rgba(54, 162, 235, 1)',
-                pointRadius: 3
-            },
-            {
-                label: `전체 평균`,
-                data: avgData.map(v => Math.round(v * 10) / 10), // 평균 데이터도 반올림 처리
-                backgroundColor: 'rgba(255, 99, 132, 0.1)', // 평균은 조금 더 연하게
-                borderColor: 'rgba(255, 99, 132, 0.8)',
-                borderWidth: 2,
-                borderDash: [5, 5], 
-                pointRadius: 2
-            }
-        ]
-    },
-    options: {
-        // 1. 클릭 이벤트 감지
-        onClick: (event, elements, chart) => {
-            const { x, y } = event;
-            const scale = chart.scales.r;
-            
-            // 클릭한 지점이 어느 라벨인지 확인하는 로직
-            for (let i = 0; i < scale._pointLabels.length; i++) {
-                const labelPos = scale._pointLabelItems[i];
-                // 라벨 주변의 클릭 영역 계산 (여유 공간 포함)
-                if (x >= labelPos.left - 20 && x <= labelPos.right + 20 &&
-                    y >= labelPos.top - 10 && y <= labelPos.bottom + 10) {
-                    
-                    const labelText = summaryLabels[i];
-                    const desc = labelDescriptions[labelText] || "설명이 없습니다.";
-                    alert(`[${labelText}] ${desc}`); // 실무에서는 커스텀 모달 추천
-                    break;
+    // 1. 차트 인스턴스를 저장할 변수는 함수 밖(전역)에 선언되어 있어야 합니다.
+    const getVal = (idx) => parseFloat(info.stats[idx]) || 0;
+    const avg = (arr) => arr.reduce((a, b) => a + b, 0) / arr.length;
+    
+    // 데이터 계산 (데이터는 항상 '숫자' 상태를 유지하는 게 좋습니다)
+    const summaryData = [
+        avg([getVal(4), getVal(5)]),
+        getVal(6),
+        avg([getVal(20), getVal(21), getVal(22), getVal(27)]),
+        avg([getVal(23), getVal(24)]),
+        avg([getVal(8), getVal(9)]),
+        getVal(7),
+        avg([getVal(13), getVal(14), getVal(15), getVal(16), getVal(17), getVal(18), getVal(19)]),
+        avg([getVal(25), getVal(26)])
+    ];
+    
+    const avgData = [
+        avg([15.5, 16]),
+        14.5,
+        avg([14.5, 15.5, 14.5, 14.5]),
+        avg([17, 14.5]),
+        avg([10, 16]),
+        14.5,
+        avg([13, 14.5, 14.5, 13, 13, 14.5, 11.5]),
+        avg([13, 13])
+    ];
+    
+    const summaryLabels = ["피지컬", "체력", "공격", "슛", "커뮤니케이션", "스피드", "수비", "패스"];
+    const labelDescriptions = {
+        "몸싸움과 균형감가의 평균 점수",
+        "체력(활동량) 점수",
+        "일대일 돌파, 연계플레이, 공격위치선정, 드리블의 평균 점수",
+        "슛파워, 슛정확도의 평균 점수",
+        "리더십과 의사소통 능력의 평균 점수",
+        "주력 점수",
+        "일대일 수비, 수비지원, 수비위치선정, 대인마크 가로채기, 반사신경, 공중볼처리능력의 평균 점수",
+        "패스, 롱패스 능력 및 정확도에 대한 평균 점수"
+    };
+    
+    const chartContainer = document.getElementById('chart-container');
+    chartContainer.style.display = 'block';
+    
+    const ctx = document.getElementById('memberChart').getContext('2d');
+    if (typeof myChart !== 'undefined' && myChart) { myChart.destroy(); }
+    
+    myChart = new Chart(ctx, {
+        type: 'radar',
+        data: {
+            labels: summaryLabels,
+            datasets: [
+                {
+                    label: `${name} 능력치`,
+                    // .toFixed(1) 대신 숫자로 넣고, 필요하면 소수점 한자리 반올림
+                    data: summaryData.map(v => Math.round(v * 10) / 10), 
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 2,
+                    pointBackgroundColor: 'rgba(54, 162, 235, 1)',
+                    pointRadius: 3
+                },
+                {
+                    label: `전체 평균`,
+                    data: avgData.map(v => Math.round(v * 10) / 10), // 평균 데이터도 반올림 처리
+                    backgroundColor: 'rgba(255, 99, 132, 0.1)', // 평균은 조금 더 연하게
+                    borderColor: 'rgba(255, 99, 132, 0.8)',
+                    borderWidth: 2,
+                    borderDash: [5, 5], 
+                    pointRadius: 2
                 }
-            }
+            ]
         },
-        scales: {
-            r: {
-                suggestedMin: 0,
-                suggestedMax: 20,
-                ticks: { stepSize: 5, display: false },
-                pointLabels: { 
-                    font: { size: 12, weight: 'bold' },
-                    callback: function(label) {
-                        return label + ' ⓘ'; 
+        options: {
+            // 1. 클릭 이벤트 감지
+            onClick: (event, elements, chart) => {
+                const { x, y } = event;
+                const scale = chart.scales.r;
+                
+                // 클릭한 지점이 어느 라벨인지 확인하는 로직
+                for (let i = 0; i < scale._pointLabels.length; i++) {
+                    const labelPos = scale._pointLabelItems[i];
+                    // 라벨 주변의 클릭 영역 계산 (여유 공간 포함)
+                    if (x >= labelPos.left - 20 && x <= labelPos.right + 20 &&
+                        y >= labelPos.top - 10 && y <= labelPos.bottom + 10) {
+                        
+                        const labelText = summaryLabels[i];
+                        const desc = labelDescriptions[labelText] || "설명이 없습니다.";
+                        alert(`[${labelText}] ${desc}`); // 실무에서는 커스텀 모달 추천
+                        break;
                     }
                 }
-            }
-        },
-        plugins: {
-            legend: { display: true, position: 'top' },
-            tooltip: {
-                callbacks: {
-                    // 툴팁에서 값을 보여줄 때 단위를 붙이거나 포맷팅하기 좋습니다.
-                    label: function(context) {
-                        return ` ${context.dataset.label}: ${context.raw}점`;
+            },
+            scales: {
+                r: {
+                    suggestedMin: 0,
+                    suggestedMax: 20,
+                    ticks: { stepSize: 5, display: false },
+                    pointLabels: { 
+                        font: { size: 12, weight: 'bold' },
+                        callback: function(label) {
+                            return label + ' ⓘ'; 
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: { display: true, position: 'top' },
+                tooltip: {
+                    callbacks: {
+                        // 툴팁에서 값을 보여줄 때 단위를 붙이거나 포맷팅하기 좋습니다.
+                        label: function(context) {
+                            return ` ${context.dataset.label}: ${context.raw}점`;
+                        }
                     }
                 }
             }
         }
-    }
-});
-
-
-
-    
+    });   
 }
 
 function toggleEditMode() {
