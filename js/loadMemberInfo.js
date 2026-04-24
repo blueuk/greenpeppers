@@ -70,6 +70,17 @@ async function loadMemberInfo() {
         avg([getVal(13), getVal(14), getVal(15), getVal(16), getVal(17), getVal(18), getVal(19)]),      // 수비
         avg([getVal(25), getVal(26)])                                                                   // 패스
     ];
+    
+    const avgData = [
+        avg([15.5, 16]),                                                                    // 피지컬
+        14.5,                                                                                      // 체력
+        avg([14.5, 15.5, 14.5, 14.5]),                                          // 공격
+        avg([17, 14.5]),                                                                  // 슛
+        avg([10, 16]),                                                                    // 커뮤니케이션
+        14.5,                                                                                      // 스피드
+        avg([13, 14.5, 14.5, 13, 13, 14.5, 11.5]),      // 수비
+        avg([13, 13])                                                                   // 패스
+    ];
 
     const summaryLabels = ["피지컬", "체력", "공격", "슛", "커뮤니케이션", "스피드", "수비", "패스"];
 
@@ -83,15 +94,30 @@ async function loadMemberInfo() {
         type: 'radar',
         data: {
             labels: summaryLabels,
-            datasets: [{
-                label: `${name} 능력치 요약`,
-                data: summaryData.map(v => v.toFixed(1)),
-                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                borderColor: 'rgba(54, 162, 235, 1)',
-                borderWidth: 2,
-                pointBackgroundColor: 'rgba(54, 162, 235, 1)',
-                pointRadius: 3
-            }]
+            datasets: [
+                {
+                    // 첫 번째 데이터: 개인 능력치
+                    label: `${name} 능력치 요약`,
+                    data: summaryData.map(v => v.toFixed(1)),
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 2,
+                    pointBackgroundColor: 'rgba(54, 162, 235, 1)',
+                    pointRadius: 3
+                },
+                {
+                    // 두 번째 데이터: 전체 평균 (avgDate)
+                    label: `전체 평균`,
+                    data: avgDate,
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)', // 빨간색 계열
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 2,
+                    pointBackgroundColor: 'rgba(255, 99, 132, 1)',
+                    pointRadius: 3,
+                    // 선이 너무 튀지 않게 점선으로 표현하고 싶다면 아래 주석 해제
+                    // borderDash: [5, 5] 
+                }
+            ]
         },
         options: {
             scales: {
@@ -105,10 +131,15 @@ async function loadMemberInfo() {
                 }
             },
             plugins: {
-                legend: { display: false },
+                legend: { 
+                    display: true, // 두 개가 겹치므로 구분을 위해 범례를 켜는 것이 좋습니다.
+                    position: 'top' 
+                },
                 tooltip: {
                     callbacks: {
-                        label: function(context) { return ` 점수: ${context.raw}`; }
+                        label: function(context) { 
+                            return `${context.dataset.label}: ${context.raw}`; 
+                        }
                     }
                 }
             }
