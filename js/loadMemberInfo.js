@@ -106,16 +106,16 @@ async function loadMemberInfo() {
                     pointRadius: 3
                 },
                 {
-                    // 두 번째 데이터: 전체 평균 (avgDate)
+                    // 두 번째 데이터: 전체 평균 (avgData)
                     label: `전체 평균`,
-                    data: avgDate,
+                    data: avgData,
                     backgroundColor: 'rgba(255, 99, 132, 0.2)', // 빨간색 계열
                     borderColor: 'rgba(255, 99, 132, 1)',
                     borderWidth: 2,
                     pointBackgroundColor: 'rgba(255, 99, 132, 1)',
                     pointRadius: 3,
-                    // 선이 너무 튀지 않게 점선으로 표현하고 싶다면 아래 주석 해제
-                    // borderDash: [5, 5] 
+                    // 선이 너무 튀지 않게 점선으로 표현
+                    borderDash: [5, 5] 
                 }
             ]
         },
