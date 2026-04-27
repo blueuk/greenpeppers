@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>토요일 풋살 날씨 상세</title>
+    <style>
+        body { font-family: 'Apple SD Gothic Neo', sans-serif; background-color: #f8f9fa; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .card { background: white; padding: 2rem; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); width: 380px; text-align: center; }
+        h2 { color: #202124; margin-bottom: 0.5rem; font-weight: 800; }
+        .location { font-size: 0.85rem; color: #5f6368; margin-bottom: 1.5rem; background: #e8f0fe; padding: 5px 10px; border-radius: 20px; display: inline-block; }
+        .weather-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .weather-header { border-bottom: 2px solid #f1f3f4; color: #70757a; font-size: 0.8rem; }
+        .weather-header th { padding: 10px 5px; }
+        .weather-row { border-bottom: 1px solid #f1f3f4; }
+        .weather-row td { padding: 15px 5px; font-size: 0.95rem; }
+        .time { font-weight: bold; }
+        .temp { color: #d93025; font-weight: bold; }
+        .precip-prob { color: #1a73e8; font-weight: 500; }
+        .precip-amount { color: #1967d2; font-size: 0.85rem; }
+        .loading { padding: 20px; color: #999; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>⚽ 이번 주 토요일 날씨</h2>
+    <div class="location">월문3리 풋살구장 (07:00 ~ 09:00)</div>
+    <div id="weather-content">
+        <p class="loading">데이터를 가져오는 중...</p>
+    </div>
+</div>
+
+<script>
+    async function getDetailedWeather() {
+        const lat = 37.58;
+        const lon = 127.24;
+        
+        const now = new Date();
+        const distToSat = (6 - now.getDay() + 7) % 7;
+        const satDate = new Date(now.getTime() + distToSat * 24 * 60 * 60 * 1000);
+        const dateStr = satDate.toISOString().split('T')[0];
+
+        // precipitation_probability(확률), precipitation(강수량) 추가
+        const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation_probability,precipitation,weathercode&timezone=Asia%2FSeoul&start_date=${dateStr}&end_date=${dateStr}`;
+
+        try {
+            const response = await fetch(apiUrl);
+            const data = await response.json();
+            const hourly = data.hourly;
+
+            let html = `
+                <table class="weather-table">
+                    <tr class="weather-header">
+                        <th>시간</th>
+                        <th>상태</th>
+                        <th>기온</th>
+                        <th>확률</th>
+                        <th>강수량</th>
+                    </tr>
+            `;
+            
+            [7, 8, 9].forEach(hour => {
+                const temp = hourly.temperature_2m[hour];
+                const prob = hourly.precipitation_probability[hour];
+                const amount = hourly.precipitation[hour];
+                const code = hourly.weathercode[hour];
+                
+                html += `
+                    <tr class="weather-row">
+                        <td class="time">${hour}:00</td>
+                        <td>${getWeatherEmoji(code)}</td>
+                        <td class="temp">${temp}°</td>
+                        <td class="precip-prob">${prob}%</td>
+                        <td class="precip-amount">${amount}mm</td>
+                    </tr>
+                `;
+            });
+
+            html += `</table><p style="font-size:0.7rem; color:#999; margin-top:15px;">기준일: ${dateStr}</p>`;
+            document.getElementById('weather-content').innerHTML = html;
+        } catch (error) {
+            document.getElementById('weather-content').innerHTML = "날씨 정보를 불러오지 못했습니다.";
+        }
+    }
+
+    function getWeatherEmoji(code) {
+        if (code === 0) return "☀️";
+        if (code <= 3) return "⛅";
+        if (code >= 61 && code <= 65) return "☔";
+        if (code >= 71 && code <= 75) return "❄️";
+        return "☁️";
+    }
+
+    getDetailedWeather();
+</script>
+
+</body>
+</html>
