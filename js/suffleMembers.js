@@ -49,7 +49,7 @@ function executeAssignmentLogic() {
             teams[idx % teamCount].push(item.player);
             assignedIndexes.add(item.originalIdx);
         });
-    } else if(specialGoalayList === 1) {
+    } else if(specialGoalayList.length === 1) {
     		const item = specialGoalayList[0];
 		item.player.posLabel = "골레이";
         teams[0].push(item.player);
@@ -63,19 +63,19 @@ function executeAssignmentLogic() {
             .sort((a, b) =>
                 (parseFloat(b.player.stats[3]) || 0) - (parseFloat(a.player.stats[3]) || 0)
             )
-            .map(p => p.origianlIdx),
+            .map(p => p.originalIdx),
         "아라": regularPlayers
         		.filter(p => !assignedIndexes.has(p.originalIdx))
             .sort((a, b) =>
                 (parseFloat(b.player.stats[1]) || 0) - (parseFloat(a.player.stats[1]) || 0)
             )
-            .map(p => p.origianlIdx),
+            .map(p => p.originalIdx),
         "피보": regularPlayers
         		.filter(p => !assignedIndexes.has(p.originalIdx))
             .sort((a, b) =>
                 (parseFloat(b.player.stats[2]) || 0) - (parseFloat(a.player.stats[2]) || 0)
             )
-            .map(p => p.origianlIdx)
+            .map(p => p.originalIdx)
     };
     
     //포지션별 정렬 및 배정 함수
@@ -95,10 +95,10 @@ function executeAssignmentLogic() {
 		const shuffled = selected.sort(() => Math.random() - 0.5);
         
         // 각 팀에 균등하게 배분
-		shuffled.forEach((playerIdx, teamIdx) => {
+		shuffled.forEach((playerIdx, index) => {
             const player = allPlayers[playerIdx];
             player.posLabel = posLabel;
-            teams[teamIdx % teamCount].push(player);
+            teams[index % teamCount].push(player);
             assignedIndexes.add(playerIdx);
         });
         
