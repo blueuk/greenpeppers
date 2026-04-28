@@ -30,20 +30,20 @@ function executeAssignmentLogic() {
     // 한 번에 모든 포지션별 정렬 캐싱
 	const positionSortedIndexes = {
         "픽소": [...allPlayers.keys()].sort((a, b) => 
-            (parseFloat(allPlayers[b].stats[3]) || 0) - (parseFloat(allPlayers.[a].stats[3]) || 0)
+            (parseFloat(allPlayers[b].stats[3]) || 0) - (parseFloat(allPlayers[a].stats[3]) || 0)
         ),
         "아라": [...allPlayers.keys()].sort((a, b) => 
-            (parseFloat(allPlayers[b].stats[1]) || 0) - (parseFloat(allPlayers.[a].stats[1]) || 0)
+            (parseFloat(allPlayers[b].stats[1]) || 0) - (parseFloat(allPlayers[a].stats[1]) || 0)
         ),
         "피보": [...allPlayers.keys()].sort((a, b) => 
-            (parseFloat(allPlayers[b].stats[2]) || 0) - (parseFloat(allPlayers.[a].stats[2]) || 0)
+            (parseFloat(allPlayers[b].stats[2]) || 0) - (parseFloat(allPlayers[a].stats[2]) || 0)
         )
     };
     
     //포지션별 정렬 및 배정 함수
 	const assignPlayersByPosition = (posLabel, countNeeded) => {
     		const sortedIndexes = positionSortedIndexes[posLabel];
-        const = selected = [];
+        const selected = [];
         
         //배정되지 않은 선수만 한 번에 처리 선택
 		for (const idx of sortedIndexes) {
@@ -84,8 +84,8 @@ function executeAssignmentLogic() {
 	const specialGoalayList = allPlayers.filter(p => specialPlayers.includes(p.name));
     
     if(specialGoalayList.length >= 2) {
-        //	 2명을 서로 다른 팀 배정
-		const = shuffledSpecial = specialGoalayList.sort(() => Math.random() - 0.5);
+        // 2명을 서로 다른 팀 배정
+		const shuffledSpecial = specialGoalayList.sort(() => Math.random() - 0.5);
         
         shuffledSpecial.slice(0, 2).forEach((player, idx) => {
             player.posLabel = "골레이";
@@ -110,7 +110,7 @@ function executeAssignmentLogic() {
     remainingIndexes.sort(() => Math.random() - 0.5);
        
     remainingIndexes.forEach(playerIdx => {
-        const player = allPlayers.[playerIdx];
+        const player = allPlayers[playerIdx];
         player.posLabel = getBestPosLabel(player.stats, player.isMerc);
         
         teams.sort((a, b) => a.length - b.length);
@@ -119,7 +119,7 @@ function executeAssignmentLogic() {
     
     // 6. 용병 배정
 	const mercenaries = Array.from({ length: mercCount }, (_, i) => ({
-        name: '용병${i + 1}',
+        name: `용병${i + 1}`,
         stats: [0, 0, 0, 0],
         isMerc: true,
         posLabel: "미정"
