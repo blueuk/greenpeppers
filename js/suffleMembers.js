@@ -14,45 +14,108 @@ function getBestPosLabel(stats, isMerc) {
 }
 
 function executeAssignmentLogic() {
+    // 파라메터 수집
     const teamSize = parseInt(document.getElementById('team-size-select').value);
     const teamCount = parseInt(document.getElementById('team-count-select').value);
     const mercCount = parseInt(document.getElementById('merc-count').value) || 0;
-    const specialPlayers = ["임정현", "김현웅"];
-
-    let pool = [...cachedMemberInfo].filter(p => !specialPlayers.includes(p.name));
-    let specialPool = [...cachedMemberInfo].filter(p => specialPlayers.includes(p.name));
-
-    for(let i = 1; i <= mercCount; i++) {
-        pool.push({ name: `용병${i}`, stats: [0, 0, 0, 0], isMerc: true });
-    }
-
-    const teams = Array.from({ length: teamCount }, () => []);
-    const shuffle = (arr) => arr.sort(() => Math.random() - 0.5);
-
-    const pickPosition = (statIdx, countPerTeam) => {
-        pool.sort((a, b) => (parseFloat(b.stats[statIdx])||0) - (parseFloat(a.stats[statIdx])||0));
-
-        const selected = pool.splice(0, countPerTeam * teamCount);
-
-        shuffle(selected).forEach((p, idx) => {
-            p.posLabel = getBestPosLabel(p.stats, p.isMerc);
-            teams[idx % teamCount].push(p);
+	
+    // 선수 데이터 복사
+	let allPlayers = JSON.parse(JSON.stringify(cachedMemberInfo));
+    
+    // 초기화
+	const teams = Array.from({ length: teamCount }, () => []);
+    const assignedPlayers = new Set(); // 배정된 선수 추적
+	const specialPlayers = [ "임정현", "김현웅" ];
+    
+    //포지션별 정렬 및 배정 함수
+	const assignPlayersByPosition = (statIndex, posLabel, countNeeded) => {
+    		// 아직 배정되지 않은 선수만 필터링
+		let candidates = allPlayers.filter(p => !assignedPlayers.has(p.name));
+        
+        // 해당 포지션 점수로 내림차순 정렬
+		candidates.sort((a, b) => {
+            const scoreA = parseFloat(a.stats[statIndex]) || 0;
+            const scoreB = parseFloat(b.stats[statIndex]) || 0;
+            return scoreB - scoreA;
         });
+        
+        // 상위 countNeeded명 선택
+		const selected = candidates.slice(0, countNeeded);
+        
+        // 선택된 선수를 랜덤하게 섞기
+		const shuffled = selected.sort(() => Math.random() - 0.5);
+        
+        // 각 팀에 균등하게 배분
+		shuffled.forEach((player, idx) => {
+            player.posLabel = posLabel;
+            teams[idx % teamCount].push(player);
+            assignedPlayers.add(player.name);
+        });
+        
+        return selected.length;
     };
-
-    pickPosition(3, (teamSize === 6 ? 2 : 1)); // 픽소 6명 기준 2명, 5명기준 1명
-    pickPosition(1, 2);                        // 아라 2명
-    pickPosition(2, 1);                        // 피보 1명
-
-    // 배정되지 않은 인원 셔플 후 배정
-    let remaining = shuffle([...pool, ...specialPool]);
-
-    remaining.forEach(p => {
-        p.posLabel = getBestPosLabel(p.stats, p.isMerc);
-        teams.sort((a, b) => a.length - b.length);
-        teams[0].push(p);
+    
+    // 배정 처리
+	// 1. 픽소 (수비) 배정 
+	assignPlayersByPosition(3, "픽소", teamCount * 2);
+    
+    // 2. 아라 배정
+	assignPlayersByPosition(1, "아라", teamCount * 2);
+    
+    // 3. 피보 배정
+	assignPlayersByPosition(2, "픽보", teamCount * 1);
+    
+    // 4. 골레이 배정
+	const specialGoalayList = allPlayers.filter(p => specialPlayers.includes(p.name));
+    
+    if(specialGoalayList.length >= 2) {
+        //	 2명을 서로 다른 팀 배정
+		const = shuffledSpecial = specialGoalayList.sort(() => Math.random() - 0.5);
+        
+        shuffledSpecial.slice(0, 2).forEach((player, idx) => {
+            player.posLabel = "골레이";
+            teams[idx % teamCount].push(player);
+            assignedPlayers.add(player.name);
+        });
+    } else if(specialGoalayList === 1) {
+    		const player = specialGoalayList[0];
+		player.posLabel = "골레이";
+        teams[0].push(player);
+        assignedPlayers.add(player.name);
+    }
+    
+    // 5. 배정되지 않은 선수 배정 (본인 최적 포지션으로)
+	let remainingPlayers = allPlayers.filter(p => !assignedPlayers.has(p.name));
+    remainingPlayers =. remainingPlayers.sort(() => Math.random() - 0.5);
+    
+    remainingPlayers.forEach(player => {
+        player.posLabel = getBestPosLabel(player.stats, player.isMerc);
+        
+        // 인원이 가장 적은 팀에 배정
+		teams.sort((a, b) => a.length - b.length);
+        teams[0].push(player);
+        assignedPlayers.add(player.name);
     });
-
+    
+    // 6. 용병 배정
+	const mercenaries = [];
+    for (let i = 1; i <= mercCount; i++) {
+        mercenaries.push({
+            name: '용병${i}',
+            stats: [0, 0, 0, 0],
+            isMerch: true,
+            posLabel:"미정"
+        });
+    }
+    
+    const shuffledMercs = mercenaries.sort(() => Math.random() - 0.5);
+    
+    shuffledMercs.forEach((merc, idx) => {
+        teams.sort((a, b) => a.length - b.length);
+        teams[0].push(merc);
+    });
+    
+	// 결과 저장 및 표시
     lastAssignedTeams = teams; 
     displayTeamResult(teams);
 }
