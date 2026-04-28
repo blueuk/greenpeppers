@@ -76,7 +76,7 @@ function displayTeamResult(teams) {
         t.forEach(p => {
             // 약자 변환
 			const posAbbr = positionAbbreviations[p.posLabel] || p.posLabel;
-            html += `<div class="member-item"><span class="pos-badge ${p.posLabel}">${p.posLabel}</span>${p.name}</div>`;
+            html += `<div class="member-item"><span class="pos-badge ${posAbbr}">${p.posLabel}</span>${p.name}</div>`;
         });
 
         html += `</div></div>`;
