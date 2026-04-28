@@ -130,20 +130,3 @@ function closeTeamModal() {
     document.getElementById('team-modal').style.display = 'none'; 
 }
 
-async function fetchAndAssignTeams() {
-    document.getElementById('team-input-form').style.display = 'none';
-    document.getElementById('team-loading-view').style.display = 'block';
-    const bar = document.getElementById('progress-bar');
-    const msg = document.getElementById('progress-msg');
-    bar.style.width = '0%';
-    cachedMemberInfo = [];
-    const total = currentAttendees.length;
-    for(let i=0; i<total; i++) {
-        const name = currentAttendees[i];
-        msg.innerText = `${name} 정보 가져오는 중...`;
-        const info = await apiCall({ action: 'getMemberInfo', memberName: name }, true);
-        cachedMemberInfo.push({ name: name, stats: info.stats });
-        bar.style.width = `${((i + 1) / total) * 100}%`;
-    }
-    executeAssignmentLogic();
-}
