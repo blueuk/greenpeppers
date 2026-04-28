@@ -59,13 +59,23 @@ function executeAssignmentLogic() {
 
 function displayTeamResult(teams) {
     const teamNames = ["[형광팀]", "[주황팀]", "[조끼X팀]"];
-
+	
+    // 포지션 약자 매핑
+	const positionAbbreviations = {
+        "픽소": "FIX",
+        "피보": "PIV",
+        "아라": "ALA",
+        "골레이": "GOL",
+        "미정": "NAN"
+    };
     let html = "";
 
     teams.forEach((t, i) => {
         html += `<div class="team-group"><span class="team-label">${teamNames[i]}</span><div class="team-member-list">`;
 
         t.forEach(p => {
+            // 약자 변환
+			const posAbbr = positionAbbreviations[p.posLabel] || p.posLabel;
             html += `<div class="member-item"><span class="pos-badge ${p.posLabel}">${p.posLabel}</span>${p.name}</div>`;
         });
 
