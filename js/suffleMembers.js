@@ -24,32 +24,44 @@ function executeAssignmentLogic() {
     
     // 초기화
 	const teams = Array.from({ length: teamCount }, () => []);
-    const assignedPlayers = new Set(); // 배정된 선수 추적
+    const assignedIndexes = new Set(); // 배정된 선수 추적
 	const specialPlayers = [ "임정현", "김현웅" ];
     
+    // 한 번에 모든 포지션별 정렬 캐싱
+	const positionSortedIndexes = {
+        "픽소": [...allPlayers.keys()].sort((a, b) => 
+            (parseFloat(allPlayers[b].stats[3]) || 0) - (parseFloat(allPlayers.[a].stats[3]) || 0)
+        ),
+        "아라": [...allPlayers.keys()].sort((a, b) => 
+            (parseFloat(allPlayers[b].stats[1]) || 0) - (parseFloat(allPlayers.[a].stats[1]) || 0)
+        ),
+        "피보": [...allPlayers.keys()].sort((a, b) => 
+            (parseFloat(allPlayers[b].stats[2]) || 0) - (parseFloat(allPlayers.[a].stats[2]) || 0)
+        )
+    };
+    
     //포지션별 정렬 및 배정 함수
-	const assignPlayersByPosition = (statIndex, posLabel, countNeeded) => {
-    		// 아직 배정되지 않은 선수만 필터링
-		let candidates = allPlayers.filter(p => !assignedPlayers.has(p.name));
+	const assignPlayersByPosition = (posLabel, countNeeded) => {
+    		const sortedIndexes = positionSortedIndexes[posLabel];
+        const = selected = [];
         
-        // 해당 포지션 점수로 내림차순 정렬
-		candidates.sort((a, b) => {
-            const scoreA = parseFloat(a.stats[statIndex]) || 0;
-            const scoreB = parseFloat(b.stats[statIndex]) || 0;
-            return scoreB - scoreA;
-        });
-        
-        // 상위 countNeeded명 선택
-		const selected = candidates.slice(0, countNeeded);
+        //배정되지 않은 선수만 한 번에 처리 선택
+		for (const idx of sortedIndexes) {
+            if (!assignedIndexes.has(idx)) {
+                selected.push(idx);
+                if (selected.length === countNeeded) break;
+            }
+        }
         
         // 선택된 선수를 랜덤하게 섞기
 		const shuffled = selected.sort(() => Math.random() - 0.5);
         
         // 각 팀에 균등하게 배분
-		shuffled.forEach((player, idx) => {
+		shuffled.forEach((playerIdx, teamIdx) => {
+            const player = allPlayers[playerIdx];
             player.posLabel = posLabel;
-            teams[idx % teamCount].push(player);
-            assignedPlayers.add(player.name);
+            teams[teamIdx % teamCount].push(player);
+            assignedIndexes.add(playerIdx);
         });
         
         return selected.length;
@@ -57,13 +69,16 @@ function executeAssignmentLogic() {
     
     // 배정 처리
 	// 1. 픽소 (수비) 배정 
-	assignPlayersByPosition(3, "픽소", teamCount * 2);
-    
+	if (teamSize === 5) {
+		assignPlayersByPosition("픽소", teamCount * 1);
+  	} else {
+        assignPlayersByPosition("픽소", teamCount * 2);
+    }  
     // 2. 아라 배정
-	assignPlayersByPosition(1, "아라", teamCount * 2);
+	assignPlayersByPosition("아라", teamCount * 2);
     
     // 3. 피보 배정
-	assignPlayersByPosition(2, "픽보", teamCount * 1);
+	assignPlayersByPosition("피보", teamCount * 1);
     
     // 4. 골레이 배정
 	const specialGoalayList = allPlayers.filter(p => specialPlayers.includes(p.name));
@@ -75,42 +90,44 @@ function executeAssignmentLogic() {
         shuffledSpecial.slice(0, 2).forEach((player, idx) => {
             player.posLabel = "골레이";
             teams[idx % teamCount].push(player);
-            assignedPlayers.add(player.name);
+            assignedIndexes.add(allPlayers.indexOf(player));
         });
     } else if(specialGoalayList === 1) {
     		const player = specialGoalayList[0];
 		player.posLabel = "골레이";
         teams[0].push(player);
-        assignedPlayers.add(player.name);
+        assignedIndexes.add(allPlayers.indexOf(player));
     }
     
     // 5. 배정되지 않은 선수 배정 (본인 최적 포지션으로)
-	let remainingPlayers = allPlayers.filter(p => !assignedPlayers.has(p.name));
-    remainingPlayers =. remainingPlayers.sort(() => Math.random() - 0.5);
+	const remainingIndexes = [];
+    for (let i = 0; i < allPlayers.length; i++) {
+    		if (!assignedIndexes.has(i)) {
+                remainingIndexes.push(i);
+        }
+    }
     
-    remainingPlayers.forEach(player => {
+    remainingIndexes.sort(() => Math.random() - 0.5);
+       
+    remainingIndexes.forEach(playerIdx => {
+        const player = allPlayers.[playerIdx];
         player.posLabel = getBestPosLabel(player.stats, player.isMerc);
         
-        // 인원이 가장 적은 팀에 배정
-		teams.sort((a, b) => a.length - b.length);
+        teams.sort((a, b) => a.length - b.length);
         teams[0].push(player);
-        assignedPlayers.add(player.name);
     });
     
     // 6. 용병 배정
-	const mercenaries = [];
-    for (let i = 1; i <= mercCount; i++) {
-        mercenaries.push({
-            name: '용병${i}',
-            stats: [0, 0, 0, 0],
-            isMerch: true,
-            posLabel:"미정"
-        });
-    }
+	const mercenaries = Array.from({ length: mercCount }, (_, i) => ({
+        name: '용병${i + 1}',
+        stats: [0, 0, 0, 0],
+        isMerc: true,
+        posLabel: "미정"
+    }));
     
-    const shuffledMercs = mercenaries.sort(() => Math.random() - 0.5);
+    mercenaries.sort(() => Math.random() - 0.5);
     
-    shuffledMercs.forEach((merc, idx) => {
+    mercenaries.forEach(merc => {
         teams.sort((a, b) => a.length - b.length);
         teams[0].push(merc);
     });
