@@ -124,7 +124,7 @@
     .team-group { background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #f2f4f6; display: flex; flex-direction: column; width: 70%; }
     .team-label { font-weight: 800; font-size: 14px; color: var(--toss-text); margin-bottom: 12px; text-align: center; }
     .team-member-list { display: flex; flex-direction: column; gap: 8px; }
-    .member-item { background: #f2f4f6; padding: 8px; border-radius: 8px; font-size: 12px; display: flex; align-items: center; gap: 6px; font-weight: 600; width: 100%; }
+    .member-item { background: #f2f4f6; padding: 8px; border-radius: 8px; font-size: 12px; display: flex; align-items: center; gap: 6px; font-weight: 600; width: 100%; white-space: nowrap;}
         
     .pos-badge { font-size: 9px; padding: 1px 5px; border-radius: 4px; color: #fff; font-weight: 800; }
     .pos-badge.골레이 { background: var(--toss-orange); }
