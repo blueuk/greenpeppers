@@ -20,24 +20,62 @@ function executeAssignmentLogic() {
     const mercCount = parseInt(document.getElementById('merc-count').value) || 0;
 	
     // 선수 데이터 복사
-	let allPlayers = JSON.parse(JSON.stringify(cachedMemberInfo));
+		let allPlayers = JSON.parse(JSON.stringify(cachedMemberInfo));
     
     // 초기화
 	const teams = Array.from({ length: teamCount }, () => []);
     const assignedIndexes = new Set(); // 배정된 선수 추적
 	const specialPlayers = [ "임정현", "김현웅" ];
+ 
+    // 골레이 미리 분리
+	const specialGoalayList = [];
+    const regularPlayers = [];
     
+    allPlayers.forEach((player, idx) => {
+        if (specialPlayers.includes(player.name)) {
+            specialGoalayList.push({ player, originalIdx: idx });
+        } else {
+            regularPlayers.push({ player, originalIdx: idx });
+        }
+    });
+    
+    // 1. 골레이 우선 배정    
+    if(specialGoalayList.length >= 2) {
+        // 2명을 서로 다른 팀 배정
+		const shuffledSpecial = specialGoalayList.sort(() => Math.random() - 0.5);
+        
+        shuffledSpecial.slice(0, 2).forEach((item, idx) => {
+            item.player.posLabel = "골레이";
+            teams[idx % teamCount].push(item.player);
+            assignedIndexes.add(item.originalIdx);
+        });
+    } else if(specialGoalayList === 1) {
+    		const item = specialGoalayList[0];
+		item.player.posLabel = "골레이";
+        teams[0].push(item.player);
+		assignedIndexes.add(item.originalIdx);
+    }
+       
     // 한 번에 모든 포지션별 정렬 캐싱
 	const positionSortedIndexes = {
-        "픽소": [...allPlayers.keys()].sort((a, b) => 
-            (parseFloat(allPlayers[b].stats[3]) || 0) - (parseFloat(allPlayers[a].stats[3]) || 0)
-        ),
-        "아라": [...allPlayers.keys()].sort((a, b) => 
-            (parseFloat(allPlayers[b].stats[1]) || 0) - (parseFloat(allPlayers[a].stats[1]) || 0)
-        ),
-        "피보": [...allPlayers.keys()].sort((a, b) => 
-            (parseFloat(allPlayers[b].stats[2]) || 0) - (parseFloat(allPlayers[a].stats[2]) || 0)
-        )
+        "픽소": regularPlayers
+        		.filter(p => !assignedIndexes.has(p.originalIdx))
+            .sort((a, b) =>
+                (parseFloat(b.player.stats[3]) || 0) - (parseFloat(a.player.stats[3]) || 0)
+            )
+            .map(p => p.origianlIdx),
+        "아라": regularPlayers
+        		.filter(p => !assignedIndexes.has(p.originalIdx))
+            .sort((a, b) =>
+                (parseFloat(b.player.stats[1]) || 0) - (parseFloat(a.player.stats[1]) || 0)
+            )
+            .map(p => p.origianlIdx),
+        "피보": regularPlayers
+        		.filter(p => !assignedIndexes.has(p.originalIdx))
+            .sort((a, b) =>
+                (parseFloat(b.player.stats[2]) || 0) - (parseFloat(a.player.stats[2]) || 0)
+            )
+            .map(p => p.origianlIdx)
     };
     
     //포지션별 정렬 및 배정 함수
@@ -79,26 +117,7 @@ function executeAssignmentLogic() {
     
     // 3. 피보 배정
 	assignPlayersByPosition("피보", teamCount * 1);
-    
-    // 4. 골레이 배정
-	const specialGoalayList = allPlayers.filter(p => specialPlayers.includes(p.name));
-    
-    if(specialGoalayList.length >= 2) {
-        // 2명을 서로 다른 팀 배정
-		const shuffledSpecial = specialGoalayList.sort(() => Math.random() - 0.5);
         
-        shuffledSpecial.slice(0, 2).forEach((player, idx) => {
-            player.posLabel = "골레이";
-            teams[idx % teamCount].push(player);
-            assignedIndexes.add(allPlayers.indexOf(player));
-        });
-    } else if(specialGoalayList === 1) {
-    		const player = specialGoalayList[0];
-		player.posLabel = "골레이";
-        teams[0].push(player);
-        assignedIndexes.add(allPlayers.indexOf(player));
-    }
-    
     // 5. 배정되지 않은 선수 배정 (본인 최적 포지션으로)
 	const remainingIndexes = [];
     for (let i = 0; i < allPlayers.length; i++) {
