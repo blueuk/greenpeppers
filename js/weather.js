@@ -34,11 +34,11 @@ async function getDetailedWeather() {
                 
                 html += `
                     <tr class="weather-row">
-                        <td class="time">${hour}:00</td>
+                        <td class="weather-time">${hour}:00</td>
                         <td>${getWeatherEmoji(code)}</td>
-                        <td class="temp">${temp}°</td>
-                        <td class="precip-prob">${prob}%</td>
-                        <td class="precip-amount">${amount}mm</td>
+                        <td class="weather-temp">${temp}°</td>
+                        <td class="weather-precip-prob">${prob}%</td>
+                        <td class="weather-precip-amount">${amount}mm</td>
                     </tr>
                 `;
             });
