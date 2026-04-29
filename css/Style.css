@@ -238,3 +238,16 @@
         padding-top: 10px;
         margin-top: 15px;
     }
+    
+        .card { background: white; padding: 2rem; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); width: 380px; text-align: center; }
+        h2 { color: #202124; margin-bottom: 0.5rem; font-weight: 800; }
+        .location { font-size: 0.85rem; color: #5f6368; margin-bottom: 1.5rem; background: #e8f0fe; padding: 5px 10px; border-radius: 20px; display: inline-block; }
+        .weather-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .weather-header { border-bottom: 2px solid #f1f3f4; color: #70757a; font-size: 0.8rem; }
+        .weather-header th { padding: 10px 5px; }
+        .weather-row { border-bottom: 1px solid #f1f3f4; }
+        .weather-row td { padding: 15px 5px; font-size: 0.95rem; }
+        .time { font-weight: bold; }
+        .temp { color: #d93025; font-weight: bold; }
+        .precip-prob { color: #1a73e8; font-weight: 500; }
+        .precip-amount { color: #1967d2; font-size: 0.85rem;
