@@ -219,5 +219,5 @@ function copyTeamResult() {
         copyStr += `${teamNames[i]} ${t.map(p => p.name).join(", ")}\n`;
     });
     
-    navigator.clipboard.writeText(copyStr.trim()).then(() => alert("복사되었습니다."));
+    navigator.clipboard.writeText(copyStr.trim()).then(() => <div id="toast" class="toast">복사되었습니다.</div>);
 }
