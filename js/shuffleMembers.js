@@ -1,7 +1,7 @@
 async function fetchAndAssignTeams() {
     const bar = document.getElementById('progress-bar');
     const msg = document.getElementById('progress-msg');
-    bar.style.transition = 'width 2s ease-in-out'; // 부드럽게 움직이도록 CSS 추가
+  
     bar.style.width = '10%';
     msg.innerText = "서버 연결 중...";
 
