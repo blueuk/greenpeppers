@@ -390,14 +390,27 @@
         /* 알림 메시지 */
         .toast {
             position: fixed;
-            bottom: 30px;
-            background: rgba(0,0,0,0.8);
+            /* 1. 중앙 정렬을 위한 설정 */
+            left: 50%;
+            transform: translateX(-50%); 
+            
+            /* 2. 푸터(보통 60px 내외)보다 높은 위치로 조정 */
+            bottom: 80px; 
+            
+            background: rgba(0, 0, 0, 0.8);
             color: white;
             padding: 10px 20px;
             border-radius: 20px;
             font-size: 0.9rem;
-            display: none;
-            z-index: 100;
+            
+            /* 3. 푸터(z-index: 100)보다 높게 설정 */
+            z-index: 9999; 
+            
+            /* JS에서 제어하기 전까지 숨김 */
+            display: none; 
+            
+            /* 선택사항: 부드러운 나타남 효과를 원할 때 */
+            white-space: nowrap; /* 텍스트 줄바꿈 방지 */
         }
 
 
