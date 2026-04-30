@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>입금 안내 페이지</title>
+    <style>
+        :root {
+            --bg-color: #f4f7f9;
+            --card-bg: #ffffff;
+            --primary-color: #007aff;
+            --secondary-color: #ffcc00;
+            --text-main: #333;
+            --text-sub: #666;
+        }
+
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+            color: var(--text-main);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 400px;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            font-weight: 700;
+        }
+
+        /* 카드 스타일 */
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .tag {
+            font-size: 0.8rem;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+
+        .tag-membership { background: #e3f2fd; color: #1976d2; }
+        .tag-late { background: #fff3e0; color: #ef6c00; }
+
+        .amount-info {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .sub-text {
+            font-size: 0.85rem;
+            color: var(--text-sub);
+            font-weight: normal;
+        }
+
+        /* 계좌 정보 구역 */
+        .account-box {
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 15px;
+            position: relative;
+        }
+
+        .info-row {
+            display: flex;
+            margin-bottom: 5px;
+            font-size: 0.95rem;
+        }
+
+        .info-label {
+            width: 60px;
+            color: var(--text-sub);
+        }
+
+        .info-value {
+            font-weight: 500;
+        }
+
+        /* 복사 버튼 */
+        .copy-btn {
+            width: 100%;
+            margin-top: 12px;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .copy-btn:active {
+            opacity: 0.8;
+            transform: scale(0.98);
+        }
+
+        /* 알림 메시지 */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: none;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>💰 입금 안내</h2>
+
+    <div class="card">
+        <div class="card-header">
+            <span class="tag tag-membership">월 회비</span>
+        </div>
+        <div class="amount-info">
+            10,000원 <span class="sub-text">(상/하반기 일시납 6만원)</span>
+        </div>
+        <div class="account-box">
+            <div class="info-row">
+                <span class="info-label">은행</span>
+                <span class="info-value">신한은행</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">계좌</span>
+                <span class="info-value" id="acc-membership">123-123-123456</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">예금주</span>
+                <span class="info-value">월회비</span>
+            </div>
+            <button class="copy-btn" onclick="copyAccount('123-123-123456')">
+                📋 계좌복사
+            </button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <span class="tag tag-late">지각비</span>
+        </div>
+        <div class="amount-info">
+            5,000원
+        </div>
+        <div class="account-box">
+            <div class="info-row">
+                <span class="info-label">은행</span>
+                <span class="info-value">카카오뱅크</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">계좌</span>
+                <span class="info-value" id="acc-late">1234-12-12345</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">예금주</span>
+                <span class="info-value">지각비</span>
+            </div>
+            <button class="copy-btn" onclick="copyAccount('1234-12-12345')" style="background-color: #fee500; color: #3c1e1e;">
+                📋 계좌복사
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="toast" class="toast">계좌번호가 복사되었습니다! (하이픈 제외)</div>
+
+<script>
+    function copyAccount(accNum) {
+        // 하이픈 제거 로직
+        const plainNumber = accNum.replace(/-/g, '');
+        
+        // 클립보드 복사
+        navigator.clipboard.writeText(plainNumber).then(() => {
+            showToast();
+        }).catch(err => {
+            console.error('복사 실패:', err);
+        });
+    }
+
+    function showToast() {
+        const toast = document.getElementById('toast');
+        toast.style.display = 'block';
+        setTimeout(() => {
+            toast.style.display = 'none';
+        }, 2000);
+    }
+</script>
+
+</body>
+</html>
