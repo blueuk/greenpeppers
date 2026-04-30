@@ -5,11 +5,7 @@ async function fetchAndAssignTeams() {
     msg.innerText = "서버 연결 중...";
 
     // 서버 데이터 호출
-    const response = await apiCall({
-            action: 'getAllMembersData'
-        }
-
-        , true);
+    const response = await apiCall({action: 'getAllMembersData'}, true);
     bar.style.width = '60%';
     msg.innerText = "참석자 명단 필터링 중...";
 
@@ -38,21 +34,15 @@ function getBestPosLabel(stats, isMerc) {
     const mainStats = [{
             label: "골레이",
             val: parseFloat(stats[0]) || 0
-        }
-
-        ,
+        },
         {
             label: "아라",
             val: parseFloat(stats[1]) || 0
-        }
-
-        ,
+        },
         {
             label: "피보",
             val: parseFloat(stats[2]) || 0
-        }
-
-        ,
+        },
         {
             label: "픽소",
             val: parseFloat(stats[3]) || 0
@@ -81,7 +71,8 @@ function executeAssignmentLogic() {
 
         , () => []);
     const assignedIndexes = new Set(); // 배정된 선수 추적
-    const specialPlayers = ["임정현",
+    const specialPlayers = [
+		"임정현",
         "김현웅"
     ];
 
@@ -114,20 +105,23 @@ function executeAssignmentLogic() {
             assignedIndexes.add(item.originalIdx);
         });
     } else if (specialGoalayList.length === 1) {
-        const item = specialGoalayList[0];
-        item.player.posLabel = "골레이";
-        teams[0].push(item.player);
-        assignedIndexes.add(item.originalIdx);
-    }
+    	const item = specialGoalayList[0];
+    	item.player.posLabel = "골레이";
+    
+    	// 0부터 (teamCount - 1) 사이의 숫자를 무작위로 생성
+    	const randomTeamIdx = Math.floor(Math.random() * teamCount);
+    
+    	// 고정된 [0] 대신 무작위 인덱스 [randomTeamIdx] 사용
+    	teams[randomTeamIdx].push(item.player);
+    	assignedIndexes.add(item.originalIdx);
+	}
 
     // 한 번에 모든 포지션별 정렬 캐싱
     const positionSortedIndexes = {
         "픽소": regularPlayers.filter(p => !assignedIndexes.has(p.originalIdx)).sort((a, b) => (parseFloat(b.player.stats[3]) || 0) - (parseFloat(a.player.stats[3]) || 0)).map(p => p.originalIdx),
         "아라": regularPlayers.filter(p => !assignedIndexes.has(p.originalIdx)).sort((a, b) => (parseFloat(b.player.stats[1]) || 0) - (parseFloat(a.player.stats[1]) || 0)).map(p => p.originalIdx),
         "피보": regularPlayers.filter(p => !assignedIndexes.has(p.originalIdx)).sort((a, b) => (parseFloat(b.player.stats[2]) || 0) - (parseFloat(a.player.stats[2]) || 0)).map(p => p.originalIdx)
-    }
-
-    ;
+    };
 
     //포지션별 정렬 및 배정 함수
     const assignPlayersByPosition = (posLabel, countNeeded) => {
@@ -154,9 +148,7 @@ function executeAssignmentLogic() {
         });
 
         return selected.length;
-    }
-
-    ;
+    };
 
     // 배정 처리
     // 1. 픽소 (수비) 배정
@@ -193,14 +185,9 @@ function executeAssignmentLogic() {
     // 6. 용병 배정
     const mercenaries = Array.from({
             length: mercCount
-        }
-
-        , (_, i) => ({
-            name: `용병$ {
-    i + 1
-    }
-
-    `,
+        }, 
+		(_, i) => ({
+            name: `용병$ { i + 1 },
             stats: [0, 0, 0, 0],
             isMerc: true,
             posLabel: "미정"
@@ -248,15 +235,7 @@ function displayTeamResult(teams) {
             // 약자 변환
             const posAbbr = positionAbbreviations[p.posLabel] || p.posLabel;
 
-            html += `<div class="member-item"><span class="pos-badge ${p.posLabel}">$ {
-                    posAbbr
-                    }
-
-                </span>$ {
-                p.name
-                }
-
-            </div>`;
+            html += `<div class="member-item"><span class="pos-badge ${p.posLabel}">$ { posAbbr } </span>$ { p.name } </div>`;
         });
 
         html += `</div>
@@ -267,11 +246,7 @@ function displayTeamResult(teams) {
     document.getElementById('team-result-view').style.display = 'block';
     document.getElementById('team-result-text').innerHTML = html;
 
-    document.getElementById('assign-timestamp').innerText = `배정시간: $ {
-    new Date().toLocaleTimeString()
-    }
-
-    `;
+    document.getElementById('assign-timestamp').innerText = `배정시간: $ { new Date().toLocaleTimeString() }`;
 }
 
 function copyTeamResult() {
