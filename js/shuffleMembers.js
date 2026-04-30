@@ -2,8 +2,6 @@
 const sleep = (ms = 0) => new Promise(resolve => setTimeout(resolve, ms));
 
 async function fetchAndAssignTeams() {
-    document.getElementById('team-input-form').style.display = 'none';
-
     const loadingView = document.getElementById('team-loading-view');
     const resultView = document.getElementById('team-result-view');
     const bar = document.getElementById('progress-bar');
@@ -252,7 +250,8 @@ function displayTeamResult(teams) {
 
         html += `</div></div>`;
     });
-
+    
+    document.getElementById('team-input-form').style.display = 'none';
     document.getElementById('team-loading-view').style.display = 'none';
     document.getElementById('team-result-view').style.display = 'block';
     document.getElementById('team-result-text').innerHTML = html;
