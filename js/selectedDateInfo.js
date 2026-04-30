@@ -124,9 +124,12 @@ function openTeamModal() {
     document.getElementById('team-input-form').style.display = 'block';
     document.getElementById('team-loading-view').style.display = 'none';
     document.getElementById('team-result-view').style.display = 'none';
+ 
+    document.body.classList.add('scroll-lock'); // 스크롤 잠금
 }
 
 function closeTeamModal() { 
     document.getElementById('team-modal').style.display = 'none'; 
+    document.body.classList.remove('scroll-lock'); // 스크롤 해제
 }
 
