@@ -9,11 +9,3 @@ function copyAccount(accNum) {
             console.error('복사 실패:', err);
         });
 }
-
-function showToast() {
-    const toast = document.getElementById('toast');
-    toast.style.display = 'block';
-    setTimeout(() => {
-        toast.style.display = 'none';
-    }, 2000);
-}
