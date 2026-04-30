@@ -4,7 +4,7 @@ function copyAccount(accNum) {
         
         // 클립보드 복사
         navigator.clipboard.writeText(plainNumber).then(() => {
-            showToast();
+            showToast("계좌번호가 복사되었습니다.");
         }).catch(err => {
             console.error('복사 실패:', err);
         });
