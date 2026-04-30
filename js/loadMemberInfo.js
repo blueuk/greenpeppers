@@ -145,11 +145,27 @@ async function loadMemberInfo() {
             },
             scales: {
                 r: {
+                    // 1. 최소/최대값 및 눈금 간격 설정
+                    min: 0,
+                    max: 20, // 20점 만점 기준
+                    ticks: {
+                        stepSize: 5,    // 5단위로 눈금 생성 (0, 5, 10, 15, 20)
+                        display: false, // 숫자 라벨을 숨기고 싶으면 false, 보고 싶으면 true
+                        beginAtZero: true
+                    },
+                    // 2. 라벨 설정 (기존 유지)
                     pointLabels: { 
                         font: { size: 12, weight: 'bold' },
                         callback: function(label) {
                             return label + ' ⓘ'; 
                         }
+                    },
+                    // 3. 그리드 라인 스타일 (선택사항: 5단위 선을 더 잘 보이게 함)
+                    angleLines: {
+                        display: true
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.1)'
                     }
                 }
             }
