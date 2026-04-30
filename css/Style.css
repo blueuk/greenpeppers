@@ -13,12 +13,27 @@
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
+    /* 1. 전체 화면 스크롤 방지 */
+    html {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden; /* 전체 페이지 스크롤 제거 */
+        display: flex;
+        flex-direction: column;
+    }
+
     body { 
         font-family: 'Pretendard', sans-serif; 
         background-color: var(--toss-bg); 
         color: var(--toss-text); 
-        margin: 0; padding: 0; 
-        display: flex; flex-direction: column; height: 100dvh;
+        margin: 0; 
+        padding: 0; 
+        height: 100%;
+        overflow: hidden; /* 전체 페이지 스크롤 제거 */
+        display: flex; 
+        flex-direction: column; 
+        height: 100dvh;
         
     }
 
@@ -28,6 +43,8 @@
         border-bottom: 1px solid #eee; 
         display: flex; 
         align-items: center; 
+        flex-shrink: 0; /* 헤더 크기 유지 */
+        z-index: 100;
     }
     .header-container { 
         display: flex; 
@@ -44,12 +61,25 @@
         font-weight: 700; 
         line-height: 1; 
     }
+    
+    /* 4. 푸터 고정 */
+    footer {
+        flex-shrink: 0; /* 푸터 크기 유지 */
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        background: #fff;
+        border-top: 1px solid #e5e8eb;
+        height: 60px; /* 푸터 높이 명시적 지정 권장 */
+    }
+
 
     main { 
         flex: 1; 
         overflow-y: auto; 
         padding: 20px; 
         padding-bottom: 100px; 
+        -webkit-overflow-scrolling: touch; /* iOS에서 부드러운 스크롤 */
     }
     .section { 
         display: none; 
@@ -240,7 +270,14 @@
         margin-top: 15px;
     }
     
-        .weather-card { background: white; padding: 2rem; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); width: 380px; text-align: center; }
+        .weather-card { 
+            background: var(--toss-card); 
+            padding: 20px; 
+            border-radius: 20px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+            margin-bottom: 16px; 
+            text-align: center; 
+        }
         h2 { color: #202124; margin-bottom: 0.5rem; font-weight: 800; align-items: center; text-align: center; display: flex; }
         .weather-location { font-size: 0.85rem; color: #5f6368; margin-bottom: 1.5rem; background: #e8f0fe; padding: 5px 10px; border-radius: 20px; display: inline-block; align-items: center; display: inline-flex; width: fit-content; }
         .weather-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
@@ -252,39 +289,7 @@
         .weather-temp { color: #d93025; font-weight: bold; }
         .weather-precip-prob { color: #1a73e8; font-weight: 500; }
         .weather-precip-amount { color: #1967d2; font-size: 0.85rem;
-        
-        /* 1. 전체 화면 스크롤 방지 */
-html, body {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    overflow: hidden; /* 전체 페이지 스크롤 제거 */
-    display: flex;
-    flex-direction: column;
-}
 
-/* 2. 헤더 고정 (기존 스타일 유지하며 높이 확보) */
-header {
-    flex-shrink: 0; /* 헤더 크기 유지 */
-    z-index: 100;
-}
 
-/* 3. 메인 콘텐츠만 스크롤 허용 */
-main {
-    flex: 1; /* 남은 공간을 모두 차지 */
-    overflow-y: auto; /* 내용이 많으면 내부에서만 스크롤 */
-    -webkit-overflow-scrolling: touch; /* iOS에서 부드러운 스크롤 */
-    padding-bottom: 20px; /* 푸터와 겹치지 않게 여백 */
-}
 
-/* 4. 푸터 고정 */
-footer {
-    flex-shrink: 0; /* 푸터 크기 유지 */
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    background: #fff;
-    border-top: 1px solid #e5e8eb;
-    height: 60px; /* 푸터 높이 명시적 지정 권장 */
-}
 
