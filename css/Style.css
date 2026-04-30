@@ -316,23 +316,23 @@
             padding-bottom: 10px;
         }
 
-        .tag {
+        .account-tag {
             font-size: 0.8rem;
             padding: 4px 8px;
             border-radius: 6px;
             font-weight: bold;
         }
 
-        .tag-membership { background: #e3f2fd; color: #1976d2; }
-        .tag-late { background: #fff3e0; color: #ef6c00; }
+        .account-tag-membership { background: #e3f2fd; color: #1976d2; }
+        .account-tag-late { background: #fff3e0; color: #ef6c00; }
 
-        .amount-info {
+        .account-amount-info {
             font-size: 1.1rem;
             font-weight: 600;
             margin-bottom: 15px;
         }
 
-        .sub-text {
+        .account-sub-text {
             font-size: 0.85rem;
             color: var(--text-sub);
             font-weight: normal;
@@ -346,18 +346,18 @@
             position: relative;
         }
 
-        .info-row {
+        .account-info-row {
             display: flex;
             margin-bottom: 5px;
             font-size: 0.95rem;
         }
 
-        .info-label {
+        .account-info-label {
             width: 60px;
             color: var(--text-sub);
         }
 
-        .info-value {
+        .account-info-value {
             font-weight: 500;
         }
 
