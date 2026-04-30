@@ -1,5 +1,6 @@
 async function fetchAndAssignTeams() {
     const bar = document.getElementById('progress-bar');
+    const msg = document.getElementById('progress-msg');
     bar.style.transition = 'width 2s ease-in-out'; // 부드럽게 움직이도록 CSS 추가
     bar.style.width = '10%';
     msg.innerText = "서버 연결 중...";
@@ -41,17 +42,12 @@ function getBestPosLabel(stats, isMerc) {
     return mainStats[0].val > 0 ? mainStats[0].label : "미정";
 }
 
-function executeAssignmentLogic() {
-    const bar = document.getElementById('progress-bar');
-    const msg = document.getElementById('progress-msg');
-    
+function executeAssignmentLogic() {   
     // 파라메터 수집
     const teamSize = parseInt(document.getElementById('team-size-select').value);
     const teamCount = parseInt(document.getElementById('team-count-select').value);
     const mercCount = parseInt(document.getElementById('merc-count').value) || 0;
 
-    bar.style.width = '55%'; 
-    msg.innerText = "선수 데이터 복사...";
     // 선수 데이터 복사
     let allPlayers = JSON.parse(JSON.stringify(cachedMemberInfo));
     
@@ -72,8 +68,6 @@ function executeAssignmentLogic() {
         }
     });
 
-    bar.style.width = '60%'; 
-    msg.innerText = " 골레이 우선 배정...";
   
     if(specialGoalayList.length >= 2) {
         const shuffledSpecial = specialGoalayList.sort(() => Math.random() - 0.5);
@@ -92,8 +86,6 @@ function executeAssignmentLogic() {
         assignedIndexes.add(item.originalIdx);
     }
 
-    bar.style.width = '65%'; 
-    msg.innerText = " 모든 포지션별 우선순위 배정...";
     // 한 번에 모든 포지션별 정렬 캐싱
     const positionSortedIndexes = {
         "픽소": regularPlayers
@@ -145,26 +137,17 @@ function executeAssignmentLogic() {
     
     // 배정 처리
     // 1. 픽소 (수비) 배정 
-    bar.style.width = '70%'; 
-    msg.innerText = " 픽소 (수비) 배정...";
     if (teamSize === 5) {
         assignPlayersByPosition("픽소", teamCount * 1);
     } else {
         assignPlayersByPosition("픽소", teamCount * 2);
     }  
-
-    bar.style.width = '75%'; 
-    msg.innerText = " 아라 배정...";
     // 2. 아라 배정
     assignPlayersByPosition("아라", teamCount * 2);
 
-    bar.style.width = '80%'; 
-    msg.innerText = " 피보 배정...";
     // 3. 피보 배정
     assignPlayersByPosition("피보", teamCount * 1);
 
-    bar.style.width = '85%'; 
-    msg.innerText = " 최적 포지션 배정...";
     // 5. 배정되지 않은 선수 배정 (본인 최적 포지션으로)
     const remainingIndexes = [];
     for (let i = 0; i < allPlayers.length; i++) {
@@ -183,8 +166,6 @@ function executeAssignmentLogic() {
         teams[0].push(player);
     });
 
-    bar.style.width = '85%'; 
-    msg.innerText = " 용병 체크 배정...";
     // 6. 용병 배정
     const mercenaries = Array.from({ length: mercCount }, (_, i) => ({
         name: `용병${i + 1}`,
@@ -194,17 +175,11 @@ function executeAssignmentLogic() {
     }));
     
     mercenaries.sort(() => Math.random() - 0.5);
-
-    bar.style.width = '90%'; 
-    msg.innerText = " 용병 배정...";
     
     mercenaries.forEach(merc => {
         teams.sort((a, b) => a.length - b.length);
         teams[0].push(merc);
     });
-
-    bar.style.width = '100%'; 
-    msg.innerText = " 배정 완료...";
     
     // 결과 저장 및 표시
     lastAssignedTeams = teams; 
