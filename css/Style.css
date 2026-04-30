@@ -240,8 +240,8 @@
     }
     
         .weather-card { background: white; padding: 2rem; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); width: 380px; text-align: center; }
-        h2 { color: #202124; margin-bottom: 0.5rem; font-weight: 800; }
-        .weather-location { font-size: 0.85rem; color: #5f6368; margin-bottom: 1.5rem; background: #e8f0fe; padding: 5px 10px; border-radius: 20px; display: inline-block; }
+        h2 { color: #202124; margin-bottom: 0.5rem; font-weight: 800; align-items: center; }
+        .weather-location { font-size: 0.85rem; color: #5f6368; margin-bottom: 1.5rem; background: #e8f0fe; padding: 5px 10px; border-radius: 20px; display: inline-block; align-items: center; }
         .weather-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         .weather-header { border-bottom: 2px solid #f1f3f4; color: #70757a; font-size: 0.8rem; }
         .weather-header th { padding: 10px 5px; }
