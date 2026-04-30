@@ -9,7 +9,7 @@ async function fetchAndAssignTeams() {
     msg.innerText = "전체 멤버 정보 로딩 중...";
 
     // 1. 딱 한 번만 서버에서 모든 데이터를 가져옴
-    const response = await apiCall({ action: 'getAllMembersInfo' }, true);
+    const response = await apiCall({ action: 'getAllMembersData' }, true);
     const allMemberMap = response; // { 이름: stats } 형태라고 가정
 
     // 2. 현재 참석자(currentAttendees)에 해당하는 데이터만 추출
