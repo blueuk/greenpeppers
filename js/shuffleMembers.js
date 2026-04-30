@@ -1,30 +1,41 @@
+// 유틸리티 함수: 브라우저에게 쉴 시간을 줌
+const sleep = (ms = 0) => new Promise(resolve => setTimeout(resolve, ms));
+
 async function fetchAndAssignTeams() {
     const bar = document.getElementById('progress-bar');
     const msg = document.getElementById('progress-msg');
-  
+    
+    bar.style.transition = 'width 2s ease-in-out';
+    
+    // 1단계: 서버 연결
     bar.style.width = '10%';
     msg.innerText = "서버 연결 중...";
+    await sleep(50); // 화면 갱신 유도
 
-    // 서버 데이터 호출
     const response = await apiCall({action: 'getAllMembersData'}, true);
+    
+    // 2단계: 필터링
     bar.style.width = '60%';
     msg.innerText = "참석자 명단 필터링 중...";
+    await sleep(50);
 
-    // 데이터 가공
-    cachedMemberInfo = currentAttendees.map(name => {
-        return {
-            name: name,
-            stats: response[name] || new Array(28).fill(0)
-        };
-    });
+    cachedMemberInfo = currentAttendees.map(name => ({
+        name: name,
+        stats: response[name] || new Array(28).fill(0)
+    }));
 
+    // 3단계: 알고리즘 실행 전
     bar.style.width = '90%';
     msg.innerText = "팀 배정 알고리즘 가동 중...";
+    await sleep(50); // 중요: 이 sleep이 있어야 90%가 보입니다.
 
-    executeAssignmentLogic();
-
-    bar.style.width = '100%';
-    msg.innerText = "배정 완료!";
+    // 동기적으로 작동하는 무거운 로직은 setTimeout으로 감싸면 좋습니다.
+    setTimeout(() => {
+        executeAssignmentLogic();
+        
+        bar.style.width = '100%';
+        msg.innerText = "배정 완료!";
+    }, 100); 
 }
 
 function getBestPosLabel(stats, isMerc) {
