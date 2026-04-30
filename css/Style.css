@@ -288,7 +288,7 @@
         .weather-time { font-weight: bold; }
         .weather-temp { color: #d93025; font-weight: bold; }
         .weather-precip-prob { color: #1a73e8; font-weight: 500; }
-        .weather-precip-amount { color: #1967d2; font-size: 0.85rem;
+        .weather-precip-amount { color: #1967d2; font-size: 0.85rem;}
 
 
         h2 {
