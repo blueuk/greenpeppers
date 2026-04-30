@@ -7,9 +7,6 @@ async function fetchAndAssignTeams() {
     const bar = document.getElementById('progress-bar');
     const msg = document.getElementById('progress-msg');
 
-    // [추가] 배정 시작 시 설정창을 숨깁니다.
-    if (setupView) setupView.style.display = 'none';
-    
     // 로딩창 보여주기
     loadingView.style.display = 'block';
     resultView.style.display = 'none';
