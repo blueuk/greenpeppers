@@ -441,7 +441,7 @@
             font-size: 0.9rem;
             
             /* 3. 푸터(z-index: 100)보다 높게 설정 */
-            z-index: 9999; 
+            z-index: 10001; 
             
             /* JS에서 제어하기 전까지 숨김 */
             display: none; 
