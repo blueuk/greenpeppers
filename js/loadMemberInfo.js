@@ -92,19 +92,6 @@ async function loadMemberInfo() {
         avg([13, 13])
     ];
     
-    const summaryLabels = ["피지컬", "체력", "공격", "슛", "커뮤니케이션", "스피드", "수비", "패스"];
-    const labelDescriptions = {
-        "피지컬": "몸싸움과 균형감각의 평균 점수",
-        "체력": "체력(활동량) 점수",
-        "공격": "일대일 돌파, 연계 플레이, 공격 위치선정, 드리블의 평균 점수",
-        "슛": "슛파워, 슛정확도의 평균 점수",
-        "커뮤니케이션": "리더십과 의사소통능력의 평균 점수",
-        "스피드": "주력 점수",
-        "수비": "일대일 수비, 수비지원, 수비 위치선정, 대인마크, 가로채기, 반사신경, 공중볼 처리능력의 평균 점수",
-        "패스": "패스, 롱패스 능력 및 정확도의 평균 점수"
-    };
-
-    
     const chartContainer = document.getElementById('chart-container');
     chartContainer.style.display = 'block';
     
@@ -138,34 +125,37 @@ async function loadMemberInfo() {
             ]
         },
         options: {
-            // 1. 클릭 이벤트 감지
-            onClick: (event, elements, chart) => {
-                const { x, y } = event;
-                const scale = chart.scales.r;
-                
-                // 클릭한 지점이 어느 라벨인지 확인하는 로직
-                for (let i = 0; i < scale._pointLabels.length; i++) {
-                    const labelPos = scale._pointLabelItems[i];
-                    // 라벨 주변의 클릭 영역 계산 (여유 공간 포함)
-                    if (x >= labelPos.left - 20 && x <= labelPos.right + 20 &&
-                        y >= labelPos.top - 10 && y <= labelPos.bottom + 10) {
+                onClick: (event, elements, chart) => {
+                    const { x, y } = event;
+                    const scale = chart.scales.r;
+                    
+                    for (let i = 0; i < scale._pointLabels.length; i++) {
+                        const labelPos = scale._pointLabelItems[i];
                         
-                        const labelText = summaryLabels[i];
-                        const desc = labelDescriptions[labelText] || "설명이 없습니다.";
-                        alert(`[${labelText}] ${desc}`); // 실무에서는 커스텀 모달 추천
-                        break;
+                        // 라벨 클릭 영역 판정
+                        if (x >= labelPos.left - 20 && x <= labelPos.right + 20 &&
+                            y >= labelPos.top - 10 && y <= labelPos.bottom + 10) {
+                            
+                            // 클릭한 라벨 텍스트 추출 (ⓘ 문구 제거)
+                            const fullText = scale._pointLabels[i];
+                            const labelText = fullText.replace(' ⓘ', '').trim();
+                            
+                            // 설명 가져오기
+                            const desc = labelDescriptions[labelText] || "설명이 등록되지 않았습니다.";
+                            
+                            // 알림창 띄우기
+                            alert(`[${labelText}] ${desc}`);
+                            break;
+                        }
                     }
-                }
-            },
-            scales: {
-                r: {
-                    suggestedMin: 0,
-                    suggestedMax: 20,
-                    ticks: { stepSize: 5, display: false },
-                    pointLabels: { 
-                        font: { size: 12, weight: 'bold' },
-                        callback: function(label) {
-                            return label + ' ⓘ'; 
+                },
+                scales: {
+                    r: {
+                        pointLabels: { 
+                            callback: function(label) {
+                                // 모든 라벨 뒤에 아이콘을 붙여 클릭 가능함을 시각화
+                                return label + ' ⓘ'; 
+                            }
                         }
                     }
                 }
