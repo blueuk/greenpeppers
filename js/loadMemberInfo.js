@@ -55,10 +55,10 @@ async function loadMemberInfo() {
             // (isPosStat 조건문 없이 모든 labels[idx]에 적용하거나, 특정 범위만 지정)
             let labelHtml = labelText;
             
-            // 통합된 showPosDesc를 호출하도록 유지 (labelText가 Key값이 됨)
-            labelHtml += ` <span class="info-icon" 
-                            style="cursor:help; font-size:12px; color:var(--toss-gray); margin-left:2px;" 
-                            onclick="showPosDesc('${labelText}')">ⓘ</span>`;
+            if (isPosStat) {
+                // HTML의 onclick에서도 showPosDesc를 호출합니다.
+                labelHtml += ` <span class="info-icon" style="cursor:pointer;" onclick="showPosDesc('${labelText}')">ⓘ</span>`;
+            }
             
             item.innerHTML = `<div class="info-label">${labelHtml}</div><div class="stat-val" data-idx="${idx}">${displayVal}</div>`;
             grid.appendChild(item);
@@ -128,43 +128,39 @@ async function loadMemberInfo() {
             ]
         },
         options: {
-                onClick: (event, elements, chart) => {
-                    const { x, y } = event;
-                    const scale = chart.scales.r;
-                    
-                    for (let i = 0; i < scale._pointLabels.length; i++) {
-                        const labelPos = scale._pointLabelItems[i];
-                        if (x >= labelPos.left - 20 && x <= labelPos.right + 20 &&
-                            y >= labelPos.top - 10 && y <= labelPos.bottom + 10) {
-                            
-                            // ⓘ 아이콘을 떼어낸 깨끗한 이름만 추출
-                            const cleanName = scale._pointLabels[i].replace(' ⓘ', '').trim();
-                            
-                            // 공용 함수 호출!
-                            showPosDesc(cleanName); 
-                            break;
-                        }
-                    }
-                },
-                scales: {
-                    r: {
-                        pointLabels: { 
-                            callback: function(label) {
-                                // 모든 라벨 뒤에 아이콘을 붙여 클릭 가능함을 시각화
-                                return label + ' ⓘ'; 
-                            }
-                        }
+            onClick: (event, elements, chart) => {
+                const { x, y } = event;
+                const scale = chart.scales.r;
+                
+                for (let i = 0; i < scale._pointLabels.length; i++) {
+                    const labelPos = scale._pointLabelItems[i];
+                    if (x >= labelPos.left - 20 && x <= labelPos.right + 20 &&
+                        y >= labelPos.top - 10 && y <= labelPos.bottom + 10) {
+                        
+                        const labelText = summaryLabels[i]; 
+                        showPosDesc(labelText);
+                        break;
                     }
                 }
             },
-            plugins: {
-                legend: { display: true, position: 'top' },
-                tooltip: {
-                    callbacks: {
-                        // 툴팁에서 값을 보여줄 때 단위를 붙이거나 포맷팅하기 좋습니다.
-                        label: function(context) {
-                            return ` ${context.dataset.label}: ${context.raw}점`;
+            scales: {
+                r: {
+                    pointLabels: { 
+                        font: { size: 12, weight: 'bold' },
+                        callback: function(label) {
+                            return label + ' ⓘ'; 
                         }
+                    }
+                }
+            }
+        },
+        plugins: {
+            legend: { display: true, position: 'top' },
+            tooltip: {
+                callbacks: {
+                    // 툴팁에서 값을 보여줄 때 단위를 붙이거나 포맷팅하기 좋습니다.
+                    label: function(context) {
+                        return ` ${context.dataset.label}: ${context.raw}점`;
                     }
                 }
             }
