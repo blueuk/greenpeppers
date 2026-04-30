@@ -14,7 +14,9 @@ let isCalendarLoading = false; // 전역 변수 영역에 추가
 
     
 const summaryLabels = ["피지컬", "체력", "공격", "슛", "커뮤니케이션", "스피드", "수비", "패스"];
-const labelDescriptions = {
+
+// 1. 공용 설명 데이터 (포지션 + 요약 능력치 통합)
+const allDescriptions = {
     "피지컬": "몸싸움과 균형감각의 평균 점수",
     "체력": "체력(활동량) 점수",
     "공격": "일대일 돌파, 연계 플레이, 공격 위치선정, 드리블의 평균 점수",
@@ -22,10 +24,8 @@ const labelDescriptions = {
     "커뮤니케이션": "리더십과 의사소통능력의 평균 점수",
     "스피드": "주력 점수",
     "수비": "일대일 수비, 수비지원, 수비 위치선정, 대인마크, 가로채기, 반사신경, 공중볼 처리능력의 평균 점수",
-    "패스": "패스, 롱패스 능력 및 정확도의 평균 점수"
-};
-
-const positionDescriptions = {
+    "패스": "패스, 롱패스 능력 및 정확도의 평균 점수",
+    
     "골레이": "골키퍼 포지션으로 최후방에서 골문을 지키고 빌드업의 시작점 역할을 수행합니다.",
     "아라": "사이드 윙어 포지션으로 빠른 스피드와 드리블을 통해 측면 공격 및 수비를 담당합니다.",
     "피보": "최전방 공격수 포지션으로 등지는 플레이와 강력한 슈팅으로 득점을 노립니다.",
@@ -70,8 +70,8 @@ function showToast(message) {
     }, 2000);
 }
 
-function showPosDesc(posName) {
-    const desc = positionDescriptions[posName] || "설명이 등록되지 않은 포지션입니다.";
-    // 사용자 경험을 위해 차트와 동일하게 alert를 사용하거나 커스텀 모달을 호출하세요.
-    alert(`[${posName} 설명]\n\n${desc}`);
+// 2. 통합 알림 함수
+function showPosDesc(name) {
+    const desc = allDescriptions[name] || "설명이 등록되지 않았습니다.";
+    alert(`[${name}] \n\n${desc}`);
 }
