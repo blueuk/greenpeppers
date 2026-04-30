@@ -245,7 +245,6 @@ function displayTeamResult(teams) {
         html += `</div></div>`;
     });
     
-    document.getElementById('team-input-form').style.display = 'none';
     document.getElementById('team-loading-view').style.display = 'none';
     document.getElementById('team-result-view').style.display = 'block';
     document.getElementById('team-result-text').innerHTML = html;
