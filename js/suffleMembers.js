@@ -219,5 +219,22 @@ function copyTeamResult() {
         copyStr += `${teamNames[i]} ${t.map(p => p.name).join(", ")}\n`;
     });
     
-    navigator.clipboard.writeText(copyStr.trim()).then(() => <div id="toast" class="toast">복사되었습니다.</div>);
+    navigator.clipboard.writeText(copyStr.trim()).then(() => {
+        showToast("팀 명단이 복사되었습니다.");
+    }).catch(err => {
+        console.error('복사 실패:', err);
+    });
 }
+
+// 토스트 메시지를 보여주는 별도의 함수 (재사용성)
+function showToast(message) {
+    const toast = document.getElementById("toast");
+    if (toast) {
+        toast.innerText = message;
+        toast.style.display = "block";
+        
+        // 2초 후 사라짐
+        setTimeout(() => {
+            toast.style.display = "none";
+        }, 2000);
+    }
