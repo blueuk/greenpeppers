@@ -51,11 +51,14 @@ async function loadMemberInfo() {
             item.className = 'info-item';
             if (isHighlight) item.classList.add('highlight');
 
+            // 모든 라벨(핵심 포지션 + 요약 능력치)에 대해 i 아이콘을 붙이고 싶다면:
+            // (isPosStat 조건문 없이 모든 labels[idx]에 적용하거나, 특정 범위만 지정)
             let labelHtml = labelText;
-            if (isPosStat) {
-            // i 아이콘을 span으로 추가하고 스타일과 이벤트를 부여합니다.
-                labelHtml += ` <span class="info-icon" style="cursor:help; font-size:12px; color:var(--toss-gray); margin-left:2px;" onclick="showPosDesc('${labelText}')">ⓘ</span>`;
-            }
+            
+            // 통합된 showPosDesc를 호출하도록 유지 (labelText가 Key값이 됨)
+            labelHtml += ` <span class="info-icon" 
+                            style="cursor:help; font-size:12px; color:var(--toss-gray); margin-left:2px;" 
+                            onclick="showPosDesc('${labelText}')">ⓘ</span>`;
             
             item.innerHTML = `<div class="info-label">${labelHtml}</div><div class="stat-val" data-idx="${idx}">${displayVal}</div>`;
             grid.appendChild(item);
@@ -131,20 +134,14 @@ async function loadMemberInfo() {
                     
                     for (let i = 0; i < scale._pointLabels.length; i++) {
                         const labelPos = scale._pointLabelItems[i];
-                        
-                        // 라벨 클릭 영역 판정
                         if (x >= labelPos.left - 20 && x <= labelPos.right + 20 &&
                             y >= labelPos.top - 10 && y <= labelPos.bottom + 10) {
                             
-                            // 클릭한 라벨 텍스트 추출 (ⓘ 문구 제거)
-                            const fullText = scale._pointLabels[i];
-                            const labelText = fullText.replace(' ⓘ', '').trim();
+                            // ⓘ 아이콘을 떼어낸 깨끗한 이름만 추출
+                            const cleanName = scale._pointLabels[i].replace(' ⓘ', '').trim();
                             
-                            // 설명 가져오기
-                            const desc = labelDescriptions[labelText] || "설명이 등록되지 않았습니다.";
-                            
-                            // 알림창 띄우기
-                            alert(`[${labelText}] ${desc}`);
+                            // 공용 함수 호출!
+                            showPosDesc(cleanName); 
                             break;
                         }
                     }
