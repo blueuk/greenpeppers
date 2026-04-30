@@ -43,6 +43,9 @@
     .scroll-lock {
         overflow: hidden !important;
         touch-action: none; /* 모바일 터치 스크롤 방지 */
+        height: 100%;
+        width: 100%;
+        position: fixed; /* iOS 등 모바일에서 스크롤을 완전히 막는 가장 확실한 방법 */
     }
 
 
@@ -160,7 +163,7 @@
         width: 100%; 
         height: 100%; 
         background: rgba(0,0,0,0.5); 
-        z-index: 9999; 
+        z-index: 10000; 
         
         /* 중앙 정렬 보강 */
         display: none; 
