@@ -196,7 +196,14 @@ function executeAssignmentLogic() {
         const player = allPlayers[playerIdx];
         player.posLabel = getBestPosLabel(player.stats, player.isMerc);
         
-        teams.sort((a, b) => a.length - b.length);
+        // 1. 인원수(length)를 먼저 비교
+        // 2. 인원수가 같다면(0), random()을 이용해 50% 확률로 순서를 바꿈
+        teams.sort((a, b) => {
+            if (a.length !== b.length) {
+                return a.length - b.length;
+            }
+            return Math.random() - 0.5; 
+        });
         teams[0].push(player);
     });
 
@@ -211,9 +218,17 @@ function executeAssignmentLogic() {
     mercenaries.sort(() => Math.random() - 0.5);
     
     mercenaries.forEach(merc => {
-        teams.sort((a, b) => a.length - b.length);
-        teams[0].push(merc);
+    // 1. 인원수(length)를 먼저 비교
+    // 2. 인원수가 같다면(0), random()을 이용해 50% 확률로 순서를 바꿈
+    teams.sort((a, b) => {
+        if (a.length !== b.length) {
+            return a.length - b.length;
+        }
+        return Math.random() - 0.5; 
     });
+
+    teams[0].push(merc);
+});
     
     // 결과 저장 및 표시
     lastAssignedTeams = teams; 
