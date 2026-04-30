@@ -56,3 +56,9 @@ function showToast(message) {
         toast.style.display = "none";
     }, 2000);
 }
+
+function showPosDesc(posName) {
+    const desc = positionDescriptions[posName] || "설명이 등록되지 않은 포지션입니다.";
+    // 사용자 경험을 위해 차트와 동일하게 alert를 사용하거나 커스텀 모달을 호출하세요.
+    alert(`[${posName} 설명]\n\n${desc}`);
+}
