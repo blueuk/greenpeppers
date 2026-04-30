@@ -721,3 +721,20 @@ h2 {
     white-space:nowrap;
     /* 텍스트 줄바꿈 방지 */
 }
+.info-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background-color: #f2f4f6; /* 토스트풍 연회색 */
+    color: #8b95a1;
+    font-weight: normal;
+    vertical-align: middle;
+}
+
+.info-icon:hover {
+    background-color: #e5e8eb;
+    color: #4e5968;
+}
