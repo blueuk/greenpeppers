@@ -286,20 +286,3 @@ function copyTeamResult() {
         console.error('복사 실패:', err);
     });
 }
-
-// 토스트 메시지를 보여주는 별도의 함수 (재사용성)
-function showToast(message) {
-    const toast = document.getElementById("toast");
-    if (!toast) return;
-
-    // 전달받은 메시지가 있으면 그 메시지를 쓰고, 없으면 기본값 설정
-    toast.textContent = message || "복사되었습니다."; 
-    
-    toast.style.display = "block";
-    
-    // 기존에 실행 중인 타이머가 있을 수 있으므로 클리어해주는 것이 좋지만, 
-    // 간단하게는 아래와 같이 유지합니다.
-    setTimeout(() => {
-        toast.style.display = "none";
-    }, 2000);
-}
