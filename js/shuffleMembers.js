@@ -2,40 +2,63 @@
 const sleep = (ms = 0) => new Promise(resolve => setTimeout(resolve, ms));
 
 async function fetchAndAssignTeams() {
+    const loadingView = document.getElementById('team-loading-view');
+    const resultView = document.getElementById('team-result-view');
     const bar = document.getElementById('progress-bar');
     const msg = document.getElementById('progress-msg');
+
+    // [추가] 초기 UI 설정: 로딩창은 보이고 결과창은 숨김
+    loadingView.style.display = 'block';
+    resultView.style.display = 'none';
     
-    bar.style.transition = 'width 2s ease-in-out';
-    
-    // 1단계: 서버 연결
-    bar.style.width = '10%';
-    msg.innerText = "서버 연결 중...";
-    await sleep(50); // 화면 갱신 유도
+    // 프로그래스바 초기화
+    bar.style.transition = 'width 0.3s ease-in-out'; // 너무 느리면 답답하므로 0.3~0.5초 권장
+    bar.style.width = '0%';
 
-    const response = await apiCall({action: 'getAllMembersData'}, true);
-    
-    // 2단계: 필터링
-    bar.style.width = '60%';
-    msg.innerText = "참석자 명단 필터링 중...";
-    await sleep(50);
+    try {
+        // 1단계: 서버 연결
+        bar.style.width = '10%';
+        msg.innerText = "서버 연결 중...";
+        await sleep(300); // 사용자가 인지할 수 있는 최소 시간
 
-    cachedMemberInfo = currentAttendees.map(name => ({
-        name: name,
-        stats: response[name] || new Array(28).fill(0)
-    }));
-
-    // 3단계: 알고리즘 실행 전
-    bar.style.width = '90%';
-    msg.innerText = "팀 배정 알고리즘 가동 중...";
-    await sleep(50); // 중요: 이 sleep이 있어야 90%가 보입니다.
-
-    // 동기적으로 작동하는 무거운 로직은 setTimeout으로 감싸면 좋습니다.
-    setTimeout(() => {
-        executeAssignmentLogic();
+        const response = await apiCall({action: 'getAllMembersData'}, true);
         
+        // 2단계: 필터링
+        bar.style.width = '60%';
+        msg.innerText = "참석자 명단 필터링 중...";
+        await sleep(300);
+
+        cachedMemberInfo = currentAttendees.map(name => ({
+            name: name,
+            stats: response[name] || new Array(28).fill(0)
+        }));
+
+        // 3단계: 알고리즘 실행 준비
+        bar.style.width = '90%';
+        msg.innerText = "팀 배정 알고리즘 가동 중...";
+        await sleep(300); 
+
+        // [수정] 무거운 로직을 수행할 때 브라우저가 멈추지 않도록 비동기 실행
+        await new Promise(resolve => {
+            setTimeout(() => {
+                executeAssignmentLogic();
+                resolve();
+            }, 100);
+        });
+
+        // 4단계: 완료 처리
         bar.style.width = '100%';
         msg.innerText = "배정 완료!";
-    }, 100); 
+        await sleep(200);
+
+        // [참고] executeAssignmentLogic 내부에서 displayTeamResult를 호출하므로 
+        // 여기서 별도로 resultView를 조절하지 않아도 되지만, 확실히 하기 위해 displayTeamResult를 확인하세요.
+
+    } catch (error) {
+        console.error("팀 배정 중 오류 발생:", error);
+        msg.innerText = "오류가 발생했습니다.";
+        loadingView.style.display = 'none';
+    }
 }
 
 function getBestPosLabel(stats, isMerc) {
