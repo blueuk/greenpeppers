@@ -253,11 +253,13 @@
     /* 글자 길이만큼 왕복하는 효과 */
     @keyframes roll-shuttle {
         0% {
-            transform: translateX(0) rotate(0deg);
+            left: 0;
+            transform: rotate(0deg);
         }
         100% {
             /* 부모 컨테이너 너비 내에서 이동 */
-            transform: translateX(calc(100% - 24px)) rotate(360deg);
+            left: calc (100% - 24px); 
+            transform: rotate(360deg);
         }
     }
     
