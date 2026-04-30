@@ -544,8 +544,8 @@ input,select {
     }
     100% {
         /* 부모 컨테이너 너비 내에서 이동 */
-        left: calc (100% - 24px);
-        transform:rotate(360deg);
+        left: calc(100% - 24px); 
+        transform: rotate(360deg);
     }
 }
 .loading-text {
