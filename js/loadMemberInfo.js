@@ -30,6 +30,9 @@ async function loadMemberInfo() {
 
         group.indices.forEach(idx => {
             if (idx >= labels.length) return;
+            
+            const labelText = labels[idx]; // "골레이", "아라" 등
+            
             let val = info.stats[idx];
             const isPosStat = idx < 4;
 
@@ -48,6 +51,12 @@ async function loadMemberInfo() {
             item.className = 'info-item';
             if (isHighlight) item.classList.add('highlight');
 
+            let labelHtml = labelText;
+            if (isPosStat) {
+            // i 아이콘을 span으로 추가하고 스타일과 이벤트를 부여합니다.
+                labelHtml += ` <span class="info-icon" style="cursor:help; font-size:12px; color:var(--toss-gray); margin-left:2px;" onclick="showPosDesc('${labelText}')">ⓘ</span>`;
+            }
+            
             item.innerHTML = `<div class="info-label">${labels[idx]}</div><div class="stat-val" data-idx="${idx}">${displayVal}</div>`;
             grid.appendChild(item);
         });
