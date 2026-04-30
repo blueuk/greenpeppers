@@ -2,14 +2,21 @@
 const sleep = (ms = 0) => new Promise(resolve => setTimeout(resolve, ms));
 
 async function fetchAndAssignTeams() {
+const setupView = document.getElementById('team-setup-view'); // 설정창 영역
     const loadingView = document.getElementById('team-loading-view');
     const resultView = document.getElementById('team-result-view');
     const bar = document.getElementById('progress-bar');
     const msg = document.getElementById('progress-msg');
 
-    // [추가] 초기 UI 설정: 로딩창은 보이고 결과창은 숨김
+    // [추가] 배정 시작 시 설정창을 숨깁니다.
+    if (setupView) setupView.style.display = 'none';
+    
+    // 로딩창 보여주기
     loadingView.style.display = 'block';
     resultView.style.display = 'none';
+    
+    bar.style.transition = 'width 0.3s ease-in-out';
+    bar.style.width = '0%';
     
     // 프로그래스바 초기화
     bar.style.transition = 'width 0.3s ease-in-out'; // 너무 느리면 답답하므로 0.3~0.5초 권장
