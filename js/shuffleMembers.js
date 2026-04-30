@@ -2,7 +2,8 @@
 const sleep = (ms = 0) => new Promise(resolve => setTimeout(resolve, ms));
 
 async function fetchAndAssignTeams() {
-const setupView = document.getElementById('team-setup-view'); // 설정창 영역
+    document.getElementById('team-input-form').style.display = 'none';
+
     const loadingView = document.getElementById('team-loading-view');
     const resultView = document.getElementById('team-result-view');
     const bar = document.getElementById('progress-bar');
