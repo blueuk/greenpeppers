@@ -75,20 +75,21 @@ function executeAssignmentLogic() {
 	bar.style.width = '60%'; 
     msg.innerText = " 골레이 우선 배정...";
   
-    if(specialGoalayList.length >= 2) {
-        // 2명을 서로 다른 팀 배정
-		const shuffledSpecial = specialGoalayList.sort(() => Math.random() - 0.5);
-        
+	if(specialGoalayList.length >= 2) {
+        const shuffledSpecial = specialGoalayList.sort(() => Math.random() - 0.5);
         shuffledSpecial.slice(0, 2).forEach((item, idx) => {
             item.player.posLabel = "골레이";
+            // 팀 개수만큼 순차 배정 (shuffled 되었으므로 무작위)
             teams[idx % teamCount].push(item.player);
             assignedIndexes.add(item.originalIdx);
         });
     } else if(specialGoalayList.length === 1) {
-    	const item = specialGoalayList[0];
-		item.player.posLabel = "골레이";
-        teams[0].push(item.player);
-		assignedIndexes.add(item.originalIdx);
+        const item = specialGoalayList[0];
+        item.player.posLabel = "골레이";
+        // 고정 0번이 아닌 랜덤 팀 배정
+        const randomTeamIdx = Math.floor(Math.random() * teamCount);
+        teams[randomTeamIdx].push(item.player);
+        assignedIndexes.add(item.originalIdx);
     }
 
 	bar.style.width = '65%'; 
