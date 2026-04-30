@@ -2,15 +2,12 @@
 const sleep = (ms = 0) => new Promise(resolve => setTimeout(resolve, ms));
 
 async function fetchAndAssignTeams() {
-    const loadingView = document.getElementById('team-loading-view');
-    const resultView = document.getElementById('team-result-view');
+    document.getElementById('team-input-form').style.display = 'none';
+    document.getElementById('team-loading-view').style.display = 'block';
+
     const bar = document.getElementById('progress-bar');
     const msg = document.getElementById('progress-msg');
 
-    // 로딩창 보여주기
-    loadingView.style.display = 'block';
-    resultView.style.display = 'none';
-    
     bar.style.transition = 'width 0.3s ease-in-out';
     bar.style.width = '0%';
     
