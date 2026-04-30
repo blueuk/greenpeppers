@@ -150,7 +150,66 @@
             <div id="weather-content">
             <p class="loading">데이터를 가져오는 중...</p>
         </div>
-</div>
+        
+        <div id="receipts-info" class="section">
+            <h2>💰 입금 안내</h2>
+
+            <div class="account-card">
+                <div class="account-card-header">
+                    <span class="tag tag-membership">월 회비</span>
+                </div>
+                <div class="amount-info">
+                    10,000원 <span class="sub-text">(상/하반기 일시납 6만원)</span>
+                </div>
+                <div class="account-box">
+                    <div class="info-row">
+                        <span class="info-label">은행</span>
+                        <span class="info-value">신한은행</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">계좌</span>
+                        <span class="info-value" id="acc-membership">123-123-123456</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">예금주</span>
+                        <span class="info-value">월회비</span>
+                    </div>
+                    <button class="copy-btn" onclick="copyAccount('123-123-123456')">
+                        📋 계좌복사
+                    </button>
+                </div>
+            </div>
+
+            <div class="account-card">
+                <div class="account-card-header">
+                    <span class="tag tag-late">지각비</span>
+                </div>
+                <div class="amount-info">
+                    5,000원
+                </div>
+                <div class="account-box">
+                    <div class="info-row">
+                        <span class="info-label">은행</span>
+                        <span class="info-value">카카오뱅크</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">계좌</span>
+                        <span class="info-value" id="acc-late">1234-12-12345</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">예금주</span>
+                        <span class="info-value">지각비</span>
+                    </div>
+                    <button class="copy-btn" onclick="copyAccount('1234-12-12345')" style="background-color: #fee500; color: #3c1e1e;">
+                        📋 계좌복사
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="toast" class="toast">계좌번호가 복사되었습니다! (하이픈 제외)</div>
+        
+        </div>
     </main>
 
     <footer>
