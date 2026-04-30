@@ -57,7 +57,7 @@ async function loadMemberInfo() {
                 labelHtml += ` <span class="info-icon" style="cursor:help; font-size:12px; color:var(--toss-gray); margin-left:2px;" onclick="showPosDesc('${labelText}')">ⓘ</span>`;
             }
             
-            item.innerHTML = `<div class="info-label">${labelHtml}</div><div class="info-label">${labels[idx]}</div><div class="stat-val" data-idx="${idx}">${displayVal}</div>`;
+            item.innerHTML = `<div class="info-label">${labelHtml}</div><div class="stat-val" data-idx="${idx}">${displayVal}</div>`;
             grid.appendChild(item);
         });
     });
