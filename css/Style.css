@@ -82,7 +82,7 @@ main {
     flex:1;
     overflow-y:auto;
     padding:20px;
-    padding-bottom:20px;
+    padding-bottom:100px;
     -webkit-overflow-scrolling:touch;
     /* iOS에서 부드러운 스크롤 */
 }
