@@ -238,3 +238,4 @@ function showToast(message) {
             toast.style.display = "none";
         }, 2000);
     }
+}
