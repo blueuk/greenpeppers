@@ -9,6 +9,10 @@
         --toss-green: #2ecc71;
         --toss-orange: #ff9500;
         --toss-yellow: #ffd600;
+        
+        --card-bg: #ffffff;
+        --primary-color: #007aff;
+        --text-sub: #666;
     }
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
