@@ -244,7 +244,7 @@ function displayTeamResult(teams) {
         "피보": "PIV",
         "아라": "ALA",
         "골레이": "GOL",
-        "미정": "NAN"
+        "미정": "GUE"
     };
     let html = "";
 
