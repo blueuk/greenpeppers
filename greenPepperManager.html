@@ -159,7 +159,7 @@
             </div>
         </div>
         
-           <div id="receipts-info" class="section">
+        <div id="receipts-info" class="section">
             <h2>💰 입금 안내</h2>
 
             <div class="account-card">
@@ -214,6 +214,50 @@
                 </div>
             </div>
         </div>
+
+        <div id="map-info" class="section">
+            <!-- 1. 월문3리 풋살구장 -->
+            <div class="map-card">
+                <div class="map-header">⚽ 월문3리 풋살구장</div>
+                <!-- PC용 지도 -->
+                <iframe class="pc-only" src="https://map.naver.com/v5/entry/place/1836479798?c=15,0,0,0,dh"></iframe>
+                <!-- 모바일용 클릭 영역 -->
+                <a href="https://map.naver.com/p/entry/place/1836479798" target="_blank" class="mobile-only">
+                    <b>[터치하여 지도 보기]</b>
+                    <span>네이버 지도 앱으로 연결됩니다</span>
+                </a>
+                <div class="map-footer">
+                    <a href="https://map.naver.com/p/entry/place/1836479798" target="_blank" class="btn btn-naver">네이버 지도</a>
+                    <a href="https://map.naver.com/p/directions/undefined,undefined/월문3리 풋살구장,1836479798" target="_blank" class="btn btn-dark">길찾기</a>
+                </div>
+            </div>
+
+            <div class="map-card">
+                <div class="map-header">⚽ 다산풋살장(실내)</div>
+                <iframe class="pc-only" src="https://map.naver.com/v5/entry/place/1542542168?c=15,0,0,0,dh"></iframe>
+                <a href="https://map.naver.com/p/entry/place/1542542168" target="_blank" class="mobile-only">
+                    <b>[터치하여 지도 보기]</b>
+                    <span>네이버 지도 앱으로 연결됩니다</span>
+                </a>
+                <div class="map-footer">
+                    <a href="https://map.naver.com/p/entry/place/1542542168" target="_blank" class="btn btn-naver">네이버 지도</a>
+                    <a href="https://map.naver.com/p/directions/undefined,undefined/와부체육공원,1542542168" target="_blank" class="btn btn-dark">길찾기</a>
+                </div>
+            </div>
+
+            <div class="map-card">
+                <div class="map-header">⚽ 태왕주니어클럽(실내)</div>
+                <iframe class="pc-only" src="https://map.naver.com/v5/entry/place/36383917?c=15,0,0,0,dh"></iframe>
+                <a href="https://map.naver.com/p/entry/place/36383917" target="_blank" class="mobile-only">
+                    <b>[터치하여 지도 보기]</b>
+                    <span>네이버 지도 앱으로 연결됩니다</span>
+                </a>
+                <div class="map-footer">
+                    <a href="https://map.naver.com/p/entry/place/36383917" target="_blank" class="btn btn-naver">네이버 지도</a>
+                    <a href="https://map.naver.com/p/directions/undefined,undefined/와부 배드민턴장,36383917" target="_blank" class="btn btn-dark">길찾기</a>
+                </div>
+            </div>
+        </div>
         
         <div id="toast" class="toast"></div>
     </main>
@@ -223,7 +267,7 @@
         <div class="tab" onclick="showSection('member-view')"><span class="tab-icon">👤</span>멤버조회</div>
         <div class="tab" onclick="showSection('member-add')"><span class="tab-icon">➕</span>멤버추가</div>
         <div class="tab" onclick="showSection('receipts-info')"><span class="tab-icon">💰</span>입금안내</div>
-
+        <div class="tab" onclick="showSection('map-info')"><span class="tab-icon">📍</span>경기장안내</div>
         <div class="tab" onclick="window.open('https://www.youtube.com/@FC_GreeN_PeppeR', '_blank')"><span class="tab-icon">▶️</span>유튜브</div>
     </footer> 
 
