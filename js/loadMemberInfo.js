@@ -72,7 +72,7 @@ async function loadMemberInfo() {
 
     // 1. 차트 인스턴스를 저장할 변수는 함수 밖(전역)에 선언되어 있어야 합니다.
     const getVal = (idx) => parseFloat(info.stats[idx]) || 0;
-    const getAvgVal = (idx) => parseFloat(AvgInfo.stats[idx]) || 0;
+    const getAvgVal = (avgIdx) => parseFloat(AvgInfo.stats[avgIdx]) || 0;
     const avg = (arr) => arr.reduce((a, b) => a + b, 0) / arr.length;
     
     // 데이터 계산 (데이터는 항상 '숫자' 상태를 유지하는 게 좋습니다)
