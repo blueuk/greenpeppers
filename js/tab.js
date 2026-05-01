@@ -15,4 +15,7 @@ function showSection(id) {
         tabs[3].classList.add('active');
         resetVoteStep();
     }
+    else if (id === 'receipts-info') tabs[4].classList.add('active');
+    else if (id === 'map-add') tabs[5].classList.add('active');
+
 }
