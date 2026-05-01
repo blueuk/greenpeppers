@@ -4,7 +4,7 @@ async function loadMemberInfo() {
     if (!name) return;
 
     const info = await apiCall({ action: 'getMemberInfo', memberName: name }); // 멤버 점수
-    const avgInfo = await apiCall({ action: 'getAvgMemberInfo', memberName: name }); // 멤버 평균점수
+    const avgInfo = await apiCall({ action: 'getAvgMemberInfo' }); // 멤버 평균점수
     
     originalStatsBeforeEdit = [...info.stats];
     const grid = document.getElementById('member-detail');
