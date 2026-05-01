@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbyh9hN5zhLVEK79YvJsfBKst1X5RPMmQ0udY93L9tP-7g-s9NigLFoVYLF_BAYoROxc/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwgtlsW3dxQuPd0C4XsvoVChoiNPb8UGvMyD1B-Vq1EEd28xESjcrxZgx7o6jVsTQXX/exec";
 
 async function apiCall(data, silent = false) {
     const loadingEl = document.getElementById('loading');
