@@ -117,3 +117,11 @@ async function submitQuickVote(status) {
     
     selectDate(selectedDateForQuickVote, document.querySelector('.date-item.selected'));
 }
+
+async function submitQuickNoGame() {
+    if(!selectedDateForQuickVote) return alert("날짜를 선택하세요.");
+    if(confirm("해당 날짜(" + selectedDateForQuickVote +")를 경기 미진행(R)으로 처리하시겠습니까?")) {
+        await apiCall({ action: 'setNoGame', date: selectedDateForQuickVote });
+        alert("처리 완료");
+    }
+}
