@@ -32,6 +32,7 @@ async function selectDate(date, el) {
     const countBadge = document.getElementById('attendee-count-badge');
     const addBtn = document.getElementById('attendee-add-btn-container');
     const addMemberBtn = document.querySelector('.add-member-chip');
+    const teamCancelBtn = document.querySelector('.team-cancel-chip');
 
     listContainer.innerHTML = `<div style="color: var(--toss-gray); font-size: 14px;">조회 중...</div>`;
     addBtn.style.display = 'none';
@@ -55,8 +56,10 @@ async function selectDate(date, el) {
     
         if(selectedDate < today) {
             addMemberBtn.style.display = 'none';
+            teamCancelBtn.style.display = 'none';
         } else {
             addMemberBtn.style.display = 'inline-flex';
+            teamCancelBtn.style.display = 'inline-flex';
         } 
         
         countBadge.innerText = `${currentAttendees.length}명`;
