@@ -234,6 +234,7 @@ main {
     font-weight:800;
     cursor:pointer;
     margin-right:6px;
+    margin-left:6px;
     border:none;
     box-shadow:0 2px 4px rgba(0,0,0,0.1);
 }
