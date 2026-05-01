@@ -752,15 +752,6 @@ h2 {
     background-color: #e5e8eb;
     color: #4e5968;
 }
-#map-info {
-    display: flex;          /* 플렉스 박스 적용 */
-    flex-direction: column; /* 기본적으로 세로 나열 (필요 시) */
-    align-items: center;    /* 가로축 기준 중앙 정렬 */
-    justify-content: center;/* 세로축 기준 중앙 정렬 (부모 높이가 있을 때) */
-    gap: 20px;              /* 카드 사이의 간격 */
-    width: 100%;            /* 전체 너비 사용 */
-    padding: 20px 0;
-}
 .map-card {
     width: 100%;            /* 모바일 대응 */
     max-width: 500px;       /* 카드의 최대 너비 제한 */
