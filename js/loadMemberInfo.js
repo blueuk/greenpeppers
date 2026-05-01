@@ -3,7 +3,9 @@ async function loadMemberInfo() {
     const name = document.getElementById('member-select').value;
     if (!name) return;
 
-    const info = await apiCall({ action: 'getMemberInfo', memberName: name });
+    const info = await apiCall({ action: 'getMemberInfo', memberName: name }); // 멤버 점수
+    const avgInfo = await apiCall({ action: 'getAvgMemberInfo', memberName: name }); // 멤버 평균점수
+    
     originalStatsBeforeEdit = [...info.stats];
     const grid = document.getElementById('member-detail');
     grid.innerHTML = "";
@@ -70,6 +72,7 @@ async function loadMemberInfo() {
 
     // 1. 차트 인스턴스를 저장할 변수는 함수 밖(전역)에 선언되어 있어야 합니다.
     const getVal = (idx) => parseFloat(info.stats[idx]) || 0;
+    const getAvgVal = (idx) => parseFloat(AvgInfo.stats[idx]) || 0;
     const avg = (arr) => arr.reduce((a, b) => a + b, 0) / arr.length;
     
     // 데이터 계산 (데이터는 항상 '숫자' 상태를 유지하는 게 좋습니다)
@@ -85,14 +88,14 @@ async function loadMemberInfo() {
     ];
     
     const avgData = [
-        avg([15.5, 16]),
-        14.5,
-        avg([14.5, 15.5, 14.5, 14.5]),
-        avg([17, 14.5]),
-        avg([10, 16]),
-        14.5,
-        avg([13, 14.5, 14.5, 13, 13, 14.5, 11.5]),
-        avg([13, 13])
+        avg([getAvgVal(4), getAvgVal(5)]),
+        getAvgVal(6),
+        avg([getAvgVal(20), getAvgVal(21), getAvgVal(22), getAvgVal(27)]),
+        avg([getAvgVal(23), getAvgVal(24)]),
+        avg([getAvgVal(8), getAvgVal(9)]),
+        getAvgVal(7),
+        avg([getAvgVal(13), getAvgVal(14), getAvgVal(15), getAvgVal(16), getAvgVal(17), getAvgVal(18), getAvgVal(19)]),
+        avg([getAvgVal(25), getAvgVal(26)])
     ];
     
     const chartContainer = document.getElementById('chart-container');
