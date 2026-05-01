@@ -51,11 +51,17 @@
                 <div id="attendee-list" class="attendee-container">
                     <div style="color: var(--toss-gray); font-size: 14px;">날짜를 선택해 주세요.</div>
                 </div>
-                <div id="attendee-add-btn-container" style="margin-top: 15px; display: none; justify-content: flex-end; align-items: center;">
-                    <button class="team-assign-chip" onclick="openTeamModal()">⚡ 팀 배정</button>
-                    <button class="team-cancel-chip" onclick="submitQuickNoGame()">💔 경기 취소</button>
-                    <div class="add-member-chip" style="width: 100%; text-align: right;" onclick="openQuickVoteModal()">+ 직접 추가/변경</div>
+                <div id="attendee-add-btn-container" style="margin-top: 15px; display: none; flex-direction: column; align-items: flex-end; gap: 10px;">
+                    <!-- 상단 버튼 그룹 -->
+                    <div style="display: flex; gap: 10px;">
+                        <button class="team-assign-chip" onclick="openTeamModal()">⚡ 팀 배정</button>
+                        <button class="team-cancel-chip" onclick="submitQuickNoGame()">💔 경기 취소</button>
+                    </div>
+                    
+                    <!-- 하단 버튼 -->
+                    <div class="add-member-chip" onclick="openQuickVoteModal()">+ 직접 추가/변경</div>
                 </div>
+
             </div>
             
             <div class="weather-card">
