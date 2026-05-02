@@ -258,12 +258,60 @@
                 </div>
             </div>
         </div>
+
+        <!-- 공지사항 목록 섹션 -->
+        <div id="notice-list-view" class="section">
+            <div class="card">
+                <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>📢 공지사항</span>
+                    <button class="btn btn-outline" style="width: auto; padding: 4px 12px; font-size: 13px;" onclick="openNoticeWrite()">글쓰기</button>
+                </div>
+                <div id="notice-container" class="notice-list-container">
+                    <!-- 공지사항 목록이 이곳에 렌더링됩니다 -->
+                    <div class="loading-text">공지사항을 불러오고 있어요...</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 게시글 상세 및 수정 섹션 -->
+        <div id="notice-detail-view" class="section">
+            <div class="card">
+                <div id="notice-detail-content">
+                    <!-- 상세 내용 렌더링 -->
+                </div>
+                <div id="notice-admin-actions" style="display: none; gap: 10px; margin-top: 20px;">
+                    <button class="btn btn-outline" style="flex: 1;" onclick="editNotice()">수정하기</button>
+                    <button class="btn" style="flex: 1; background: #ff4d4f;" onclick="confirmDeleteNotice()">삭제하기</button>
+                </div>
+                <button class="btn" style="margin-top: 10px; background: var(--toss-gray);" onclick="showSection('notice-list-view')">목록으로</button>
+            </div>
+        </div>
+        
+        <!-- 게시글 작성/수정 폼 섹션 -->
+        <div id="notice-form-view" class="section">
+            <div class="card">
+                <div class="card-title" id="notice-form-title">공지사항 작성</div>
+                <div class="info-grid" style="display: flex; flex-direction: column; gap: 12px;">
+                    <input type="text" id="notice-title-input" placeholder="제목을 입력하세요" style="padding: 12px; border-radius: 8px; border: 1px solid #e5e8eb;">
+                    <select id="notice-category-input" style="padding: 12px; border-radius: 8px; border: 1px solid #e5e8eb;">
+                        <option value="일반">일반</option>
+                        <option value="매치">매치</option>
+                        <option value="회비">회비</option>
+                        <option value="중요">중요</option>
+                    </select>
+                    <textarea id="notice-content-input" placeholder="내용을 입력하세요 (HTML 가능)" style="min-height: 200px; padding: 12px; border-radius: 8px; border: 1px solid #e5e8eb; resize: vertical;"></textarea>
+                    <button class="btn" onclick="saveNotice()">저장하기</button>
+                    <button class="btn" style="background: var(--toss-gray);" onclick="showSection('notice-list-view')">취소</button>
+                </div>
+            </div>
+        </div>
         
         <div id="toast" class="toast"></div>
     </main>
 
     <footer>
         <div class="tab active" onclick="showSection('home')"><span class="tab-icon">🏠</span>홈</div>
+        <div class="tab" onclick="loadNoticeList()"><span class="tab-icon">📢</span>공지</div>
         <div class="tab" onclick="showSection('member-view')"><span class="tab-icon">👤</span>멤버조회</div>
         <div class="tab" onclick="showSection('member-add')"><span class="tab-icon">➕</span>멤버추가</div>
         <div class="tab" onclick="showSection('receipts-info')"><span class="tab-icon">💰</span>입금안내</div>
