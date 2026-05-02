@@ -12,12 +12,19 @@ function loadNoticeList() {
                 container.innerHTML = '<div style="text-align:center; padding: 40px; color: #adb5bd;">등록된 공지가 없습니다.</div>';
                 return;
             }
-
+            // js/notice.js 내 렌더링 부분 수정 예시
             container.innerHTML = notices.map(n => `
-                <div class="notice-item" onclick="viewNoticeDetail('${n.id}')" style="padding: 16px 0; border-bottom: 1px solid #f2f4f6; cursor: pointer;">
-                    <div style="font-size: 12px; color: #4e5968; margin-bottom: 4px;">[${n.category}] ${n.author} · ${formatDate(n.regDate)}</div>
-                    <div style="font-size: 16px; font-weight: 600; color: #191f28;">${n.title}</div>
-                    <div style="font-size: 12px; color: #8b95a1; margin-top: 4px;">조회수 ${n.views}</div>
+                <div class="notice-item" onclick="viewNoticeDetail('${n.id}')">
+                    <div class="notice-meta">
+                        <span class="notice-category-tag">${n.category}</span>
+                        <span>${n.author}</span>
+                        <span>·</span>
+                        <span>${formatDate(n.regDate)}</span>
+                    </div>
+                    <div class="notice-item-title">${n.title}</div>
+                    <div class="notice-footer">
+                        <span>조회수 ${n.views}</span>
+                    </div>
                 </div>
             `).join('');
         })
