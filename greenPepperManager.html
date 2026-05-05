@@ -19,6 +19,12 @@
         </div>
     </div>
 
+    <!-- 로딩 레이어 -->
+    <div id="noticeloadingOverlay">
+        <div class="notice-spinner"></div>
+        <div class="notice-loading-text">잠시만 기다려주세요...</div>
+    </div>
+
     <header>
         <div class="header-container" style="display: flex; align-items: center; justify-content: space-between; min-height: 30px; padding: 0 16px; background-color: #ffffff;">
             <div style="display: flex; align-items: center; gap: 8px;">
@@ -260,12 +266,94 @@
             </div>
         </div>
         
+        <div id="notice-view" class="section">
+            <div class="notice-container">
+                <div class="notice-header-area">
+                    <h2>공지사항</h2>
+                    <div class="notice-btn-group">
+                        <button class="notice-btn notice-btn-secondary" onclick="loadNotices()">새로고침</button>
+                        <button class="notice-btn notice-btn-primary" onclick="openWriteModal()">글쓰기</button>
+                    </div>
+                </div>
+                <div class="notice-card">
+                    <div id="noticeList">데이터를 불러오는 중...</div>
+                </div>
+            </div>
+            
+            <!-- 모달 부분은 기존과 동일하되 class만 notice- 접두사 유지 -->
+            <!-- (가독성을 위해 상세 HTML은 중략하고 JS 핵심 로직 위주로 작성합니다) -->
+            <!-- [글쓰기 모달, 상세보기 모달, 수정 모달 소스 삽입 위치] -->
+            
+            <div id="writeModal" class="notice-modal">
+                <div class="notice-modal-content">
+                    <h2>새 공지 작성</h2>
+                    <form id="writeForm">
+                        <div class="notice-field"><label>등록자</label><input type="text" id="wAuthor" required></div>
+                        <div class="notice-field"><label>제목</label><input type="text" id="wTitle" required></div>
+                        <div style="display: flex; gap: 10px;">
+                            <div class="notice-field" style="flex: 1;"><label>카테고리</label>
+                                <select id="wCategory">
+                                    <option value="일반">일반</option>
+                                    <option value="긴급">긴급</option>
+                                    <option value="고정">📌 상단 고정 (최대 3개)</option>
+                                </select>
+                            </div>
+                            <div class="notice-field" style="flex: 1;"><label>대상</label><input type="text" id="wTarget" placeholder="전체"></div>
+                        </div>
+                        <div class="notice-field"><label>내용</label><div id="wEditor" class="notice-editor-container"></div></div>
+                        <div class="notice-btn-group" style="margin-top: 20px;">
+                            <button type="button" class="notice-btn notice-btn-secondary" style="flex:1" onclick="closeModal('writeModal')">취소</button>
+                            <button type="submit" id="writeSubmitBtn" class="notice-btn notice-btn-primary" style="flex:2">등록하기</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div id="detailModal" class="notice-modal">
+                <div class="notice-modal-content">
+                    <div id="mTitle" style="font-size: 24px; font-weight: bold; margin-bottom: 8px;"></div>
+                    <div id="mMeta" style="font-size: 13px; color: #8b95a1; border-bottom: 1px solid #f2f4f6; padding-bottom: 15px; margin-bottom: 20px;"></div>
+                    <div id="mContent" class="ql-editor" style="padding: 0; min-height: 150px;"></div>
+                    <div class="notice-btn-group" style="margin-top: 30px; justify-content: flex-end;">
+                        <button class="notice-btn notice-btn-delete" id="detailDeleteBtn">삭제하기</button>
+                        <button class="notice-btn notice-btn-edit" id="detailEditBtn">수정하기</button>
+                        <button class="notice-btn notice-btn-secondary" onclick="closeModal('detailModal')">닫기</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="editModal" class="notice-modal">
+                <div class="notice-modal-content">
+                    <h2>공지 수정</h2>
+                    <form id="editForm">
+                        <input type="hidden" id="editId">
+                        <div class="notice-field"><label>수정자</label><input type="text" id="editAuthor" required></div>
+                        <div class="notice-field"><label>제목</label><input type="text" id="editTitle" required></div>
+                        <div style="display: flex; gap: 10px;">
+                            <div class="notice-field" style="flex: 1;"><label>카테고리</label>
+                                <select id="editCategory">
+                                    <option value="일반">일반</option>
+                                    <option value="긴급">긴급</option>
+                                    <option value="고정">📌 상단 고정 (최대 3개)</option>
+                                </select>
+                            </div>
+                            <div class="notice-field" style="flex: 1;"><label>대상</label><input type="text" id="editTarget"></div>
+                        </div>
+                        <div class="notice-field"><label>내용</label><div id="eEditor" class="notice-editor-container"></div></div>
+                        <div class="notice-btn-group" style="margin-top: 20px;">
+                            <button type="button" class="notice-btn notice-btn-secondary" style="flex:1" onclick="closeModal('editModal')">취소</button>
+                            <button type="submit" id="editSubmitBtn" class="notice-btn notice-btn-primary" style="flex:2">저장하기</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
         <div id="toast" class="toast"></div>
     </main>
 
     <footer>
         <div class="tab active" onclick="showSection('home')"><span class="tab-icon">🏠</span>홈</div>
-        <div class="tab" onclick="loadNoticeList()"><span class="tab-icon">📢</span>공지</div>
+        <div class="tab" onclick="showSection('notice-view')"><span class="tab-icon">📢</span>공지</div>
         <div class="tab" onclick="showSection('member-view')"><span class="tab-icon">👤</span>멤버조회</div>
         <div class="tab" onclick="showSection('member-add')"><span class="tab-icon">➕</span>멤버추가</div>
         <div class="tab" onclick="showSection('receipts-info')"><span class="tab-icon">💰</span>입금안내</div>
