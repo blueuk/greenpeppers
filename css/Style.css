@@ -824,3 +824,45 @@ h2 {
     background: #03c75a; 
     color: #fff; 
 }
+
+
+        /* 기존 스타일 유지 */
+        .notice-container { font-family: -apple-system, sans-serif; max-width: 800px; margin: 0 auto; color: #333d4b; line-height: 1.5; padding: 20px; }
+        .notice-card { background: white; padding: 30px; border-radius: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); min-height: 200px; position: relative; }
+        .notice-header-area { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .notice-header-area h2 { font-size: 22px; margin: 0; }
+        .notice-btn-group { display: flex; gap: 8px; }
+        .notice-btn { padding: 10px 18px; border-radius: 12px; font-weight: 600; cursor: pointer; border: none; font-size: 14px; transition: 0.2s; }
+        .notice-btn-primary { background-color: #3182f6; color: white; }
+        .notice-btn-secondary { background-color: #f2f4f6; color: #4e5968; }
+        .notice-btn-edit { background-color: #e8f3ff; color: #1b64da; }
+        .notice-btn-delete { background-color: #feeef0; color: #f04452; }
+        .notice-item { border-bottom: 1px solid #f2f4f6; padding: 18px 10px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border-radius: 12px; }
+        .notice-item:hover { background-color: #f9fafb; }
+        .notice-info .title { font-weight: bold; font-size: 16px; color: #191f28; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+        .notice-info .meta { font-size: 13px; color: #8b95a1; margin-top: 4px; }
+        .notice-badge { display: inline-block; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; line-height: 1.2; }
+        .notice-new-badge { background-color: #f04452; color: white; }
+        .notice-fixed-badge { background-color: #3182f6; color: white; margin-right: 4px; }
+        .notice-item.is-fixed { background-color: #f8faff; }
+        .notice-modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); align-items: center; justify-content: center; }
+        .notice-modal-content { background: white; width: 95%; max-width: 650px; border-radius: 24px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); max-height: 90vh; overflow-y: auto; }
+        .notice-field { margin-bottom: 16px; }
+        .notice-field label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #4e5968; }
+        .notice-field input, .notice-field select { width: 100%; padding: 12px; border: 1px solid #e5e8eb; border-radius: 10px; box-sizing: border-box; font-size: 15px; }
+        .notice-editor-container { height: 250px; margin-bottom: 10px; }
+
+        /* --- 로딩 인디케이터 스타일 --- */
+        #noticeloadingOverlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.7); z-index: 2000;
+            flex-direction: column; align-items: center; justify-content: center;
+        }
+        .notice-spinner {
+            width: 40px; height: 40px; border: 4px solid #f3f3f3;
+            border-top: 4px solid #3182f6; border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .notice-loading-text { margin-top: 15px; font-weight: 600; color: #3182f6; font-size: 14px; }
+
