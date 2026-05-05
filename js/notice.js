@@ -4,7 +4,20 @@
     function showLoading() { document.getElementById('noticeloadingOverlay').style.display = 'flex'; }
     function hideLoading() { document.getElementById('noticeloadingOverlay').style.display = 'none'; }
 
-    const quillOptions = { theme: 'snow', modules: { toolbar: [['bold', 'italic', 'underline'], ['link', 'clean']] } };
+    // 1. Magic URL 모듈 등록
+    if (typeof QuillMagicUrl !== 'undefined') {
+        const magicUrlModule = QuillMagicUrl.default ? QuillMagicUrl.default : QuillMagicUrl;
+        Quill.register('modules/magicUrl', magicUrlModule);
+    }
+    
+    // 2. 에디터 옵션에 magicUrl: true 추가
+    const quillOptions = { 
+        theme: 'snow', 
+        modules: { 
+            toolbar: [['bold', 'italic', 'underline'], ['link', 'clean']],
+            magicUrl: true // 이 부분이 주소를 자동으로 링크로 만듭니다.
+        } 
+    };
     const wQuill = new Quill('#wEditor', quillOptions);
     const eQuill = new Quill('#eEditor', quillOptions);
 
@@ -115,15 +128,29 @@
     }
 
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
     function openWriteModal() { wQuill.setContents([]); document.getElementById('writeForm').reset(); document.getElementById('writeModal').style.display = 'flex'; }
+
     function openDetail(index) {
         const item = noticeData[index];
         document.getElementById('mTitle').innerText = item.제목;
-        document.getElementById('mContent').innerHTML = item.내용;
+        
+        // 내용 삽입
+        const contentDiv = document.getElementById('mContent');
+        contentDiv.innerHTML = item.내용;
+        
+        // 추가된 부분: 저장된 링크가 클릭 가능하게 스타일과 타겟 설정
+        contentDiv.querySelectorAll('a').forEach(link => {
+            link.target = '_blank';
+            link.style.color = '#3182f6';
+            link.style.textDecoration = 'underline';
+        });
+    
         document.getElementById('detailEditBtn').onclick = () => openEditModal(item);
         document.getElementById('detailDeleteBtn').onclick = () => deleteNotice(item.ID);
         document.getElementById('detailModal').style.display = 'flex';
     }
+
     function openEditModal(item) {
         closeModal('detailModal');
         document.getElementById('editId').value = item.ID;
