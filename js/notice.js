@@ -1,8 +1,8 @@
     let noticeData = [];
 
     // 로딩 표시/숨김 함수
-    function showLoading() { document.getElementById('noticeloadingOverlay').style.display = 'flex'; }
-    function hideLoading() { document.getElementById('noticeloadingOverlay').style.display = 'none'; }
+    function showLoading() { document.getElementById('loading').style.display = 'flex'; }
+    function hideLoading() { document.getElementById('loading').style.display = 'none'; }
 
     // 1. Magic URL 모듈 등록
     if (typeof QuillMagicUrl !== 'undefined') {
