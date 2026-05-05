@@ -96,15 +96,21 @@ async function saveNotice() {
   const title = document.getElementById('notice-title-input').value;
   const content = document.getElementById('notice-content-input').value;
   const category = document.getElementById('notice-category-input').value;
-  const author = "관리자"; // 필요 시 실제 사용자 정보로 대체
+  const author = "관리자";
 
   if (!title.trim() || !content.trim()) {
     showToast("제목과 내용을 모두 입력해 주세요.");
     return;
   }
 
+  // 로딩 상태 표시 (버튼 중복 클릭 방지)
+  const saveBtn = document.querySelector('.save-button'); // 버튼 클래스명 확인 필요
+  if(saveBtn) saveBtn.disabled = true;
+
   const action = currentNoticeId ? 'updateNotice' : 'addNotice';
-  const payload = {
+  
+  // 전달할 데이터 구조
+  const params = {
     id: currentNoticeId,
     title: title,
     content: content,
@@ -114,11 +120,19 @@ async function saveNotice() {
   };
 
   try {
-    await apiCall(action, { payload: payload });
+    // 백엔드 함수 호출
+    await apiCall(action, params); 
+    
     showToast(currentNoticeId ? "수정되었습니다." : "등록되었습니다.");
-    loadNoticeList(); // 저장 후 목록으로 이동
+    
+    // 목록 새로고침 및 화면 전환
+    await loadNoticeList(); 
+    showSection('notice-list-view'); // 저장 후 목록 뷰로 강제 이동
   } catch (err) {
+    console.error("Save Error:", err);
     showToast("저장 중 오류가 발생했습니다.");
+  } finally {
+    if(saveBtn) saveBtn.disabled = false;
   }
 }
 
