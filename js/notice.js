@@ -1,4 +1,4 @@
-const GAS_URL = "https://script.google.com/macros/s/AKfycbxeMsbOCAOLLdH9rhl8l9Uv4W3oEmrYoi_eE7zTQmiZB0nJ7n4jm8xjpr_-i4RTlAvK/exec";
+
     let noticeData = [];
     
     if (typeof QuillMagicUrl !== 'undefined') {
@@ -20,7 +20,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbxeMsbOCAOLLdH9rhl8l9Uv
     async function loadNotices() {
         const listDiv = document.getElementById('noticeList');
         try {
-            const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: "getNoticeList" }) });
+            const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "getNoticeList" }) });
             const result = await res.json();
             if (result.success) {
                 // 고정글 우선 정렬 로직
@@ -83,7 +83,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbxeMsbOCAOLLdH9rhl8l9Uv
             target: document.getElementById('wTarget').value || "전체"
         };
 
-        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
+        const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
         const result = await res.json();
         if (result.success) { alert("등록되었습니다."); closeModal('writeModal'); loadNotices(); }
         btn.disabled = false;
@@ -112,7 +112,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbxeMsbOCAOLLdH9rhl8l9Uv
             target: document.getElementById('editTarget').value
         };
 
-        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
+        const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
         const result = await res.json();
         if (result.success) { alert("수정되었습니다."); closeModal('editModal'); loadNotices(); }
         btn.disabled = false;
@@ -144,7 +144,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbxeMsbOCAOLLdH9rhl8l9Uv
     }
     async function deleteNotice(id) {
         if (!confirm("정말 삭제하시겠습니까?")) return;
-        const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: "deleteNotice", id: id }) });
+        const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "deleteNotice", id: id }) });
         const result = await res.json();
         if (result.success) { alert("삭제되었습니다."); closeModal('detailModal'); loadNotices(); }
     }
