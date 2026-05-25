@@ -866,3 +866,53 @@ h2 {
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .notice-loading-text { margin-top: 15px; font-weight: 600; color: #3182f6; font-size: 14px; }
 
+/* 유튜브 슬라이더 스타일 */
+.youtube-slider {
+    display: flex;
+    overflow-x: auto;
+    gap: 12px;
+    padding-bottom: 5px;
+    /* 모바일 스와이프 스냅 효과 */
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+}
+
+/* Chrome, Safari, Edge 스크롤바 숨김 */
+.youtube-slider::-webkit-scrollbar {
+    display: none; 
+}
+
+.youtube-slide {
+    flex: 0 0 160px; /* 슬라이드 1개당 가로 너비 (모바일에 적합) */
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-decoration: none;
+    color: #191f28;
+}
+
+.youtube-thumbnail {
+    width: 100%;
+    aspect-ratio: 16/9;
+    border-radius: 8px;
+    object-fit: cover;
+    background-color: #f2f4f6;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);
+}
+
+.youtube-title {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.4;
+    color: #333d4b;
+    /* 2줄 이상 길어지면 말줄임표(...) 처리 */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: normal;
+}
+
