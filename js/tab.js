@@ -19,3 +19,7 @@ function showSection(id) {
     else if (id === 'map-add') tabs[5].classList.add('active');
 
 }
+
+window.addEventListener('DOMContentLoaded', () => {
+    showSection('home');
+});
