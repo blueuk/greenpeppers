@@ -41,9 +41,15 @@
     </header>
 
     <main>
-        <div id="home" class="section active">
-            <div id="rate-card" class="card">
-                <div class="card-title">멤버 참석 현황</div>
+	   <div id="rate-card" class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <div class="card-title" style="margin: 0;">멤버 참석 현황</div>
+                    <div style="display: flex; gap: 4px; align-items: center; background: #f2f4f6; padding: 2px 8px; border-radius: 12px;">
+                        <button onclick="prevRollingPage()" style="background: none; border: none; cursor: pointer; font-size: 12px; color: #191f28; padding: 4px 6px; font-weight: bold; outline: none;">&lt;</button>
+                        <button id="rolling-toggle-btn" onclick="toggleRolling()" style="background: none; border: none; cursor: pointer; font-size: 12px; color: #191f28; display: flex; align-items: center; justify-content: center; padding: 4px 4px; font-weight: bold; outline: none;">⏸&#xFE0E;</button>
+                        <button onclick="nextRollingPage()" style="background: none; border: none; cursor: pointer; font-size: 12px; color: #191f28; padding: 4px 6px; font-weight: bold; outline: none;">&gt;</button>
+                    </div>
+                </div>
                 <div id="rolling-content" class="card-value">데이터를 불러오는 중...</div>
             </div>
             
