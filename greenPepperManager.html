@@ -54,6 +54,19 @@
                 <div id="rolling-content" class="card-value">데이터를 불러오는 중...</div>
             </div>
             
+<div class="card" style="margin-top:20px;">
+    <div class="card-title" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <span>🎬 최신 경기 영상</span>
+        <a href="https://www.youtube.com/@FC_GreeN_PeppeR" target="_blank" style="font-size: 13px; color: var(--toss-blue); text-decoration: none; font-weight: 500;">채널 가기 &gt;</a>
+    </div>
+    
+    <div id="youtube-slider" class="youtube-slider">
+        <div style="width: 100%; text-align: center; color: var(--toss-gray); font-size: 14px; padding: 20px 0;">
+            영상을 불러오는 중...
+        </div>
+    </div>
+</div>
+
             <div class="card-title" style="margin-left:5px;">경기 일정 (토요일 오전 7-9시 월문3리 풋살구장)</div>
             <div class="calendar-wrapper" id="horizontal-calendar"></div>
 
@@ -368,6 +381,7 @@
                 </div>
             </div>
         </div>
+
         <div id="toast" class="toast"></div>
     </main>
 
@@ -377,7 +391,6 @@
         <div class="tab" onclick="showSection('member-view')"><span class="tab-icon">👤</span>멤버</div>
         <div class="tab" onclick="showSection('receipts-info')"><span class="tab-icon">💰</span>입금안내</div>
         <div class="tab" onclick="showSection('map-info')"><span class="tab-icon">📍</span>경기장안내</div>
-        <div class="tab" onclick="window.open('https://www.youtube.com/@FC_GreeN_PeppeR', '_blank')"><span class="tab-icon">▶️</span>유튜브</div>
     </footer>
 
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
