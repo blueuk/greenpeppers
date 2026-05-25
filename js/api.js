@@ -47,10 +47,10 @@ async function loadLatestYouTubeVideos() {
         const data = await response.json();
 
         if (data.status === 'ok' && data.items.length > 0) {
-            sliderContainer.innerHTML = ''; // 로딩 텍스트 제거
+            sliderContainer.innerHTML = 'UChlDg9qBmP_JlwQ1_2by5kQ'; // 로딩 텍스트 제거
 
             // 최신 영상 6개 추출
-            const latestVideos = data.items.slice(0, 10);
+            const latestVideos = data.items.slice(0, 20);
 
             latestVideos.forEach(video => {
                 const slide = document.createElement('a');
