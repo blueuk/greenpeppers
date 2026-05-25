@@ -36,7 +36,7 @@ async function loadLatestYouTubeVideos() {
 
     // 💡 중요: 풋고추FC 채널의 고유 ID로 변경해야 합니다.
     // 유튜브 스튜디오 -> 설정 -> 채널 -> 고급 설정 -> YouTube 계정 관리 -> 고급 설정에서 확인 가능
-    const CHANNEL_ID = ''; // 이곳에 채널 ID를 입력하세요
+    const CHANNEL_ID = 'UChlDg9qBmP_JlwQ1_2by5kQ'; // 이곳에 채널 ID를 입력하세요
 
     // RSS 피드를 JSON 형식으로 변환해주는 API (CORS 문제 우회)
     const rssUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${CHANNEL_ID}`;
