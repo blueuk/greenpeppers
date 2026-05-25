@@ -1,228 +1,234 @@
-// --- 멤버 조회 로직 ---
-async function loadMemberInfo() {
-    const name = document.getElementById('member-select').value;
-    if (!name) return;
+let selectedMembersForView = []; // 다중 선택된 멤버 저장 배열
 
-    const info = await apiCall({ action: 'getMemberInfo', memberName: name }); // 멤버 점수
-    const avgInfo = await apiCall({ action: 'getAvgMemberInfo' }); // 멤버 평균점수
+// 멤버 목록 사이드바 토글 및 렌더링
+function toggleMemberList() {
+    const sidebar = document.getElementById('member-sidebar');
+    if (sidebar.style.display === 'none') {
+        sidebar.style.display = 'block';
+        renderMemberSidebar();
+    } else {
+        sidebar.style.display = 'none';
+    }
+}
+
+function renderMemberSidebar() {
+    const container = document.getElementById('member-list-container');
+    container.innerHTML = '';
     
-    originalStatsBeforeEdit = [...info.stats];
-    const grid = document.getElementById('member-detail');
-    grid.innerHTML = "";
-
-    // --- 관리자 권한 확인 ---
-    const isAdmin = sessionStorage.getItem('isAdminAuthenticated') === 'true';
-
-    // 1. 포지션 값들을 가져와서 숫자로 변환
-    const posValues = info.stats.slice(0, 4).map(v => parseFloat(v) || 0);
-    const maxPosValStr = Math.max(...posValues).toFixed(2);
-
-    groupDefinitions.forEach(group => {
-        // --- 일반 사용자 필터링 로직 추가 ---
-        // 관리자가 아니고, 현재 그룹 이름이 "핵심 포지션"이 아니면 화면에 그리지 않고 넘어감
-        if (!isAdmin && group.name !== "핵심 포지션") {
-            return; 
+    // memberList는 common.js에서 로드된 전역 배열
+    memberList.forEach(name => {
+        const chip = document.createElement('div');
+        chip.innerText = name;
+        chip.style.padding = '6px 12px';
+        chip.style.borderRadius = '15px';
+        chip.style.fontSize = '13px';
+        chip.style.cursor = 'pointer';
+        chip.style.border = '1px solid #e5e8eb';
+        chip.style.transition = 'all 0.2s';
+        
+        // 선택된 상태 디자인 적용
+        if (selectedMembersForView.includes(name)) {
+            chip.style.backgroundColor = 'var(--toss-blue)';
+            chip.style.color = '#ffffff';
+            chip.style.borderColor = 'var(--toss-blue)';
+        } else {
+            chip.style.backgroundColor = '#ffffff';
+            chip.style.color = '#333333';
         }
 
-        const titleDiv = document.createElement('div');
-        titleDiv.className = 'group-title';
-        titleDiv.innerText = group.name;
-
-        grid.appendChild(titleDiv);
-
-        group.indices.forEach(idx => {
-            if (idx >= labels.length) return;
-            
-            const labelText = labels[idx]; // "골레이", "아라" 등
-            
-            let val = info.stats[idx];
-            const isPosStat = idx < 4;
-
-            let displayVal = val || '-';
-            let isHighlight = false;
-
-            if (isPosStat && val !== null) {
-                const currentValStr = parseFloat(val).toFixed(2);
-                displayVal = currentValStr;
-                if (parseFloat(maxPosValStr) > 0 && currentValStr === maxPosValStr) {
-                    isHighlight = true;
-                }
+        chip.onclick = () => {
+            if (selectedMembersForView.includes(name)) {
+                // 이미 선택된 경우 제거
+                selectedMembersForView = selectedMembersForView.filter(n => n !== name);
+            } else {
+                // 새로운 멤버 추가
+                selectedMembersForView.push(name);
             }
+            renderMemberSidebar(); // UI 업데이트
+            loadMemberInfo(); // 데이터 다시 불러오기 및 차트 비교
+        };
+        container.appendChild(chip);
+    });
+}
 
-            const item = document.createElement('div');
-            item.className = 'info-item';
-            if (isHighlight) item.classList.add('highlight');
+// 멤버 추가 모달 제어
+function openAddMemberModal() {
+    document.getElementById('add-member-modal').style.display = 'flex';
+}
+function closeAddMemberModal() {
+    document.getElementById('add-member-modal').style.display = 'none';
+}
 
-            // 모든 라벨(핵심 포지션 + 요약 능력치)에 대해 i 아이콘을 붙이고 싶다면:
-            // (isPosStat 조건문 없이 모든 labels[idx]에 적용하거나, 특정 범위만 지정)
-            let labelHtml = labelText;
-            
-            if (isPosStat) {
-                // HTML의 onclick에서도 showPosDesc를 호출합니다.
-                labelHtml += ` <span class="info-icon" style="cursor:pointer;" onclick="showPosDesc('${labelText}')">ⓘ</span>`;
-            }
-            
-            item.innerHTML = `<div class="info-label">${labelHtml}</div><div class="stat-val" data-idx="${idx}">${displayVal}</div>`;
-            grid.appendChild(item);
+async function loadMemberInfo() {
+    const display = document.getElementById('selected-members-display');
+    const grid = document.getElementById('member-detail');
+    const chartContainer = document.getElementById('chart-container');
+    const editBtn = document.getElementById('edit-btn');
+    const isAdmin = sessionStorage.getItem('isAdminAuthenticated') === 'true';
+
+    if (selectedMembersForView.length === 0) {
+        display.innerText = "선택된 멤버가 없습니다.";
+        grid.innerHTML = "";
+        chartContainer.style.display = 'none';
+        editBtn.style.display = 'none';
+        return;
+    }
+
+    display.innerText = `선택된 멤버: ${selectedMembersForView.join(', ')}`;
+    
+    // 선택된 모든 멤버의 데이터를 병렬로 가져옴
+    const promises = selectedMembersForView.map(name => apiCall({ action: 'getMemberInfo', memberName: name }));
+    promises.push(apiCall({ action: 'getAvgMemberInfo' })); // 마지막에 평균 데이터 추가
+    
+    const results = await Promise.all(promises);
+    const memberInfos = results.slice(0, selectedMembersForView.length);
+    const avgInfo = results[results.length - 1];
+
+    // 데이터가 1명일 때만 수정용 원본 백업
+    if (selectedMembersForView.length === 1) {
+        originalStatsBeforeEdit = [...memberInfos[0].stats];
+    }
+
+    // --- 차트 렌더링 로직 ---
+    chartContainer.style.display = 'block';
+    const ctx = document.getElementById('memberChart').getContext('2d');
+    if (typeof myChart !== 'undefined' && myChart) { myChart.destroy(); }
+
+    const datasets = [];
+    const colorPalette = [
+        { bg: 'rgba(54, 162, 235, 0.2)', border: 'rgba(54, 162, 235, 1)' },
+        { bg: 'rgba(255, 159, 64, 0.2)', border: 'rgba(255, 159, 64, 1)' },
+        { bg: 'rgba(75, 192, 192, 0.2)', border: 'rgba(75, 192, 192, 1)' },
+        { bg: 'rgba(153, 102, 255, 0.2)', border: 'rgba(153, 102, 255, 1)' }
+    ];
+
+    memberInfos.forEach((info, index) => {
+        const getVal = (idx) => parseFloat(info.stats[idx]) || 0;
+        const avg = (arr) => arr.reduce((a, b) => a + b, 0) / arr.length;
+        
+        const summaryData = [
+            avg([getVal(4), getVal(5)]), getVal(6),
+            avg([getVal(20), getVal(21), getVal(22), getVal(27)]), avg([getVal(23), getVal(24)]),
+            avg([getVal(8), getVal(9)]), getVal(7),
+            avg([getVal(13), getVal(14), getVal(15), getVal(16), getVal(17), getVal(18), getVal(19)]), avg([getVal(25), getVal(26)])
+        ];
+
+        const colors = colorPalette[index % colorPalette.length];
+        datasets.push({
+            label: `${selectedMembersForView[index]} 능력치`,
+            data: summaryData.map(v => Math.round(v * 10) / 10),
+            backgroundColor: colors.bg,
+            borderColor: colors.border,
+            borderWidth: 2,
+            pointBackgroundColor: colors.border,
+            pointRadius: 3
         });
     });
 
-    // 수정 버튼은 관리자에게만 노출
-    document.getElementById('edit-btn').style.display = isAdmin ? 'block' : 'none';
-
-    // 1. 차트 인스턴스를 저장할 변수는 함수 밖(전역)에 선언되어 있어야 합니다.
-    const getVal = (idx) => parseFloat(info.stats[idx]) || 0;
-    const getAvgVal = (avgIdx) => parseFloat(avgInfo.stats[avgIdx]) || 0;
+    // 평균 데이터 추가
+    const getAvgVal = (idx) => parseFloat(avgInfo.stats[idx]) || 0;
     const avg = (arr) => arr.reduce((a, b) => a + b, 0) / arr.length;
-    
-    // 데이터 계산 (데이터는 항상 '숫자' 상태를 유지하는 게 좋습니다)
-    const summaryData = [
-        avg([getVal(4), getVal(5)]),
-        getVal(6),
-        avg([getVal(20), getVal(21), getVal(22), getVal(27)]),
-        avg([getVal(23), getVal(24)]),
-        avg([getVal(8), getVal(9)]),
-        getVal(7),
-        avg([getVal(13), getVal(14), getVal(15), getVal(16), getVal(17), getVal(18), getVal(19)]),
-        avg([getVal(25), getVal(26)])
-    ];
-    
     const avgData = [
-        avg([getAvgVal(4), getAvgVal(5)]),
-        getAvgVal(6),
-        avg([getAvgVal(20), getAvgVal(21), getAvgVal(22), getAvgVal(27)]),
-        avg([getAvgVal(23), getAvgVal(24)]),
-        avg([getAvgVal(8), getAvgVal(9)]),
-        getAvgVal(7),
-        avg([getAvgVal(13), getAvgVal(14), getAvgVal(15), getAvgVal(16), getAvgVal(17), getAvgVal(18), getAvgVal(19)]),
-        avg([getAvgVal(25), getAvgVal(26)])
+        avg([getAvgVal(4), getAvgVal(5)]), getAvgVal(6),
+        avg([getAvgVal(20), getAvgVal(21), getAvgVal(22), getAvgVal(27)]), avg([getAvgVal(23), getAvgVal(24)]),
+        avg([getAvgVal(8), getAvgVal(9)]), getAvgVal(7),
+        avg([getAvgVal(13), getAvgVal(14), getAvgVal(15), getAvgVal(16), getAvgVal(17), getAvgVal(18), getAvgVal(19)]), avg([getAvgVal(25), getAvgVal(26)])
     ];
-    
-    const chartContainer = document.getElementById('chart-container');
-    chartContainer.style.display = 'block';
-    
-    const ctx = document.getElementById('memberChart').getContext('2d');
-    if (typeof myChart !== 'undefined' && myChart) { myChart.destroy(); }
-    
+    datasets.push({
+        label: `전체 평균`,
+        data: avgData.map(v => Math.round(v * 10) / 10),
+        backgroundColor: 'rgba(255, 99, 132, 0.1)', borderColor: 'rgba(255, 99, 132, 0.8)',
+        borderWidth: 2, borderDash: [5, 5], pointRadius: 2
+    });
+
     myChart = new Chart(ctx, {
         type: 'radar',
-        data: {
-            labels: summaryLabels,
-            datasets: [
-                {
-                    label: `${name} 능력치`,
-                    // .toFixed(1) 대신 숫자로 넣고, 필요하면 소수점 한자리 반올림
-                    data: summaryData.map(v => Math.round(v * 10) / 10), 
-                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 2,
-                    pointBackgroundColor: 'rgba(54, 162, 235, 1)',
-                    pointRadius: 3
-                },
-                {
-                    label: `전체 평균`,
-                    data: avgData.map(v => Math.round(v * 10) / 10), // 평균 데이터도 반올림 처리
-                    backgroundColor: 'rgba(255, 99, 132, 0.1)', // 평균은 조금 더 연하게
-                    borderColor: 'rgba(255, 99, 132, 0.8)',
-                    borderWidth: 2,
-                    borderDash: [5, 5], 
-                    pointRadius: 2
-                }
-            ]
-        },
+        data: { labels: summaryLabels, datasets: datasets },
         options: {
             onClick: (event, elements, chart) => {
                 const { x, y } = event;
                 const scale = chart.scales.r;
-                
                 for (let i = 0; i < scale._pointLabels.length; i++) {
                     const labelPos = scale._pointLabelItems[i];
-                    if (x >= labelPos.left - 20 && x <= labelPos.right + 20 &&
-                        y >= labelPos.top - 10 && y <= labelPos.bottom + 10) {
-                        
-                        const labelText = summaryLabels[i]; 
-                        showPosDesc(labelText);
+                    if (x >= labelPos.left - 20 && x <= labelPos.right + 20 && y >= labelPos.top - 10 && y <= labelPos.bottom + 10) {
+                        showPosDesc(summaryLabels[i]);
                         break;
                     }
                 }
             },
             scales: {
-                r: {
-                    // 1. 최소/최대값 및 눈금 간격 설정
-                    min: 0,
-                    max: 20, // 20점 만점 기준
-                    ticks: {
-                        stepSize: 5,    // 5단위로 눈금 생성 (0, 5, 10, 15, 20)
-                        display: false, // 숫자 라벨을 숨기고 싶으면 false, 보고 싶으면 true
-                        beginAtZero: true
-                    },
-                    // 2. 라벨 설정 (기존 유지)
-                    pointLabels: { 
-                        font: { size: 12, weight: 'bold' },
-                        callback: function(label) {
-                            return label + ' ⓘ'; 
-                        }
-                    },
-                    // 3. 그리드 라인 스타일 (선택사항: 5단위 선을 더 잘 보이게 함)
-                    angleLines: {
-                        display: true
-                    },
-                    grid: {
-                        color: 'rgba(0, 0, 0, 0.1)'
-                    }
-                }
-            }
-        },
-        plugins: {
-            legend: { display: true, position: 'top' },
-            tooltip: {
-                callbacks: {
-                    // 툴팁에서 값을 보여줄 때 단위를 붙이거나 포맷팅하기 좋습니다.
-                    label: function(context) {
-                        return ` ${context.dataset.label}: ${context.raw}점`;
-                    }
-                }
-            }
+                r: { min: 0, max: 20, ticks: { stepSize: 5, display: false }, pointLabels: { font: { size: 12, weight: 'bold' }, callback: (label) => label + ' ⓘ' } }
+            },
+            plugins: { tooltip: { callbacks: { label: (ctx) => ` ${ctx.dataset.label}: ${ctx.raw}점` } } }
         }
-    });   
+    });
+
+    // --- 상세 그리드 렌더링 (첫 번째 멤버 기준) ---
+    grid.innerHTML = "";
+    if (selectedMembersForView.length === 1) {
+        const info = memberInfos[0];
+        const posValues = info.stats.slice(0, 4).map(v => parseFloat(v) || 0);
+        const maxPosValStr = Math.max(...posValues).toFixed(2);
+
+        groupDefinitions.forEach(group => {
+            if (!isAdmin && group.name !== "핵심 포지션") return; 
+
+            const titleDiv = document.createElement('div');
+            titleDiv.className = 'group-title';
+            titleDiv.innerText = group.name;
+            grid.appendChild(titleDiv);
+
+            group.indices.forEach(idx => {
+                if (idx >= labels.length) return;
+                const labelText = labels[idx];
+                let val = info.stats[idx];
+                const isPosStat = idx < 4;
+                let displayVal = val || '-';
+                let isHighlight = false;
+
+                if (isPosStat && val !== null) {
+                    const currentValStr = parseFloat(val).toFixed(2);
+                    displayVal = currentValStr;
+                    if (parseFloat(maxPosValStr) > 0 && currentValStr === maxPosValStr) isHighlight = true;
+                }
+
+                const item = document.createElement('div');
+                item.className = 'info-item';
+                if (isHighlight) item.classList.add('highlight');
+                let labelHtml = labelText;
+                if (isPosStat) labelHtml += ` <span class="info-icon" style="cursor:pointer;" onclick="showPosDesc('${labelText}')">ⓘ</span>`;
+                item.innerHTML = `<div class="info-label">${labelHtml}</div><div class="stat-val" data-idx="${idx}">${displayVal}</div>`;
+                grid.appendChild(item);
+            });
+        });
+        editBtn.style.display = isAdmin ? 'block' : 'none';
+    } else {
+        grid.innerHTML = "<div style='grid-column: span 3; text-align: center; color: var(--toss-gray); font-size: 13px;'>상세 스탯 및 정보 수정은 멤버 1명 선택 시에만 가능합니다.</div>";
+        editBtn.style.display = 'none';
+    }
 }
 
 function toggleEditMode() {
-        // 1. 관리자 권한 체크 (sessionStorage 확인)
-        const isAdmin = sessionStorage.getItem('isAdminAuthenticated');
-
-    if (isAdmin !== 'true') {
-        // 관리자가 아닐 경우 경고창을 띄우고 함수 종료
-        alert("관리자만 가능합니다.");
-            return; 
-        }
+    const isAdmin = sessionStorage.getItem('isAdminAuthenticated');
+    if (isAdmin !== 'true') return alert("관리자만 가능합니다.");
+    if (selectedMembersForView.length !== 1) return alert("비교 대상을 해제하고 1명만 선택해주세요."); // 요구사항 반영
 
     const btn = document.getElementById('edit-btn');
     const statDivs = document.querySelectorAll('.stat-val');
-    const options = [5, 10, 13, 16, 18]; // 선택 가능한 옵션들
+    const options = [5, 10, 13, 16, 18];
 
     if (btn.innerText === "정보 수정하기") {
         statDivs.forEach(div => {
             const idx = parseInt(div.dataset.idx);
-            // 핵심 포지션(0~3)을 제외한 나머지 능력치만 수정 가능
             if (idx > 3) {
                 const currentVal = div.innerText === '-' ? '' : div.innerText;
-                
-                // select 태그 생성 및 옵션 추가
                 let selectHtml = `<select style="margin:0; padding:4px; font-size:14px; width:100%; border-radius:4px; background:#fff; border:1px solid #ccc;">`;
-                
-                // 현재 값이 옵션에 없을 경우를 위해 빈 옵션 또는 현재값 옵션 추가 가능
-                if (!options.includes(Number(currentVal)) && currentVal !== '') {
-                    selectHtml += `<option value="${currentVal}" selected>${currentVal}</option>`;
-                } else if (currentVal === '') {
-                    selectHtml += `<option value="" selected disabled>선택</option>`;
-                }
-
+                if (!options.includes(Number(currentVal)) && currentVal !== '') selectHtml += `<option value="${currentVal}" selected>${currentVal}</option>`;
+                else if (currentVal === '') selectHtml += `<option value="" selected disabled>선택</option>`;
                 options.forEach(opt => {
                     const isSelected = Number(currentVal) === opt ? 'selected' : '';
                     selectHtml += `<option value="${opt}" ${isSelected}>${opt}</option>`;
                 });
-                
                 selectHtml += `</select>`;
                 div.innerHTML = selectHtml;
             }
@@ -240,10 +246,8 @@ function cancelEdit() {
     document.getElementById('cancel-btn').style.display = 'none';
 }
 
-// 저장 함수도 함께 수정 (input -> select 로 변경되었으므로 선택자 수정 필요)
 async function submitEditedInfo() {
-    const name = document.getElementById('member-select').value;
-    // .stat-val 내부의 select 요소를 모두 찾음
+    const name = selectedMembersForView[0];
     const selects = document.querySelectorAll('.stat-val select');
     let newStats = [...originalStatsBeforeEdit];
     
