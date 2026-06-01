@@ -99,7 +99,33 @@ async function submitNoGame() {
 }
 
 function openQuickVoteModal() { 
-    if(!selectedDateForQuickVote) return alert("날짜를 선택해주세요."); document.getElementById('vote-modal').style.display = 'flex'; 
+    if(!selectedDateForQuickVote) return alert("날짜를 선택해주세요."); 
+    
+    // 모달을 열기 전에 셀렉트 박스에 멤버 리스트를 채워 넣음
+    renderQuickMemberSelect();
+    
+    document.getElementById('vote-modal').style.display = 'flex'; 
+}
+
+// 새롭게 추가할 셀렉트 박스 렌더링 함수
+function renderQuickMemberSelect() {
+    const select = document.getElementById('quick-member-select');
+    
+    // 1. 기존 옵션 초기화 (중복 방지)
+    select.innerHTML = '<option value="">멤버 선택</option>';
+    
+    // 2. memberList 전역 변수가 있는지 확인하고 옵션 추가
+    if (typeof memberList !== 'undefined' && memberList.length > 0) {
+        memberList.forEach(name => {
+            const option = document.createElement('option');
+            option.value = name;
+            option.innerText = name;
+            select.appendChild(option);
+        });
+    } else {
+        // 데이터가 아직 안 불러와졌을 경우 예외 처리
+        select.innerHTML = '<option value="">데이터 로딩 중...</option>';
+    }
 }
 
 function closeQuickVoteModal() { 
