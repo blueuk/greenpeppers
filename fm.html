@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>풋고추FC 매치 엔진 V4.2 (스쿼드 드래프트)</title>
+    <title>풋고추FC 매치 엔진 V4.3 (초고속 스쿼드 드래프트)</title>
     <style>
         body { background-color: #1a252f; color: white; font-family: 'Malgun Gothic', sans-serif; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 20px; }
         h1 { margin-top: 0; color: #f1c40f; margin-bottom: 10px; }
@@ -44,10 +44,10 @@
         #bottom-panel { width: 1000px; background: #34495e; padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); display: flex; flex-direction: column; gap: 10px; }
         #bottom-panel h3 { margin: 0; border-bottom: 2px solid #7f8c8d; padding-bottom: 5px; font-size: 16px; }
         
-        #player-pool { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 0; min-height: 50px; }
+        #player-pool { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 0; min-height: 50px; align-items: center; }
         
         /* 칩(라벨) 스타일 */
-        .player-chip { background: #ecf0f1; color: #2c3e50; padding: 8px 15px; border-radius: 20px; font-size: 14px; font-weight: bold; cursor: pointer; user-select: none; transition: all 0.2s; border: 2px solid transparent; }
+        .player-chip { background: #ecf0f1; color: #2c3e50; padding: 8px 15px; border-radius: 20px; font-size: 14px; font-weight: bold; cursor: pointer; user-select: none; transition: all 0.1s; border: 2px solid transparent; }
         .player-chip:hover { transform: translateY(-2px); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         .player-chip.selected { background: #3498db; color: white; border-color: #2980b9; }
         
@@ -64,7 +64,7 @@
     </style>
 </head>
 <body>
-    <h1>풋고추FC 실시간 시뮬레이터 V4.2</h1>
+    <h1>풋고추FC 실시간 시뮬레이터 V4.3</h1>
     
     <div id="main-container">
         <div id="left-panel">
@@ -86,7 +86,7 @@
             <div id="ui-panel">
                 <div id="scoreboard">A팀 <span id="scoreA">0</span> : <span id="scoreB">0</span> B팀</div>
                 <div id="timer">00:00</div>
-                <button id="startBtn" class="start-btn" onclick="startGame()">킥오프 (경기 시작)</button>
+                <button id="startBtn" class="start-btn" onclick="startGame()" disabled>선수 데이터 로딩 중...</button>
             </div>
             
             <div id="stats-container">
@@ -130,8 +130,7 @@
     <div id="bottom-panel">
         <h3>대기 명단 (라벨 다중 선택)</h3>
         <div id="player-pool">
-            <span style="color:#bdc3c7; font-size:14px;">선수 명단을 불러오는 중입니다...</span>
-        </div>
+            </div>
         
         <div class="assign-controls">
             <button class="assign-btn btn-a" onclick="assignSelected('A')">◀ A팀 (형광) 배정</button>
@@ -143,10 +142,10 @@
         const API_URL = "https://script.google.com/macros/s/AKfycbzdLjnfQEFuF0c6sH75D7gLyaPUg4LJWSDJLAym5kWKucot-CbY-QEkrDI7DnaxRYpe/exec";
         
         let allPlayersData = {}; 
-        let availablePlayers = []; // 대기 명단 배열
-        let selectedPoolPlayers = []; // 하단에서 클릭(선택)된 선수들
-        let teamA = []; // A팀 배열
-        let teamB = []; // B팀 배열
+        let availablePlayers = []; 
+        let selectedPoolPlayers = []; 
+        let teamA = []; 
+        let teamB = []; 
 
         async function fetchFutsalAPI(data) {
             try {
@@ -160,14 +159,44 @@
             }
         }
 
-        // 1. 초기 로딩 및 렌더링
+        // 1. 앱 초기화 및 전체 데이터 사전 일괄 로딩 (Pre-fetching)
         async function initApp() {
+            const poolDiv = document.getElementById('player-pool');
+            poolDiv.innerHTML = '<span style="color:#f1c40f; font-size:14px; font-weight:bold;">서버에서 선수 명단을 가져오는 중입니다...</span>';
+            
+            // 1단계: 전체 명단 가져오기
             const listData = await fetchFutsalAPI({ action: 'getMemberList' });
             if (listData && Array.isArray(listData)) {
                 availablePlayers = listData;
             } else {
-                availablePlayers = ["강승지", "강한팀", "김동섭", "김진혁", "배장원", "송정환", "용병1", "용병2"]; // Fallback
+                availablePlayers = ["강승지", "강한팀", "김동섭", "김진혁", "배장원", "송정환"]; // Fallback
             }
+
+            // 2단계: 명단에 있는 모든 선수의 능력치 데이터를 순차적으로 미리 가져오기
+            for (let i = 0; i < availablePlayers.length; i++) {
+                const name = availablePlayers[i];
+                // 로딩 진행 상황을 UI에 표시
+                poolDiv.innerHTML = `<span style="color:#3498db; font-size:14px; font-weight:bold;">선수 데이터 일괄 로딩 중... (${i + 1}/${availablePlayers.length}) - ${name}</span>`;
+                
+                if (!allPlayersData[name]) {
+                    const playerData = await fetchFutsalAPI({ action: 'getMemberInfo', memberName: name });
+                    if (playerData && playerData.stats) {
+                        allPlayersData[name] = {
+                            이름: name,
+                            스피드: parseFloat(playerData.stats[7]) || 10,
+                            rawStats: playerData.stats
+                        };
+                    }
+                    // 서버 과부하를 막기 위해 0.25초(250ms)씩 쉬면서 가져옴
+                    await new Promise(resolve => setTimeout(resolve, 250));
+                }
+            }
+
+            // 모든 로딩이 끝나면 UI 활성화
+            const startBtn = document.getElementById('startBtn');
+            startBtn.innerText = "킥오프 (경기 시작)";
+            startBtn.disabled = false;
+
             renderPool();
             drawPitch();
         }
@@ -216,24 +245,13 @@
             });
         }
 
-        // 2. 선택 및 데이터 페칭 로직
-        async function toggleSelection(name) {
+        // 2. 딜레이 없는 즉각적인 선택 로직 (데이터가 이미 있으므로 API 호출 제거)
+        function toggleSelection(name) {
             const idx = selectedPoolPlayers.indexOf(name);
             if (idx > -1) {
                 selectedPoolPlayers.splice(idx, 1);
             } else {
                 selectedPoolPlayers.push(name);
-                // 선택된 선수의 데이터가 없으면 백그라운드에서 바로 가져옴
-                if (!allPlayersData[name]) {
-                    const playerData = await fetchFutsalAPI({ action: 'getMemberInfo', memberName: name });
-                    if (playerData && playerData.stats) {
-                        allPlayersData[name] = {
-                            이름: name,
-                            스피드: parseFloat(playerData.stats[7]) || 10,
-                            rawStats: playerData.stats
-                        };
-                    }
-                }
             }
             renderPool();
             updateStatsView();
@@ -260,14 +278,10 @@
                         if(el) {
                             const val = parseFloat(stats.rawStats[i]) || 0;
                             el.innerText = val;
-                            el.className = 'stat-cell stat-value'; // 초기화
-                            if (val >= 15) el.classList.add('stat-highlight'); // 15점 이상 노란색 하이라이트
+                            el.className = 'stat-cell stat-value'; 
+                            if (val >= 15) el.classList.add('stat-highlight'); // 15점 이상 하이라이트
                         }
                     }
-                } else {
-                    msg.innerHTML = "데이터를 불러오는 중입니다...";
-                    msg.style.display = 'block';
-                    grid.style.display = 'none';
                 }
             } else {
                 title.innerText = "스카우팅 리포트";
@@ -285,18 +299,16 @@
             
             const targetArr = teamId === 'A' ? teamA : teamB;
             
-            // 💡 6명 인원 초과 방지
             if (targetArr.length + selectedPoolPlayers.length > 6) {
                 return alert(`팀 당 최대 6명까지만 등록할 수 있습니다.\n(현재 ${targetArr.length}명 + 추가 ${selectedPoolPlayers.length}명 = ${targetArr.length + selectedPoolPlayers.length}명)`);
             }
 
-            // 대기 명단에서 제거하고 팀에 추가
             selectedPoolPlayers.forEach(name => {
                 targetArr.push(name);
                 availablePlayers = availablePlayers.filter(p => p !== name);
             });
             
-            selectedPoolPlayers = []; // 선택 초기화
+            selectedPoolPlayers = []; 
             renderPool();
             renderTeams();
             updateStatsView();
@@ -305,11 +317,9 @@
         function removeFromTeam(teamId, name) {
             const targetArr = teamId === 'A' ? teamA : teamB;
             
-            // 팀에서 제거
             const idx = targetArr.indexOf(name);
             if(idx > -1) targetArr.splice(idx, 1);
             
-            // 대기 명단으로 복귀
             availablePlayers.push(name);
             
             renderPool();
