@@ -2,13 +2,11 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>풋고추FC 매치 엔진 V7.1 (레이아웃 픽스)</title>
+    <title>풋고추FC 매치 엔진 V8.0 (전술 롤 & 라인브레이킹)</title>
     <style>
-        /* 💡 버그 수정: body의 강제 중앙 정렬(align-items: center)을 제거하고 여백 정렬로 변경 */
-        body { background-color: #1a252f; color: white; font-family: 'Malgun Gothic', sans-serif; margin: 0; padding: 20px; min-width: 1240px; /* 화면이 작아져도 레이아웃이 깨지지 않도록 최소 너비 보장 */ }
+        body { background-color: #1a252f; color: white; font-family: 'Malgun Gothic', sans-serif; margin: 0; padding: 20px; min-width: 1240px; }
         h1 { margin-top: 0; color: #f1c40f; margin-bottom: 10px; text-align: center; }
         
-        /* 💡 버그 수정: margin: 0 auto; 를 통해 중앙 정렬을 하되, 화면이 작아지면 왼쪽이 안 잘리게 만듦 */
         #main-container { display: flex; gap: 20px; width: 1200px; margin: 0 auto 20px auto; }
         
         #left-panel { display: flex; flex-direction: column; gap: 15px; flex: 1.5; }
@@ -22,10 +20,11 @@
         .team-count { font-size: 12px; color: #f1c40f; }
         
         .team-members { display: flex; flex-direction: column; gap: 8px; min-height: 80px; }
-        .player-row { display: flex; justify-content: space-between; align-items: center; background: #2c3e50; padding: 6px 10px; border-radius: 6px; border: 1px solid #7f8c8d; }
-        .player-row-name { font-size: 13px; font-weight: bold; width: 60px; }
-        .pos-select { padding: 4px; font-size: 12px; background: #ecf0f1; color: #333; border-radius: 4px; border: none; outline: none; }
-        .remove-btn { background: #e74c3c; color: white; border: none; border-radius: 4px; padding: 4px 8px; font-size: 11px; cursor: pointer; font-weight: bold; }
+        .player-row { display: flex; justify-content: space-between; align-items: center; background: #2c3e50; padding: 6px; border-radius: 6px; border: 1px solid #7f8c8d; }
+        .player-row-name { font-size: 13px; font-weight: bold; width: 50px; }
+        .pos-select { padding: 3px; font-size: 11px; background: #ecf0f1; color: #333; border-radius: 4px; border: none; outline: none; width: 65px; }
+        .role-select { padding: 3px; font-size: 11px; background: #f39c12; color: #fff; border-radius: 4px; border: none; outline: none; width: 85px; font-weight: bold; }
+        .remove-btn { background: #e74c3c; color: white; border: none; border-radius: 4px; padding: 4px 6px; font-size: 11px; cursor: pointer; font-weight: bold; }
         
         #right-panel { display: flex; flex-direction: column; gap: 15px; flex: 1.5; }
         #ui-panel { background: #2c3e50; padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); display: flex; flex-direction: column;}
@@ -50,7 +49,6 @@
         .start-btn { width: 100%; padding: 10px; background: #e74c3c; color: white; font-weight: bold; font-size: 15px; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px;}
         .start-btn:disabled { background: #7f8c8d; cursor: not-allowed; }
         
-        /* 💡 버그 수정: width 조정 및 margin 중앙 정렬 도입 */
         #bottom-panel { width: 1200px; margin: 0 auto; background: #34495e; padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); display: flex; flex-direction: column; gap: 10px; box-sizing: border-box; }
         #bottom-panel h3 { margin: 0; border-bottom: 2px solid #7f8c8d; padding-bottom: 5px; font-size: 16px; }
         #player-pool { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 0; min-height: 50px; align-items: center; }
@@ -62,7 +60,7 @@
     </style>
 </head>
 <body>
-    <h1>풋고추FC 실시간 시뮬레이터 V7.1</h1>
+    <h1>풋고추FC 실시간 시뮬레이터 V8.0</h1>
     
     <div id="main-container">
         <div id="left-panel">
@@ -108,7 +106,7 @@
                     <table id="player-stats-table">
                         <thead>
                             <tr>
-                                <th>이름(포지션)</th><th>평점</th><th>골</th><th>슈팅(유효)</th><th>패스(%)</th><th>선방</th>
+                                <th>이름(역할)</th><th>평점</th><th>골</th><th>슈팅(유효)</th><th>패스(%)</th><th>선방</th>
                             </tr>
                         </thead>
                         <tbody id="player-stats-body">
@@ -137,6 +135,13 @@
         let allPlayersData = {}; 
         let availablePlayers = []; let selectedPoolPlayers = []; 
         let teamA = []; let teamB = []; 
+
+        const ROLES = {
+            '골레이로': ['방어 집중', '스위퍼 키퍼'],
+            '픽소': ['수비 전담', '빌드업 리더'],
+            '아라': ['측면 돌파', '중앙 침투'],
+            '피보': ['포스트 플레이', '라인 브레이커']
+        };
 
         let matchStats = {
             A: { posTicks: 1, shots: 0, sot: 0, passSucc: 0, passFail: 0, fouls: 0, saves: 0, corners: 0 },
@@ -179,7 +184,7 @@
                             패스: parseFloat(playerData.stats[25]) || 10, 롱패스: parseFloat(playerData.stats[26]) || 10
                         };
                     }
-                    await new Promise(resolve => setTimeout(resolve, 150));
+                    await new Promise(resolve => setTimeout(resolve, 100)); // 속도 향상
                 }
             }
             document.getElementById('startBtn').innerText = "킥오프 (경기 시작)";
@@ -196,6 +201,16 @@
             });
         }
 
+        function updateRoleOptions(teamId, name) {
+            const posSelect = document.getElementById(`pos-${teamId}-${name}`);
+            const roleSelect = document.getElementById(`role-${teamId}-${name}`);
+            const selectedPos = posSelect.value;
+            roleSelect.innerHTML = '';
+            ROLES[selectedPos].forEach(role => {
+                roleSelect.innerHTML += `<option value="${role}">${role}</option>`;
+            });
+        }
+
         function renderTeams() {
             document.getElementById('count-a').innerText = `${teamA.length}/6명`;
             document.getElementById('count-b').innerText = `${teamB.length}/6명`;
@@ -203,14 +218,18 @@
                 const list = document.getElementById(listId); list.innerHTML = '';
                 teamArr.forEach(name => {
                     list.innerHTML += `<div class="player-row"><span class="player-row-name" style="color:${color};">${name}</span>
-                        <select id="pos-${teamId}-${name}" class="pos-select">
-                            <option value="아라">아라(Ala)</option><option value="픽소">픽소(Fixo)</option>
-                            <option value="피보">피보(Pivo)</option><option value="골레이로">골레이로(GK)</option>
+                        <select id="pos-${teamId}-${name}" class="pos-select" onchange="updateRoleOptions('${teamId}', '${name}')">
+                            <option value="아라">아라</option><option value="픽소">픽소</option>
+                            <option value="피보">피보</option><option value="골레이로">골레이로</option>
+                        </select>
+                        <select id="role-${teamId}-${name}" class="role-select">
+                            <option value="측면 돌파">측면 돌파</option><option value="중앙 침투">중앙 침투</option>
                         </select>
                         <button class="remove-btn" onclick="removeFromTeam('${teamId}', '${name}')">제외</button></div>`;
                 });
             };
-            renderTeamList(teamA, 'A', 'team-a-list', '#cddc39'); renderTeamList(teamB, 'B', 'team-b-list', '#e67e22');
+            renderTeamList(teamA, 'A', 'team-a-list', '#cddc39'); 
+            renderTeamList(teamB, 'B', 'team-b-list', '#e67e22');
         }
 
         function autoAssignPositions(teamId) {
@@ -221,18 +240,20 @@
                 if (allPlayersData[name] && allPlayersData[name].골레이로 > maxGkScore) { maxGkScore = allPlayersData[name].골레이로; bestGkName = name; }
             });
             targetArr.forEach(name => {
-                const selectEl = document.getElementById(`pos-${teamId}-${name}`);
-                if (!selectEl) return;
-                if (name === bestGkName) selectEl.value = "골레이로";
+                const posEl = document.getElementById(`pos-${teamId}-${name}`);
+                if (!posEl) return;
+                if (name === bestGkName) posEl.value = "골레이로";
                 else {
                     const stats = allPlayersData[name];
                     const fieldMap = { "아라": stats.아라, "피보": stats.피보, "픽소": stats.픽소 };
                     let maxVal = -1, bestPos = "아라";
                     for (let pos in fieldMap) { if (fieldMap[pos] > maxVal) { maxVal = fieldMap[pos]; bestPos = pos; } }
-                    selectEl.value = bestPos;
+                    posEl.value = bestPos;
                 }
+                updateRoleOptions(teamId, name);
             });
         }
+
         function toggleSelection(name) {
             const idx = selectedPoolPlayers.indexOf(name);
             if (idx > -1) selectedPoolPlayers.splice(idx, 1); else selectedPoolPlayers.push(name); renderPool();
@@ -249,9 +270,9 @@
         }
         window.onload = initApp;
 
-        // --- [매치 엔진 그래픽/로직 영역 V7.1] ---
+        // --- [매치 엔진 그래픽/로직 영역 V8.0] ---
         const canvas = document.getElementById('pitch'); const ctx = canvas.getContext('2d');
-        let gameState = 'STOPPED'; // PLAYING, DEAD_BALL, KICK_OFF
+        let gameState = 'STOPPED'; 
         let deadBallTimer = 0; let matchTime = 0; const MAX_TIME = 780; 
         let score = { A: 0, B: 0 };
         let ball = { x: 325, y: 190, vx: 0, vy: 0, owner: null, lastTouchedTeam: null, isShot: false };
@@ -281,13 +302,23 @@
                 ctx.fill(); ctx.strokeStyle = '#333'; ctx.stroke();
                 
                 if(p.isSetPiece) {
-                    ctx.beginPath(); ctx.arc(p.x, p.y, 14, 0, Math.PI * 2);
+                    ctx.beginPath(); ctx.arc(p.x, p.y, 15, 0, Math.PI * 2);
                     ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)'; ctx.setLineDash([3, 2]); ctx.stroke(); ctx.setLineDash([]);
                 }
                 
-                let posShort = p.position === '골레이로' ? 'GK' : p.position.substring(0, 1);
+                // 라인브레이킹 진행 중 이펙트
+                if(p.isLineBreaking && gameState === 'PLAYING') {
+                    ctx.beginPath(); ctx.moveTo(p.x, p.y); 
+                    ctx.lineTo(p.x + (p.team==='A'? 15:-15), p.y);
+                    ctx.strokeStyle = '#f39c12'; ctx.lineWidth = 2; ctx.stroke(); ctx.lineWidth = 1.5;
+                }
+
                 ctx.fillStyle = 'white'; ctx.font = '10px Arial'; ctx.textAlign = 'center';
-                ctx.fillText(p.name, p.x, p.y - 15); ctx.fillStyle = '#f1c40f'; ctx.fillText(`[${posShort}]`, p.x, p.y + 23);
+                ctx.fillText(p.name, p.x, p.y - 15); 
+                // 역할 약자 표시
+                let roleShort = p.role.substring(0, 2);
+                if(p.position === '골레이로') roleShort = 'GK';
+                ctx.fillStyle = '#f1c40f'; ctx.fillText(`[${roleShort}]`, p.x, p.y + 23);
             });
         }
 
@@ -324,9 +355,9 @@
                     let r = p.rec; let rtg = calcRating(r).toFixed(1);
                     let pTot = r.passSucc + r.passFail; let pRate = pTot > 0 ? Math.round((r.passSucc/pTot)*100) : 0;
                     let cls = p.team === 'A' ? 'col-a' : 'col-b';
-                    let posS = p.position === '골레이로' ? 'GK' : p.position.substring(0,1);
-                    tbody.innerHTML += `<tr><td class="${cls}"><strong>${p.name}</strong>(${posS})</td>
-                        <td><span style="color:${rtg>=7.5?'#f1c40f':(rtg<5.5?'#e74c3c':'white')}">${rtg}</span></td>
+                    let roleStr = p.position==='골레이로' ? 'GK' : p.role;
+                    tbody.innerHTML += `<tr><td class="${cls}"><strong>${p.name}</strong><br><span style="font-size:8px;color:#bdc3c7;">${roleStr}</span></td>
+                        <td><span style="font-size:12px;font-weight:bold;color:${rtg>=7.5?'#f1c40f':(rtg<5.5?'#e74c3c':'white')}">${rtg}</span></td>
                         <td>${r.goals}</td><td>${r.shots}(${r.sot})</td><td>${r.passSucc}/${pTot} (${pRate}%)</td><td>${r.saves}</td></tr>`;
                 });
             }
@@ -342,6 +373,7 @@
             deadBallTimer -= 1/60;
             activePlayers.forEach(p => {
                 let dx = p.homeX - p.x; let dy = p.homeY - p.y;
+                p.isLineBreaking = false; // 데드볼시 침투 초기화
                 let dist = Math.hypot(dx, dy);
                 if(dist > 5) { p.x += (dx/dist)*2.5; p.y += (dy/dist)*2.5; }
             });
@@ -392,6 +424,7 @@
             activePlayers.forEach(p => {
                 let targetX = p.homeX, targetY = p.homeY;
                 let isOff = (teamWithBall === p.team); let distToBall = Math.hypot(ball.x - p.x, ball.y - p.y);
+                p.isLineBreaking = false; // 초기화
 
                 if (p === ball.owner) {
                     let targetGoalX = p.team === 'A' ? canvas.width - 5 : 5;
@@ -405,7 +438,7 @@
                             p.rec.passSucc++; matchStats[p.team].passSucc++;
                             let angle = Math.atan2(mate.y - p.y, mate.x - p.x);
                             ball.vx = Math.cos(angle) * 7; ball.vy = Math.sin(angle) * 7;
-                            addLog(`[킥인/진행] ${p.name} ➔ ${mate.name} 패스 출발`);
+                            addLog(`[킥인/진행] ${p.name} ➔ ${mate.name} 연결`);
                         }
                     } 
                     else if ((distToGoal < 160 || (distToGoal < 250 && p.stats.슛 >= 14)) && Math.random() < 0.08) {
@@ -416,18 +449,18 @@
                         if (isSot) {
                             matchStats[p.team].sot++; p.rec.sot++; ball.isShot = true;
                             if(isGoal) {
-                                addLog(`⚽ [슈팅] ${p.name} 강력한 유효슈팅! 골문을 향합니다!`);
+                                addLog(`⚽ [슈팅] ${p.name} 강력한 유효슈팅!`);
                                 let angle = Math.atan2((Math.random()>0.5? 160 : 220) - p.y, targetGoalX - p.x);
                                 ball.vx = Math.cos(angle) * 11; ball.vy = Math.sin(angle) * 11;
                             } else {
-                                addLog(`⚡ [슈팅] ${p.name} 유효슈팅! 그러나 키퍼 정면입니다.`);
+                                addLog(`⚡ [슈팅] ${p.name} 유효슈팅! 키퍼 정면입니다.`);
                                 let gk = activePlayers.find(e => e.team !== p.team && e.position === '골레이로');
                                 let gky = gk ? gk.y : 190;
                                 let angle = Math.atan2(gky - p.y, targetGoalX - p.x);
                                 ball.vx = Math.cos(angle) * 9; ball.vy = Math.sin(angle) * 9;
                             }
                         } else {
-                            addLog(`❌ [실수] ${p.name} 슛 미스! 엉뚱한 곳으로 날아갑니다.`);
+                            addLog(`❌ [실수] ${p.name} 슛 미스!`);
                             let angle = Math.atan2(190 + (Math.random()-0.5)*180 - p.y, targetGoalX - p.x);
                             ball.vx = Math.cos(angle) * 11; ball.vy = Math.sin(angle) * 11;
                         }
@@ -435,23 +468,36 @@
                     else if (Math.random() < 0.08) {
                         let mates = activePlayers.filter(t => t.team === p.team && t !== p);
                         if (mates.length > 0) {
-                            mates.sort((a,b) => Math.abs(b.y - p.y) - Math.abs(a.y - p.y));
-                            let targetMate = mates[Math.floor(Math.random() * Math.min(3, mates.length))];
+                            // 💡 [핵심] 라인 브레이킹 중인 동료가 있는지 스캔
+                            let breakers = mates.filter(m => m.isLineBreaking);
+                            let targetMate = null;
+                            let isKillerPass = false;
+
+                            if (breakers.length > 0 && Math.random() < 0.6) { // 60% 확률로 침투 패스 찌름
+                                targetMate = breakers[Math.floor(Math.random() * breakers.length)];
+                                isKillerPass = true;
+                            } else {
+                                mates.sort((a,b) => Math.abs(b.y - p.y) - Math.abs(a.y - p.y)); // 넓게 벌려주는 패스
+                                targetMate = mates[Math.floor(Math.random() * Math.min(3, mates.length))];
+                            }
                             
                             ball.owner = null;
                             let distToMate = Math.hypot(targetMate.x - p.x, targetMate.y - p.y);
                             let passAccuracy = distToMate > 160 ? p.stats.롱패스 : p.stats.패스;
-                            let isPassSucc = Math.random() * 20 <= passAccuracy + 2;
+                            // 킬패스는 성공 난이도가 조금 더 높음 (-1 보정)
+                            let isPassSucc = Math.random() * 20 <= passAccuracy + (isKillerPass ? 1 : 2);
 
                             if (isPassSucc) {
                                 p.rec.passSucc++; matchStats[p.team].passSucc++;
-                                addLog(`[${distToMate > 160 ? '롱패스' : '패스'}] ${p.name} ➔ ${targetMate.name}`);
+                                if(isKillerPass) addLog(`🔥 [킬패스] ${p.name} ➔ 공간을 가르는 스루패스! (${targetMate.name})`);
+                                else addLog(`[${distToMate > 160 ? '롱패스' : '패스'}] ${p.name} ➔ ${targetMate.name}`);
+                                
                                 let angle = Math.atan2(targetMate.y - p.y, targetMate.x - p.x);
-                                let power = distToMate > 160 ? 11 : 7;
+                                let power = isKillerPass ? 11 : (distToMate > 160 ? 11 : 7);
                                 ball.vx = Math.cos(angle) * power; ball.vy = Math.sin(angle) * power;
                             } else {
                                 p.rec.passFail++; matchStats[p.team].passFail++;
-                                addLog(`⚠️ [패스 실수] ${p.name} 패스 미스! 상대에게 끊깁니다.`);
+                                addLog(`⚠️ [패스 실수] ${p.name} 패스가 짤립니다.`);
                                 let randomAngle = Math.random() * Math.PI * 2; 
                                 ball.vx = Math.cos(randomAngle) * 5; ball.vy = Math.sin(randomAngle) * 5;
                             }
@@ -460,19 +506,41 @@
                         targetX = p.x + (p.team === 'A' ? 30 : -30); targetY = p.y;
                     }
                 } else if (isOff) {
+                    // 💡 [오프더볼 AI - 역할에 따른 움직임 분기]
                     if (p.position === '피보') { 
-                        targetX = p.team === 'A' ? canvas.width - 25 : 25; 
-                        targetY = ball.y; 
+                        if (p.role === '라인 브레이커') {
+                            targetX = p.team === 'A' ? canvas.width - 25 : 25; // 수비 뒤로 질주
+                            targetY = ball.y + Math.sin(matchTime*3)*40; // 빈 공간 찾기
+                            p.isLineBreaking = true; // 침투 플래그 켜짐!
+                        } else { // 포스트 플레이 (타겟맨)
+                            targetX = p.team === 'A' ? canvas.width - 60 : 60;
+                            targetY = 190; // 중앙에 버티고 서있음
+                        }
                     }
                     else if (p.position === '아라') {
-                        targetX = ball.x + (p.team === 'A' ? 50 : -50);
-                        let timeSec = Math.floor(matchTime);
-                        let oscillation = Math.sin(timeSec + p.y) * 120;
-                        targetY = 190 + oscillation;
-                    } else if (p.position === '픽소') {
-                        targetX = ball.x + (p.team === 'A' ? -60 : 60); targetY = ball.y;
+                        if (p.role === '측면 돌파') {
+                            targetX = ball.x + (p.team === 'A' ? 50 : -50);
+                            targetY = p.homeY < 190 ? 25 : 355; // 완전 끝 사이드로 벌림
+                        } else { // 중앙 침투
+                            targetX = ball.x + (p.team === 'A' ? 40 : -40);
+                            targetY = 190 + (p.homeY < 190 ? -30 : 30); // 중앙으로 좁혀서 이동
+                        }
+                    } 
+                    else if (p.position === '픽소') {
+                        if (p.role === '빌드업 리더') {
+                            targetX = ball.x + (p.team === 'A' ? -35 : 35); // 공 바로 뒤에서 지원
+                            targetY = ball.y;
+                        } else { // 수비 전담
+                            targetX = p.homeX + (p.team === 'A' ? 20 : -20); // 후방 고정 대기
+                            targetY = p.homeY;
+                        }
+                    }
+                    else if (p.position === '골레이로' && p.role === '스위퍼 키퍼') {
+                        targetX = p.team === 'A' ? 80 : canvas.width - 80; // 공격 시 올라와서 패스 각도 제공
+                        targetY = 190;
                     }
                 } else {
+                    // 수비 AI 로직
                     if (p.position === '골레이로') {
                         targetX = p.team === 'A' ? 20 : canvas.width - 20; targetY = Math.max(150, Math.min(230, ball.y)); 
                         if(distToBall < 60) { targetX = ball.x; targetY = ball.y; }
@@ -502,6 +570,8 @@
                 let dist = Math.hypot(dx, dy);
                 if(dist > 3) {
                     let moveSpeed = (p.stats.스피드 / 10) * (p === ball.owner ? 0.65 : 0.85); 
+                    // 라인 브레이킹 중일 땐 순간 속도 폭발
+                    if(p.isLineBreaking) moveSpeed *= 1.2; 
                     p.x += (dx / dist) * moveSpeed; p.y += (dy / dist) * moveSpeed;
                 }
                 
@@ -579,7 +649,7 @@
 
             const getHomePos = (team, pos, posCount, totalInPos) => {
                 let x, y = 190;
-                if(pos === '골레이로') x = 30; else if(pos === '픽소') x = 150; else if(pos === '아라') x = 250; else if(pos === '피보') x = 340;
+                if(pos === '골레이로') x = 30; else if(pos === '픽소') x = 140; else if(pos === '아라') x = 240; else if(pos === '피보') x = 330;
                 
                 if (totalInPos === 1) y = 190; 
                 else if (totalInPos === 2) y = posCount === 0 ? 80 : 300; 
@@ -591,9 +661,10 @@
             const initPlayer = (name, team, pCountObj, pTotalObj) => {
                 const s = allPlayersData[name] || { 스피드: 10, 슛: 10, 패스: 10, 롱패스: 10 }; 
                 const pos = document.getElementById(`pos-${team}-${name}`).value;
+                const role = document.getElementById(`role-${team}-${name}`).value;
                 const home = getHomePos(team, pos, pCountObj[pos]++, pTotalObj[pos]);
                 const rec = { goals: 0, shots: 0, sot: 0, passSucc: 0, passFail: 0, saves: 0 };
-                activePlayers.push({ name, team, stats: s, position: pos, x: home.x, y: home.y, homeX: home.x, homeY: home.y, rec, isSetPiece: false });
+                activePlayers.push({ name, team, stats: s, position: pos, role: role, x: home.x, y: home.y, homeX: home.x, homeY: home.y, rec, isSetPiece: false, isLineBreaking: false });
             };
 
             let pCa = { '골레이로': 0, '아라': 0, '픽소': 0, '피보': 0 }; teamA.forEach(n => initPlayer(n, 'A', pCa, pTotalA));
