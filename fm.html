@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>풋고추FC 매치 엔진 V4.4 (포지션 전술 시스템)</title>
+    <title>풋고추FC 매치 엔진 V4.5 (규칙 및 전술 완성)</title>
     <style>
         body { background-color: #1a252f; color: white; font-family: 'Malgun Gothic', sans-serif; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 20px; }
         h1 { margin-top: 0; color: #f1c40f; margin-bottom: 10px; }
@@ -60,7 +60,7 @@
     </style>
 </head>
 <body>
-    <h1>풋고추FC 실시간 시뮬레이터 V4.4</h1>
+    <h1>풋고추FC 실시간 시뮬레이터 V4.5</h1>
     
     <div id="main-container">
         <div id="left-panel">
@@ -70,14 +70,14 @@
                 <div class="team-box">
                     <div class="team-box-header">
                         <h3>TEAM A <span class="team-count" id="count-a">0/6</span></h3>
-                        <button class="auto-btn" onclick="autoAssignPositions('A')">⚡ AI 포지션 자동배치</button>
+                        <button class="auto-btn" onclick="autoAssignPositions('A')">⚡ AI 자동배치</button>
                     </div>
                     <div id="team-a-list" class="team-members"></div>
                 </div>
                 <div class="team-box">
                     <div class="team-box-header">
                         <h3>TEAM B <span class="team-count" id="count-b">0/6</span></h3>
-                        <button class="auto-btn" onclick="autoAssignPositions('B')">⚡ AI 포지션 자동배치</button>
+                        <button class="auto-btn" onclick="autoAssignPositions('B')">⚡ AI 자동배치</button>
                     </div>
                     <div id="team-b-list" class="team-members"></div>
                 </div>
@@ -211,10 +211,9 @@
             });
         }
 
-        // 💡 수동 포지션 선택 UI 추가 렌더링
         function renderTeams() {
-            document.getElementById('count-a').innerText = `${teamA.length}/6`;
-            document.getElementById('count-b').innerText = `${teamB.length}/6`;
+            document.getElementById('count-a').innerText = `${teamA.length}/6명`;
+            document.getElementById('count-b').innerText = `${teamB.length}/6명`;
             
             const listA = document.getElementById('team-a-list');
             listA.innerHTML = '';
@@ -251,35 +250,45 @@
             });
         }
 
-        // 💡 AI 스카우팅 기반 포지션 자동 배치 기능
+        // 💡 [핵심] 골레이로 1명 필수 조건이 적용된 스마트 AI 자동배치
         function autoAssignPositions(teamId) {
             const targetArr = teamId === 'A' ? teamA : teamB;
             if (targetArr.length === 0) return alert("배정된 선수가 없습니다.");
 
+            // 1단계: 팀 내에서 '골레이로' 점수가 가장 높은 1명을 찾기
+            let bestGkName = "";
+            let maxGkScore = -1;
+            
             targetArr.forEach(name => {
                 const stats = allPlayersData[name];
-                if (stats) {
-                    // 가장 점수가 높은 포지션 찾기
-                    const posMap = {
-                        "골레이로": stats.골레이로, 
-                        "아라": stats.아라, 
-                        "피보": stats.피보, 
-                        "픽소": stats.픽소
-                    };
-                    
-                    let maxVal = -1;
-                    let bestPos = "아라"; // 기본값
-                    
-                    for (let pos in posMap) {
-                        if (posMap[pos] > maxVal) {
-                            maxVal = posMap[pos];
-                            bestPos = pos;
+                if (stats && stats.골레이로 > maxGkScore) {
+                    maxGkScore = stats.골레이로;
+                    bestGkName = name;
+                }
+            });
+
+            // 2단계: 나머지 선수들은 필드 플레이어 중 최고 점수로 배치
+            targetArr.forEach(name => {
+                const selectEl = document.getElementById(`pos-${teamId}-${name}`);
+                if (!selectEl) return;
+
+                if (name === bestGkName) {
+                    selectEl.value = "골레이로"; // 최고 점수 1명은 무조건 골레이로 배정
+                } else {
+                    const stats = allPlayersData[name];
+                    if (stats) {
+                        const fieldPosMap = { "아라": stats.아라, "피보": stats.피보, "픽소": stats.픽소 };
+                        let maxVal = -1;
+                        let bestPos = "아라";
+                        
+                        for (let pos in fieldPosMap) {
+                            if (fieldPosMap[pos] > maxVal) {
+                                maxVal = fieldPosMap[pos];
+                                bestPos = pos;
+                            }
                         }
+                        selectEl.value = bestPos;
                     }
-                    
-                    // 해당 선수의 드롭다운 값을 최적 포지션으로 변경
-                    const selectEl = document.getElementById(`pos-${teamId}-${name}`);
-                    if (selectEl) selectEl.value = bestPos;
                 }
             });
         }
@@ -392,7 +401,6 @@
                 ctx.fill();
                 ctx.strokeStyle = '#333'; ctx.lineWidth = 1.5; ctx.stroke();
                 
-                // 포지션 약자 표시 (GK, AL, PI, FI)
                 let posShort = p.position.substring(0, 1);
                 if(p.position === '골레이로') posShort = 'GK';
                 
@@ -401,7 +409,7 @@
                 ctx.textAlign = 'center';
                 ctx.fillText(p.name, p.x, p.y - 14);
                 
-                ctx.fillStyle = '#f1c40f'; // 포지션 텍스트는 노란색으로 강조
+                ctx.fillStyle = '#f1c40f'; 
                 ctx.fillText(`[${posShort}]`, p.x, p.y + 22);
             });
         }
@@ -420,10 +428,8 @@
             }
 
             activePlayers.forEach(p => {
-                // 💡 [핵심] 1차원적인 직진 AI에서, 기본 포지션(Home)과 공(Ball)의 중간 지점을 향해 이동하도록 변경
                 let targetX = (ball.x + p.homeX) / 2;
                 let targetY = (ball.y + p.homeY) / 2;
-                
                 let dx = targetX - p.x;
                 let dy = targetY - p.y;
                 let dist = Math.sqrt(dx*dx + dy*dy);
@@ -469,29 +475,34 @@
                 return;
             }
             
+            // 💡 [핵심] 골레이로 필수 조건 유효성 검사
+            const gkCountA = teamA.filter(name => document.getElementById(`pos-A-${name}`).value === '골레이로').length;
+            const gkCountB = teamB.filter(name => document.getElementById(`pos-B-${name}`).value === '골레이로').length;
+            
+            if (gkCountA !== 1 || gkCountB !== 1) {
+                alert("🚨 경기를 시작할 수 없습니다!\n\n각 팀에는 골레이로(GK)가 반드시 1명씩만 배치되어야 합니다.");
+                return;
+            }
+            
             matchTime = 0; score = { A: 0, B: 0 };
             document.getElementById('scoreA').innerText = 0; document.getElementById('scoreB').innerText = 0;
             activePlayers = [];
             
-            // 💡 캔버스 상의 각 포지션별 기본(Home) 좌표 맵핑
             const posCoords = {
                 'A': { '골레이로': {x: 40, y: 175}, '픽소': {x: 120, y: 175}, '아라': {x: 220, y: 80}, '피보': {x: 260, y: 175} },
                 'B': { '골레이로': {x: 560, y: 175}, '픽소': {x: 480, y: 175}, '아라': {x: 380, y: 270}, '피보': {x: 340, y: 175} }
             };
 
-            // A팀 초기 좌표 및 포지션 세팅
             teamA.forEach((name, i) => {
                 const stats = allPlayersData[name] || { 스피드: 10 };
                 const pos = document.getElementById(`pos-A-${name}`).value;
                 const home = posCoords['A'][pos] || {x: 150, y: 175};
                 
-                // 아라가 2명일 경우를 대비해 Y축(위/아래) 분산 처리
                 if(pos === '아라' && activePlayers.filter(p => p.team === 'A' && p.position === '아라').length > 0) home.y = 270;
                 
                 activePlayers.push({ name: name, team: 'A', speed: stats.스피드, position: pos, x: home.x, y: home.y, homeX: home.x, homeY: home.y });
             });
 
-            // B팀 초기 좌표 및 포지션 세팅
             teamB.forEach((name, i) => {
                 const stats = allPlayersData[name] || { 스피드: 10 };
                 const pos = document.getElementById(`pos-B-${name}`).value;
