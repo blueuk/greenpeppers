@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>풋고추FC 매치 엔진 V3 (실시간 데이터 연동)</title>
+    <title>풋고추FC 매치 엔진 V3.1 (전체 선수 연동)</title>
     <style>
         body { background-color: #1a252f; color: white; font-family: 'Malgun Gothic', sans-serif; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 20px; }
         h1 { margin-top: 0; color: #f1c40f; }
@@ -69,12 +69,12 @@
         </div>
     </div>
 
+    <script src="js/common.js"></script>
+
     <script>
         // --- [API 및 데이터 연동 영역] ---
         const API_URL = "https://script.google.com/macros/s/AKfycbzdLjnfQEFuF0c6sH75D7gLyaPUg4LJWSDJLAym5kWKucot-CbY-QEkrDI7DnaxRYpe/exec";
         
-        // 공통 선수 명단 (common.js가 없으므로 우선 배열로 선언)
-        const playerNames = ["강승지", "강한팀", "김동섭", "김진혁", "배장원", "송정환"]; 
         let allPlayersData = []; // 서버에서 받아온 가공된 선수 데이터
         let teamAPlayers = [];
         let teamBPlayers = [];
@@ -107,12 +107,17 @@
             }
         }
 
-        // 초기 데이터 로딩
+        // 초기 데이터 로딩 (전체 선수단 호출 및 서버 과부하 방지 적용)
         async function initGameData() {
-            addComment("선수단 세부 능력치를 불러오고 있습니다...", true);
+            // common.js에 있는 전체 선수 명단(memberList)을 가져옵니다. 
+            // 만약 로드가 안 됐다면 임시 배열을 사용합니다.
+            const targetPlayers = (typeof memberList !== 'undefined') ? memberList : ["강승지", "강한팀", "김동섭", "김진혁", "배장원", "송정환"];
             
-            for (let name of playerNames) {
+            addComment(`총 ${targetPlayers.length}명의 선수단 세부 능력치를 서버에 요청합니다...`, true);
+            
+            for (let name of targetPlayers) {
                 const playerData = await fetchFutsalAPI({ action: 'getMemberInfo', memberName: name });
+                
                 if (playerData && playerData.stats) {
                     allPlayersData.push({
                         이름: name,
@@ -123,10 +128,15 @@
                         스피드: parseFloat(playerData.stats[7]) || 10,
                         패스: parseFloat(playerData.stats[23]) || 10
                     });
+                    // 콘솔창에 로드 진행 상황 출력
+                    console.log(`${name} 선수 데이터 로드 완료`); 
                 }
+
+                // 💡 핵심 해결책: 구글 서버가 차단하지 않도록 요청 사이에 0.3초 대기 시간(Delay) 적용
+                await new Promise(resolve => setTimeout(resolve, 300));
             }
             
-            addComment(`총 ${allPlayersData.length}명의 데이터를 성공적으로 불러왔습니다!`, true);
+            addComment(`전체 ${allPlayersData.length}명의 데이터를 성공적으로 불러왔습니다!`, true);
             populateUI();
             
             startBtn.innerText = "킥오프 (경기 시작)";
