@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>풋고추FC 매치 엔진 V4.5 (규칙 및 전술 완성)</title>
+    <title>풋고추FC 매치 엔진 V5.0 (전술 AI 풀매치)</title>
     <style>
         body { background-color: #1a252f; color: white; font-family: 'Malgun Gothic', sans-serif; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 20px; }
         h1 { margin-top: 0; color: #f1c40f; margin-bottom: 10px; }
@@ -19,7 +19,6 @@
         .auto-btn { background: #3498db; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; }
         .team-count { font-size: 12px; color: #f1c40f; }
         
-        /* 포지션 선택 리스트 UI */
         .team-members { display: flex; flex-direction: column; gap: 8px; min-height: 80px; }
         .player-row { display: flex; justify-content: space-between; align-items: center; background: #2c3e50; padding: 6px 10px; border-radius: 6px; border: 1px solid #7f8c8d; }
         .player-row-name { font-size: 13px; font-weight: bold; width: 60px; }
@@ -60,12 +59,11 @@
     </style>
 </head>
 <body>
-    <h1>풋고추FC 실시간 시뮬레이터 V4.5</h1>
+    <h1>풋고추FC 실시간 시뮬레이터 V5.0 (전술 AI 완벽 적용)</h1>
     
     <div id="main-container">
         <div id="left-panel">
             <canvas id="pitch" width="600" height="350"></canvas>
-            
             <div class="team-lists">
                 <div class="team-box">
                     <div class="team-box-header">
@@ -94,7 +92,6 @@
             <div id="stats-container">
                 <h3 id="stat-title">스카우팅 리포트</h3>
                 <div id="stat-msg" class="stat-msg">대기 명단에서 <strong>선수 1명</strong>을 선택하면<br>상세 능력치가 표시됩니다.</div>
-                
                 <div id="full-stats-grid">
                     <div class="stat-cell stat-header">골레이로</div><div class="stat-cell stat-value" id="st-0">0</div>
                     <div class="stat-cell stat-header">아라</div><div class="stat-cell stat-value" id="st-1">0</div>
@@ -153,23 +150,18 @@
                 const result = await response.json();
                 if (!result.success) throw new Error(result.error);
                 return result.data;
-            } catch (e) {
-                console.error("API Error:", e);
-                return null;
-            }
+            } catch (e) { return null; }
         }
 
         async function initApp() {
             const poolDiv = document.getElementById('player-pool');
-            poolDiv.innerHTML = '<span style="color:#f1c40f; font-size:14px; font-weight:bold;">서버에서 선수 명단을 가져오는 중입니다...</span>';
-            
+            poolDiv.innerHTML = '<span style="color:#f1c40f; font-size:14px; font-weight:bold;">서버에서 데이터 로딩 중...</span>';
             const listData = await fetchFutsalAPI({ action: 'getMemberList' });
             availablePlayers = (listData && Array.isArray(listData)) ? listData : ["강승지", "강한팀", "김동섭", "김진혁", "배장원", "송정환"];
 
             for (let i = 0; i < availablePlayers.length; i++) {
                 const name = availablePlayers[i];
-                poolDiv.innerHTML = `<span style="color:#3498db; font-size:14px; font-weight:bold;">선수 데이터 일괄 로딩 중... (${i + 1}/${availablePlayers.length}) - ${name}</span>`;
-                
+                poolDiv.innerHTML = `<span style="color:#3498db; font-size:14px; font-weight:bold;">데이터 일괄 로딩 중... (${i + 1}/${availablePlayers.length})</span>`;
                 if (!allPlayersData[name]) {
                     const playerData = await fetchFutsalAPI({ action: 'getMemberInfo', memberName: name });
                     if (playerData && playerData.stats) {
@@ -180,13 +172,15 @@
                             피보: parseFloat(playerData.stats[2]) || 0,
                             픽소: parseFloat(playerData.stats[3]) || 0,
                             스피드: parseFloat(playerData.stats[7]) || 10,
+                            슛: parseFloat(playerData.stats[23]) || 10,
+                            패스: parseFloat(playerData.stats[25]) || 10,
+                            드리블: parseFloat(playerData.stats[27]) || 10,
                             rawStats: playerData.stats
                         };
                     }
-                    await new Promise(resolve => setTimeout(resolve, 250));
+                    await new Promise(resolve => setTimeout(resolve, 200));
                 }
             }
-
             document.getElementById('startBtn').innerText = "킥오프 (경기 시작)";
             document.getElementById('startBtn').disabled = false;
             renderPool();
@@ -196,12 +190,7 @@
         function renderPool() {
             const poolDiv = document.getElementById('player-pool');
             poolDiv.innerHTML = '';
-            
-            if(availablePlayers.length === 0) {
-                poolDiv.innerHTML = '<span style="color:#7f8c8d; font-size:14px;">대기 중인 선수가 없습니다.</span>';
-                return;
-            }
-
+            if(availablePlayers.length === 0) return poolDiv.innerHTML = '<span style="color:#7f8c8d; font-size:14px;">대기 명단 없음</span>';
             availablePlayers.forEach(name => {
                 const chip = document.createElement('div');
                 chip.className = `player-chip ${selectedPoolPlayers.includes(name) ? 'selected' : ''}`;
@@ -214,78 +203,46 @@
         function renderTeams() {
             document.getElementById('count-a').innerText = `${teamA.length}/6명`;
             document.getElementById('count-b').innerText = `${teamB.length}/6명`;
-            
-            const listA = document.getElementById('team-a-list');
-            listA.innerHTML = '';
-            teamA.forEach(name => {
-                listA.innerHTML += `
-                    <div class="player-row">
-                        <span class="player-row-name" style="color:#cddc39;">${name}</span>
-                        <select id="pos-A-${name}" class="pos-select">
-                            <option value="아라">아라(Ala)</option>
-                            <option value="픽소">픽소(Fixo)</option>
-                            <option value="피보">피보(Pivo)</option>
-                            <option value="골레이로">골레이로(GK)</option>
-                        </select>
-                        <button class="remove-btn" onclick="removeFromTeam('A', '${name}')">제외</button>
-                    </div>
-                `;
-            });
-
-            const listB = document.getElementById('team-b-list');
-            listB.innerHTML = '';
-            teamB.forEach(name => {
-                listB.innerHTML += `
-                    <div class="player-row">
-                        <span class="player-row-name" style="color:#e67e22;">${name}</span>
-                        <select id="pos-B-${name}" class="pos-select">
-                            <option value="아라">아라(Ala)</option>
-                            <option value="픽소">픽소(Fixo)</option>
-                            <option value="피보">피보(Pivo)</option>
-                            <option value="골레이로">골레이로(GK)</option>
-                        </select>
-                        <button class="remove-btn" onclick="removeFromTeam('B', '${name}')">제외</button>
-                    </div>
-                `;
-            });
+            const renderTeamList = (teamArr, teamId, listId, color) => {
+                const list = document.getElementById(listId);
+                list.innerHTML = '';
+                teamArr.forEach(name => {
+                    list.innerHTML += `
+                        <div class="player-row">
+                            <span class="player-row-name" style="color:${color};">${name}</span>
+                            <select id="pos-${teamId}-${name}" class="pos-select">
+                                <option value="아라">아라(Ala)</option>
+                                <option value="픽소">픽소(Fixo)</option>
+                                <option value="피보">피보(Pivo)</option>
+                                <option value="골레이로">골레이로(GK)</option>
+                            </select>
+                            <button class="remove-btn" onclick="removeFromTeam('${teamId}', '${name}')">제외</button>
+                        </div>`;
+                });
+            };
+            renderTeamList(teamA, 'A', 'team-a-list', '#cddc39');
+            renderTeamList(teamB, 'B', 'team-b-list', '#e67e22');
         }
 
-        // 💡 [핵심] 골레이로 1명 필수 조건이 적용된 스마트 AI 자동배치
         function autoAssignPositions(teamId) {
             const targetArr = teamId === 'A' ? teamA : teamB;
             if (targetArr.length === 0) return alert("배정된 선수가 없습니다.");
-
-            // 1단계: 팀 내에서 '골레이로' 점수가 가장 높은 1명을 찾기
-            let bestGkName = "";
-            let maxGkScore = -1;
-            
+            let bestGkName = "", maxGkScore = -1;
             targetArr.forEach(name => {
                 const stats = allPlayersData[name];
-                if (stats && stats.골레이로 > maxGkScore) {
-                    maxGkScore = stats.골레이로;
-                    bestGkName = name;
-                }
+                if (stats && stats.골레이로 > maxGkScore) { maxGkScore = stats.골레이로; bestGkName = name; }
             });
-
-            // 2단계: 나머지 선수들은 필드 플레이어 중 최고 점수로 배치
             targetArr.forEach(name => {
                 const selectEl = document.getElementById(`pos-${teamId}-${name}`);
                 if (!selectEl) return;
-
-                if (name === bestGkName) {
-                    selectEl.value = "골레이로"; // 최고 점수 1명은 무조건 골레이로 배정
-                } else {
+                if (name === bestGkName) selectEl.value = "골레이로";
+                else {
                     const stats = allPlayersData[name];
                     if (stats) {
                         const fieldPosMap = { "아라": stats.아라, "피보": stats.피보, "픽소": stats.픽소 };
-                        let maxVal = -1;
-                        let bestPos = "아라";
-                        
+                        let maxVal = -1, bestPos = "아라";
                         for (let pos in fieldPosMap) {
-                            if (fieldPosMap[pos] > maxVal) {
-                                maxVal = fieldPosMap[pos];
-                                bestPos = pos;
-                            }
+                            if (fieldPosMap[pos] > maxVal) { maxVal = fieldPosMap[pos]; bestPos = pos; }
                         }
                         selectEl.value = bestPos;
                     }
@@ -302,77 +259,56 @@
         }
 
         function updateStatsView() {
-            const msg = document.getElementById('stat-msg');
-            const grid = document.getElementById('full-stats-grid');
-            const title = document.getElementById('stat-title');
-
+            const msg = document.getElementById('stat-msg'), grid = document.getElementById('full-stats-grid'), title = document.getElementById('stat-title');
             if (selectedPoolPlayers.length === 1) {
-                const name = selectedPoolPlayers[0];
-                const stats = allPlayersData[name];
-                
+                const stats = allPlayersData[selectedPoolPlayers[0]];
                 if (stats && stats.rawStats) {
-                    title.innerText = `${name} 선수의 전체 능력치`;
-                    msg.style.display = 'none';
-                    grid.style.display = 'grid';
-                    
+                    title.innerText = `${stats.이름} 선수의 전체 능력치`;
+                    msg.style.display = 'none'; grid.style.display = 'grid';
                     for(let i = 0; i <= 27; i++) {
                         const el = document.getElementById(`st-${i}`);
                         if(el) {
                             const val = parseFloat(stats.rawStats[i]) || 0;
-                            el.innerText = val;
-                            el.className = 'stat-cell stat-value'; 
+                            el.innerText = val; el.className = 'stat-cell stat-value'; 
                             if (val >= 15) el.classList.add('stat-highlight'); 
                         }
                     }
                 }
             } else {
                 title.innerText = "스카우팅 리포트";
-                msg.innerHTML = selectedPoolPlayers.length > 1 ? 
-                    `<strong>${selectedPoolPlayers.length}명</strong>이 선택되었습니다.<br>상세 능력치는 1명 선택 시 표시됩니다.` : 
-                    "대기 명단에서 <strong>선수 1명</strong>을 선택하면<br>상세 능력치가 표시됩니다.";
-                msg.style.display = 'block';
-                grid.style.display = 'none';
+                msg.innerHTML = "대기 명단에서 <strong>선수 1명</strong>을 선택하면<br>상세 능력치가 표시됩니다.";
+                msg.style.display = 'block'; grid.style.display = 'none';
             }
         }
 
         function assignSelected(teamId) {
             if (selectedPoolPlayers.length === 0) return alert("배정할 선수를 선택해주세요.");
             const targetArr = teamId === 'A' ? teamA : teamB;
-            
-            if (targetArr.length + selectedPoolPlayers.length > 6) {
-                return alert("팀 당 최대 6명까지만 등록할 수 있습니다.");
-            }
-
-            selectedPoolPlayers.forEach(name => {
-                targetArr.push(name);
-                availablePlayers = availablePlayers.filter(p => p !== name);
-            });
-            
+            if (targetArr.length + selectedPoolPlayers.length > 6) return alert("팀 당 최대 6명까지만 등록할 수 있습니다.");
+            selectedPoolPlayers.forEach(name => { targetArr.push(name); availablePlayers = availablePlayers.filter(p => p !== name); });
             selectedPoolPlayers = []; 
-            renderPool();
-            renderTeams();
-            updateStatsView();
+            renderPool(); renderTeams(); updateStatsView();
         }
 
         function removeFromTeam(teamId, name) {
             const targetArr = teamId === 'A' ? teamA : teamB;
-            const idx = targetArr.indexOf(name);
-            if(idx > -1) targetArr.splice(idx, 1);
+            targetArr.splice(targetArr.indexOf(name), 1);
             availablePlayers.push(name);
-            renderPool();
-            renderTeams();
+            renderPool(); renderTeams();
         }
 
         window.onload = initApp;
 
-        // --- [매치 엔진 그래픽/로직 영역] ---
+        // --- [매치 엔진 그래픽/로직 영역 V5.0] ---
         const canvas = document.getElementById('pitch');
         const ctx = canvas.getContext('2d');
         let gameState = 'STOPPED'; 
         let matchTime = 0; 
         const MAX_TIME = 780; 
         let score = { A: 0, B: 0 };
-        let ball = { x: 300, y: 175, vx: 0, vy: 0 };
+        
+        // 볼 물리 엔진 객체
+        let ball = { x: 300, y: 175, vx: 0, vy: 0, owner: null };
         let activePlayers = []; 
 
         function drawPitch() {
@@ -381,36 +317,32 @@
             ctx.strokeRect(5, 5, canvas.width - 10, canvas.height - 10);
             ctx.beginPath(); ctx.moveTo(canvas.width/2, 5); ctx.lineTo(canvas.width/2, canvas.height-5); ctx.stroke();
             ctx.beginPath(); ctx.arc(canvas.width/2, canvas.height/2, 40, 0, Math.PI * 2); ctx.stroke();
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-            ctx.fillRect(5, 100, 25, 150);
-            ctx.fillRect(canvas.width - 30, 100, 25, 150);
+            // 페널티 에어리어 (골레이로 행동 반경)
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.fillRect(5, 100, 60, 150);
+            ctx.fillRect(canvas.width - 65, 100, 60, 150);
+            // 골대
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.fillRect(0, 140, 10, 70);
+            ctx.fillRect(canvas.width - 10, 140, 10, 70);
         }
 
         function drawBall() {
-            ctx.beginPath();
-            ctx.arc(ball.x, ball.y, 5, 0, Math.PI * 2);
+            ctx.beginPath(); ctx.arc(ball.x, ball.y, 5, 0, Math.PI * 2);
             ctx.fillStyle = 'white'; ctx.fill();
             ctx.strokeStyle = 'black'; ctx.lineWidth = 1; ctx.stroke();
         }
 
         function drawPlayers() {
             activePlayers.forEach(p => {
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, 10, 0, Math.PI * 2);
+                ctx.beginPath(); ctx.arc(p.x, p.y, 10, 0, Math.PI * 2);
                 ctx.fillStyle = p.team === 'A' ? '#cddc39' : '#e67e22'; 
-                ctx.fill();
-                ctx.strokeStyle = '#333'; ctx.lineWidth = 1.5; ctx.stroke();
+                ctx.fill(); ctx.strokeStyle = '#333'; ctx.lineWidth = 1.5; ctx.stroke();
                 
-                let posShort = p.position.substring(0, 1);
-                if(p.position === '골레이로') posShort = 'GK';
-                
-                ctx.fillStyle = 'white';
-                ctx.font = '10px Arial';
-                ctx.textAlign = 'center';
+                let posShort = p.position === '골레이로' ? 'GK' : p.position.substring(0, 1);
+                ctx.fillStyle = 'white'; ctx.font = '10px Arial'; ctx.textAlign = 'center';
                 ctx.fillText(p.name, p.x, p.y - 14);
-                
-                ctx.fillStyle = '#f1c40f'; 
-                ctx.fillText(`[${posShort}]`, p.x, p.y + 22);
+                ctx.fillStyle = '#f1c40f'; ctx.fillText(`[${posShort}]`, p.x, p.y + 22);
             });
         }
 
@@ -421,33 +353,99 @@
             const sec = String(Math.floor(matchTime % 60)).padStart(2, '0');
             document.getElementById('timer').innerText = `${min}:${sec}`;
 
-            if (matchTime >= MAX_TIME) {
-                gameState = 'STOPPED';
-                alert("경기가 종료되었습니다!");
-                return;
+            if (matchTime >= MAX_TIME) { gameState = 'STOPPED'; alert("경기가 종료되었습니다!"); return; }
+
+            // 1. 공 물리 처리 (마찰력 및 이동)
+            if (!ball.owner) {
+                ball.x += ball.vx; ball.y += ball.vy;
+                ball.vx *= 0.96; ball.vy *= 0.96; // 잔디 마찰력
+                
+                // 벽 튕기기 (사이드라인)
+                if(ball.y < 5 || ball.y > canvas.height - 5) ball.vy *= -1;
+            } else {
+                // 공을 가진 선수의 발끝에 공 위치 고정
+                ball.x = ball.owner.x + (ball.owner.team === 'A' ? 8 : -8);
+                ball.y = ball.owner.y + 5;
             }
 
+            // 2. 소유권 획득 로직
+            if (!ball.owner) {
+                activePlayers.forEach(p => {
+                    let dist = Math.hypot(ball.x - p.x, ball.y - p.y);
+                    if (dist < 12 && Math.hypot(ball.vx, ball.vy) < 8) { // 너무 빠른 슛은 바로 못 잡음
+                        ball.owner = p; ball.vx = 0; ball.vy = 0;
+                    }
+                });
+            }
+
+            // 3. 선수 AI 로직
+            const teamWithBall = ball.owner ? ball.owner.team : null;
+
             activePlayers.forEach(p => {
-                let targetX = (ball.x + p.homeX) / 2;
-                let targetY = (ball.y + p.homeY) / 2;
-                let dx = targetX - p.x;
-                let dy = targetY - p.y;
-                let dist = Math.sqrt(dx*dx + dy*dy);
-                
-                if(dist > 5) {
-                    let moveSpeed = (p.speed / 10) * 0.8; 
-                    p.x += (dx / dist) * moveSpeed;
-                    p.y += (dy / dist) * moveSpeed;
+                let targetX = p.homeX, targetY = p.homeY;
+                let isOffense = (teamWithBall === p.team);
+                let distToBall = Math.hypot(ball.x - p.x, ball.y - p.y);
+
+                if (p === ball.owner) {
+                    // [공을 가진 선수의 판단]
+                    let targetGoalX = p.team === 'A' ? canvas.width - 5 : 5;
+                    let distToGoal = Math.hypot(targetGoalX - p.x, 175 - p.y);
+
+                    if (distToGoal < 150 && Math.random() < (p.stats.슛 / 100)) {
+                        // 슈팅!
+                        ball.owner = null;
+                        let angle = Math.atan2(175 + (Math.random()-0.5)*40 - p.y, targetGoalX - p.x);
+                        let power = 8 + (p.stats.슛 / 4);
+                        ball.vx = Math.cos(angle) * power; ball.vy = Math.sin(angle) * power;
+                    } else if (Math.random() < 0.03) {
+                        // 패스! (같은 팀 찾기)
+                        let teammates = activePlayers.filter(t => t.team === p.team && t !== p);
+                        let targetMate = teammates[Math.floor(Math.random() * teammates.length)];
+                        ball.owner = null;
+                        let angle = Math.atan2(targetMate.y - p.y, targetMate.x - p.x);
+                        let power = 5 + (p.stats.패스 / 5);
+                        ball.vx = Math.cos(angle) * power; ball.vy = Math.sin(angle) * power;
+                    } else {
+                        // 드리블 (상대 골대를 향해 전진)
+                        targetX = targetGoalX; targetY = 175;
+                    }
+                } else {
+                    // [공이 없는 선수의 판단]
+                    if (p.position === '골레이로') {
+                        // 골키퍼 로직: 자기 진영 골대 앞을 지키며 공의 Y축을 따라감
+                        targetX = p.team === 'A' ? 20 : canvas.width - 20;
+                        targetY = Math.max(100, Math.min(250, ball.y)); // 페널티 박스 내 Y축 이동
+                        // 공이 너무 가까우면 튀어나감
+                        if(distToBall < 60 && p.team !== teamWithBall) { targetX = ball.x; targetY = ball.y; }
+                    } else {
+                        // 필드 플레이어 전술 이동
+                        let pushForward = p.team === 'A' ? 80 : -80; // 공격 시 전진 거리
+                        
+                        if (isOffense) {
+                            targetX = p.homeX + pushForward; // 공격 시 라인 올림
+                        } else {
+                            targetX = p.homeX; // 수비 시 기본 위치(Home) 복귀
+                            // 근처에 공이 있으면 압박
+                            if(distToBall < 100) { targetX = ball.x; targetY = ball.y; }
+                        }
+                    }
+                }
+
+                // 이동 물리 처리
+                let dx = targetX - p.x; let dy = targetY - p.y;
+                let dist = Math.hypot(dx, dy);
+                if(dist > 3) {
+                    let moveSpeed = (p.stats.스피드 / 10) * (p === ball.owner ? 0.6 : 0.8); // 드리블 시 속도 저하
+                    p.x += (dx / dist) * moveSpeed; p.y += (dy / dist) * moveSpeed;
                 }
             });
 
-            ball.x += (Math.random() - 0.5) * 6;
-            ball.y += (Math.random() - 0.5) * 6;
-
-            if (ball.x <= 30 && ball.y >= 100 && ball.y <= 250) goalScored('B');
-            else if (ball.x >= canvas.width - 30 && ball.y >= 100 && ball.y <= 250) goalScored('A');
-            else if (ball.x < 5 || ball.x > canvas.width - 5 || ball.y < 5 || ball.y > canvas.height - 5) {
-                ball.x = canvas.width/2; ball.y = canvas.height/2; 
+            // 4. 골 판정
+            if (ball.x <= 10 && ball.y >= 140 && ball.y <= 210) goalScored('B');
+            else if (ball.x >= canvas.width - 10 && ball.y >= 140 && ball.y <= 210) goalScored('A');
+            else if (ball.x < 0 || ball.x > canvas.width) {
+                // 엔드라인 아웃 처리
+                ball.owner = null; ball.x = canvas.width/2; ball.y = canvas.height/2; ball.vx=0; ball.vy=0;
             }
         }
 
@@ -456,7 +454,7 @@
             score[teamName]++;
             document.getElementById(`score${teamName}`).innerText = score[teamName];
             setTimeout(() => {
-                ball = { x: canvas.width/2, y: canvas.height/2, vx: 0, vy: 0 };
+                ball = { x: canvas.width/2, y: canvas.height/2, vx: 0, vy: 0, owner: null };
                 gameState = 'PLAYING';
             }, 2000);
         }
@@ -470,47 +468,42 @@
         }
 
         function startGame() {
-            if (teamA.length === 0 || teamB.length === 0) {
-                alert("각 팀에 선수를 최소 1명 이상 배정해주세요.");
-                return;
-            }
+            if (teamA.length !== 6 || teamB.length !== 6) return alert("각 팀에 선수를 정확히 6명씩 배정해주세요.");
             
-            // 💡 [핵심] 골레이로 필수 조건 유효성 검사
             const gkCountA = teamA.filter(name => document.getElementById(`pos-A-${name}`).value === '골레이로').length;
             const gkCountB = teamB.filter(name => document.getElementById(`pos-B-${name}`).value === '골레이로').length;
-            
-            if (gkCountA !== 1 || gkCountB !== 1) {
-                alert("🚨 경기를 시작할 수 없습니다!\n\n각 팀에는 골레이로(GK)가 반드시 1명씩만 배치되어야 합니다.");
-                return;
-            }
+            if (gkCountA !== 1 || gkCountB !== 1) return alert("🚨 각 팀에 골레이로(GK)가 반드시 1명씩 배치되어야 합니다.");
             
             matchTime = 0; score = { A: 0, B: 0 };
             document.getElementById('scoreA').innerText = 0; document.getElementById('scoreB').innerText = 0;
-            activePlayers = [];
+            activePlayers = []; ball.owner = null; ball.x = 300; ball.y = 175;
             
-            const posCoords = {
-                'A': { '골레이로': {x: 40, y: 175}, '픽소': {x: 120, y: 175}, '아라': {x: 220, y: 80}, '피보': {x: 260, y: 175} },
-                'B': { '골레이로': {x: 560, y: 175}, '픽소': {x: 480, y: 175}, '아라': {x: 380, y: 270}, '피보': {x: 340, y: 175} }
+            // 전술별 Home X 좌표 (A팀 기준, B팀은 대칭)
+            const getHomePos = (team, pos, idx) => {
+                let x, y;
+                if(pos === '골레이로') { x = 30; y = 175; }
+                else if(pos === '픽소') { x = 150; y = 175; }
+                else if(pos === '아라') { x = 250; y = idx % 2 === 0 ? 70 : 280; } // 2명일 경우 위/아래 분산
+                else if(pos === '피보') { x = 350; y = 175; }
+                
+                if (team === 'B') x = canvas.width - x; // B팀은 오른쪽에서 왼쪽으로 공격
+                return {x, y};
             };
 
-            teamA.forEach((name, i) => {
-                const stats = allPlayersData[name] || { 스피드: 10 };
+            let alaCountA = 0, alaCountB = 0;
+            
+            teamA.forEach(name => {
+                const stats = allPlayersData[name] || { 스피드: 10, 패스: 10, 슛: 10 };
                 const pos = document.getElementById(`pos-A-${name}`).value;
-                const home = posCoords['A'][pos] || {x: 150, y: 175};
-                
-                if(pos === '아라' && activePlayers.filter(p => p.team === 'A' && p.position === '아라').length > 0) home.y = 270;
-                
-                activePlayers.push({ name: name, team: 'A', speed: stats.스피드, position: pos, x: home.x, y: home.y, homeX: home.x, homeY: home.y });
+                const home = getHomePos('A', pos, pos === '아라' ? alaCountA++ : 0);
+                activePlayers.push({ name: name, team: 'A', stats: stats, position: pos, x: home.x, y: home.y, homeX: home.x, homeY: home.y });
             });
 
-            teamB.forEach((name, i) => {
-                const stats = allPlayersData[name] || { 스피드: 10 };
+            teamB.forEach(name => {
+                const stats = allPlayersData[name] || { 스피드: 10, 패스: 10, 슛: 10 };
                 const pos = document.getElementById(`pos-B-${name}`).value;
-                const home = posCoords['B'][pos] || {x: 450, y: 175};
-                
-                if(pos === '아라' && activePlayers.filter(p => p.team === 'B' && p.position === '아라').length > 0) home.y = 80;
-
-                activePlayers.push({ name: name, team: 'B', speed: stats.스피드, position: pos, x: home.x, y: home.y, homeX: home.x, homeY: home.y });
+                const home = getHomePos('B', pos, pos === '아라' ? alaCountB++ : 0);
+                activePlayers.push({ name: name, team: 'B', stats: stats, position: pos, x: home.x, y: home.y, homeX: home.x, homeY: home.y });
             });
 
             gameState = 'PLAYING';
