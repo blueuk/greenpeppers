@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>풋고추FC 매치 엔진 V18.0 (빌드업 AI & 밸런스 패치)</title>
+    <title>풋고추FC 매치 엔진 V19.0 (픽소 빌드업 가담 AI)</title>
     <style>
         body { background-color: #1a252f; color: white; font-family: 'Malgun Gothic', sans-serif; margin: 0; padding: 20px; min-width: 1240px; }
         h1 { margin-top: 0; color: #f1c40f; margin-bottom: 10px; text-align: center; }
@@ -71,7 +71,7 @@
     </style>
 </head>
 <body>
-    <h1>풋고추FC 실시간 시뮬레이터 V18.0 (빌드업 완전판)</h1>
+    <h1>풋고추FC 실시간 시뮬레이터 V19.0 (라인 컨트롤 완성)</h1>
     
     <div id="main-container">
         <div id="left-panel">
@@ -685,7 +685,7 @@
                 let myGoalX = p.team === 'A' ? 5 : canvas.width - 5;
                 
                 p.isLineBreaking = false; 
-                p.isIsolating = false; // 💡 [핵심 V18.0] 무한 속도 증가 버그 수정 (매 프레임 초기화)
+                p.isIsolating = false; 
                 let tState = teamTactics[p.team];
                 
                 let isPatternWaiting = false;
@@ -704,7 +704,6 @@
                         }
                     });
 
-                    // 💡 [패턴 플레이 제어부] 
                     if (tState.currentPattern === 'PIVO_TARGET') {
                         if (p.position === '픽소' && tState.step === 1) {
                             isPatternWaiting = true; 
@@ -800,7 +799,7 @@
                         p.heading += getAngleDiff(angleToGoal, p.heading) * 0.2 * (angleToGoal > p.heading ? 1 : -1);
                         targetX = p.x + Math.cos(p.heading) * 50; 
                         targetY = p.y + Math.sin(p.heading) * 50;
-                        p.isIsolating = true; // 💡 [핵심 V18.0] 폭주 버그 수정
+                        p.isIsolating = true; 
                         if(Math.random() < 0.05) addLog(`⚡ [단독 돌파] 공간이 열리자 ${p.name} 선수가 매섭게 전진 드리블을 시도합니다!`);
                     }
                     else if (Math.random() < shootProb && curShoot >= 10 && !isPatternWaiting) {
@@ -842,7 +841,6 @@
                             if (breakers.length > 0 && Math.random() < (p.position === '피보' ? 0.85 : 0.7) && tState.offMode !== 'POSSESSION') { 
                                 targetMate = breakers[Math.floor(Math.random() * breakers.length)]; isKillerPass = true;
                             } else {
-                                // 💡 [핵심 V18.0] 볼 돌리기 방지: 전방(상대 골대 쪽)에 있는 동료를 우선 타겟팅
                                 visibleMates.sort((a,b) => {
                                     let aProg = dir === 1 ? a.x : -a.x;
                                     let bProg = dir === 1 ? b.x : -b.x;
@@ -889,7 +887,6 @@
                             targetX = p.x + Math.cos(p.heading) * 5; 
                             targetY = p.y + Math.sin(p.heading) * 5; 
                         } else {
-                            // 💡 [핵심 V18.0] 전진 드리블 시 볼 돌리지 않고 앞으로 밀고 나감
                             p.heading += getAngleDiff(angleToGoal, p.heading) * 0.1 * (angleToGoal > p.heading ? 1 : -1);
                             targetX = p.x + Math.cos(p.heading) * 40; targetY = p.y + Math.sin(p.heading) * 40;
                         }
@@ -902,7 +899,7 @@
                         } else if (p.position === '피보') {
                             targetX = oppGoalX - dir * 60; targetY = 190;
                         } else if (p.position === '픽소') {
-                            targetX = ball.x - dir * 25; targetY = ball.y;
+                            targetX = ball.x - dir * 35; targetY = ball.y;
                         }
                     }
                     else if (tState.currentPattern === 'ALA_OVERLAP') {
@@ -918,12 +915,17 @@
                         if (tState.offMode === 'COUNTER') {
                             if (p.position === '피보' || p.position === '아라') {
                                 targetX = oppGoalX - dir * 15; targetY = p.homeY; p.isLineBreaking = true;
-                            } else if (p.position === '픽소') { targetX = ball.x - dir * 20; targetY = ball.y; }
+                            } else if (p.position === '픽소') { 
+                                targetX = canvas.width / 2 - dir * 20; targetY = ball.y; 
+                            }
                         } 
                         else if (tState.offMode === 'POSSESSION') {
-                            // 💡 점유율 플레이 시에도 약간씩 전진
-                            targetX = ball.x - dir * 40 + (p.homeY > 190 ? 20 : -20); targetY = ball.y + (p.homeY > 190 ? 40 : -40);
-                            if(p.position === '피보') targetX = oppGoalX - dir * 100; 
+                            if(p.position === '피보') targetX = oppGoalX - dir * 80; 
+                            else if(p.position === '픽소') {
+                                targetX = canvas.width / 2 - dir * 30; targetY = 190 + (ball.y - 190) * 0.5;
+                            } else {
+                                targetX = ball.x - dir * 40 + (p.homeY > 190 ? 20 : -20); targetY = ball.y + (p.homeY > 190 ? 40 : -40);
+                            }
                         } 
                         else {
                             if (p.position === '피보') { 
@@ -943,7 +945,6 @@
                                     let switchWave = Math.sin(matchTime / 4 + p.alaIndex * Math.PI); 
                                     let dynamicY = 190 + switchWave * 120; 
                                     
-                                    // 💡 [핵심 V18.0] 패스 받기 좋은 적절한 거리(40~60px) 유지
                                     if (p.role === '측면 돌파') { targetX = ball.x + dir * 30; targetY = dynamicY; } 
                                     else { 
                                         targetX = ball.x + dir * 20;
@@ -952,12 +953,24 @@
                                 }
                             } 
                             else if (p.position === '픽소') { 
-                                // 💡 [핵심 V18.0] 빌드업 거리 조절 (너무 가깝지 않게 55px 이격)
                                 if (p.role === '빌드업 리더') {
-                                    targetX = ball.x - dir * 55; 
+                                    targetX = ball.x - dir * 45; 
                                     targetY = ball.y + Math.sin(matchTime)*30; 
                                 } else {
-                                    targetX = p.homeX + (ball.x - p.homeX)*0.5; targetY = 190;
+                                    // 💡 [핵심 V19.0] 수비 전담 픽소 공격 가담 및 하프라인 전진 AI
+                                    let halfLine = canvas.width / 2;
+                                    let isBallInOppHalf = (dir === 1 && ball.x > halfLine) || (dir === -1 && ball.x < halfLine);
+                                    if (isBallInOppHalf) {
+                                        targetX = halfLine - dir * 30; // 하프라인까지 전진
+                                    } else {
+                                        targetX = ball.x - dir * 60; // 후방 빌드업 지원
+                                    }
+                                    // 키퍼 옆에 붙는 현상 방지 (최소 전진 라인 설정)
+                                    let minAdvancedX = myGoalX + dir * 100;
+                                    if (dir === 1 && targetX < minAdvancedX) targetX = minAdvancedX;
+                                    if (dir === -1 && targetX > minAdvancedX) targetX = minAdvancedX;
+
+                                    targetY = 190 + (ball.y - 190) * 0.4; 
                                 }
                             }
                             else if (p.position === '골레이로') { targetX = myGoalX + dir * 60; targetY = 190; }
