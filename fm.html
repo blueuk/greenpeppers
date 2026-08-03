@@ -2,146 +2,288 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>풋고추FC 6v6 매치 엔진</title>
+    <title>풋고추FC 매치 엔진 V3 (실시간 데이터 연동)</title>
     <style>
-        body {
-            background-color: #2c3e50;
-            color: white;
-            text-align: center;
-            font-family: 'Malgun Gothic', sans-serif;
-        }
-        canvas {
-            background-color: #27ae60; /* 풋살장 잔디색 */
-            border: 5px solid #fff;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
-            margin-top: 20px;
-        }
+        body { background-color: #1a252f; color: white; font-family: 'Malgun Gothic', sans-serif; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 20px; }
+        h1 { margin-top: 0; color: #f1c40f; }
+        
+        #setup-panel { background: #34495e; padding: 20px; border-radius: 8px; margin-bottom: 20px; width: 800px; display: flex; justify-content: space-between; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .team-setup { width: 45%; }
+        .team-setup h3 { margin-top: 0; border-bottom: 2px solid #7f8c8d; padding-bottom: 5px; }
+        
+        #game-board { display: flex; gap: 20px; }
+        canvas { background-color: #27ae60; border: 4px solid #ecf0f1; border-radius: 4px; box-shadow: 0 0 15px rgba(0,0,0,0.5); }
+        
+        #ui-panel { width: 300px; background: #2c3e50; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        #scoreboard { font-size: 24px; font-weight: bold; text-align: center; margin-bottom: 10px; border-bottom: 2px solid #34495e; padding-bottom: 10px; background: #1abc9c; border-radius: 4px; padding: 10px;}
+        #timer { font-size: 22px; color: #f1c40f; text-align: center; margin-bottom: 20px; font-weight: bold; font-variant-numeric: tabular-nums; }
+        
+        #commentary { flex-grow: 1; background: #111; padding: 10px; overflow-y: auto; font-size: 13px; color: #ecf0f1; border-radius: 4px; margin-bottom: 10px; border: 1px solid #7f8c8d; }
+        .comment-line { margin-bottom: 6px; border-bottom: 1px dashed #333; padding-bottom: 4px; line-height: 1.4; }
+        
+        select { width: 100%; padding: 8px; margin-bottom: 15px; background: #2c3e50; color: white; border: 1px solid #7f8c8d; border-radius: 4px; }
+        .player-select { height: 120px; }
+        
+        button { width: 100%; padding: 12px; background: #e74c3c; color: white; font-weight: bold; font-size: 16px; border: none; border-radius: 4px; cursor: pointer; transition: background 0.2s; }
+        button:hover { background: #c0392b; }
+        button:disabled { background: #7f8c8d; cursor: not-allowed; }
     </style>
 </head>
 <body>
-    <h1>풋고추FC 매치 엔진 (바둑알 뷰)</h1>
-    <canvas id="pitch" width="800" height="400"></canvas>
+    <h1>풋고추FC 실시간 시뮬레이터</h1>
+    
+    <div id="setup-panel">
+        <div class="team-setup">
+            <h3>TEAM A (형광)</h3>
+            <label>포메이션</label>
+            <select id="formA">
+                <option value="1221">1-2-2-1</option>
+                <option value="1311">1-3-1-1</option>
+            </select>
+            <label>선발 명단 (Ctrl+클릭 다중선택)</label>
+            <select id="squadA" class="player-select" multiple></select>
+        </div>
+        
+        <div class="team-setup">
+            <h3>TEAM B (주황)</h3>
+            <label>포메이션</label>
+            <select id="formB">
+                <option value="1212">1-2-1-2</option>
+                <option value="1221">1-2-2-1</option>
+            </select>
+            <label>선발 명단 (Ctrl+클릭 다중선택)</label>
+            <select id="squadB" class="player-select" multiple></select>
+        </div>
+    </div>
+    
+    <div id="game-board">
+        <canvas id="pitch" width="800" height="400"></canvas>
+        
+        <div id="ui-panel">
+            <div id="scoreboard">A팀 <span id="scoreA">0</span> : <span id="scoreB">0</span> B팀</div>
+            <div id="timer">00:00</div>
+            <div id="commentary">
+                <div class="comment-line" style="color: #f1c40f;">[시스템] 풋고추FC 데이터베이스에 연결 중...</div>
+            </div>
+            <button id="startBtn" onclick="startGame()" disabled>데이터 로딩 중...</button>
+        </div>
+    </div>
 
     <script>
-        const canvas = document.getElementById('pitch');
-        const ctx = canvas.getContext('2d');
+        // --- [API 및 데이터 연동 영역] ---
+        const API_URL = "https://script.google.com/macros/s/AKfycbzdLjnfQEFuF0c6sH75D7gLyaPUg4LJWSDJLAym5kWKucot-CbY-QEkrDI7DnaxRYpe/exec";
+        
+        // 공통 선수 명단 (common.js가 없으므로 우선 배열로 선언)
+        const playerNames = ["강승지", "강한팀", "김동섭", "김진혁", "배장원", "송정환"]; 
+        let allPlayersData = []; // 서버에서 받아온 가공된 선수 데이터
+        let teamAPlayers = [];
+        let teamBPlayers = [];
 
-        // 1. 경기장 그리기 함수
-        function drawPitch() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // 중앙선
-            ctx.beginPath();
-            ctx.moveTo(canvas.width / 2, 0);
-            ctx.lineTo(canvas.width / 2, canvas.height);
-            ctx.strokeStyle = 'white';
-            ctx.lineWidth = 2;
-            ctx.stroke();
+        const commentBox = document.getElementById('commentary');
+        const startBtn = document.getElementById('startBtn');
 
-            // 센터 서클
-            ctx.beginPath();
-            ctx.arc(canvas.width / 2, canvas.height / 2, 50, 0, Math.PI * 2);
-            ctx.stroke();
-
-            // 페널티 에어리어 (간단하게 구현)
-            ctx.strokeRect(0, canvas.height/2 - 100, 100, 200);
-            ctx.strokeRect(canvas.width - 100, canvas.height/2 - 100, 100, 200);
+        // 해설 출력 함수
+        function addComment(text, isSystem = false) {
+            const timeStr = isSystem ? "[시스템]" : `[${document.getElementById('timer').innerText}]`;
+            const newComment = document.createElement('div');
+            newComment.className = 'comment-line';
+            newComment.innerHTML = `<strong>${timeStr}</strong> ${text}`;
+            commentBox.prepend(newComment);
         }
 
-        // 2. 풋고추FC 선수 데이터 (엑셀 데이터 기반 간소화)
-        // x, y는 초기 위치, speed는 엑셀의 '스피드' 스탯을 반영
-        let teamA = [
-            { name: '강승지', role: '골레이로', x: 30, y: 200, color: 'blue', speed: 1.3 },
-            { name: '강한팀', role: '픽소', x: 200, y: 200, color: 'blue', speed: 1.6 },
-            { name: '김동섭', role: '아라', x: 300, y: 80, color: 'blue', speed: 1.3 },
-            { name: '김진혁', role: '아라', x: 300, y: 320, color: 'blue', speed: 1.0 },
-            { name: '배장원', role: '피보', x: 350, y: 200, color: 'blue', speed: 1.0 },
-            { name: '송정환', role: '서브', x: 150, y: 100, color: 'blue', speed: 1.3 }
-        ];
+        // 서버 통신 함수
+        async function fetchFutsalAPI(data) {
+            try {
+                const response = await fetch(API_URL, { 
+                    method: 'POST', 
+                    body: JSON.stringify(data) 
+                });
+                const result = await response.json();
+                if (!result.success) throw new Error(result.error);
+                return result.data;
+            } catch (e) {
+                console.error("API Error:", e);
+                return null;
+            }
+        }
 
-        let teamB = [
-            { name: '안성모', role: '골레이로', x: 770, y: 200, color: 'red', speed: 1.3 },
-            { name: '상대1', role: '픽소', x: 600, y: 200, color: 'red', speed: 1.4 },
-            { name: '상대2', role: '아라', x: 500, y: 80, color: 'red', speed: 1.4 },
-            { name: '상대3', role: '아라', x: 500, y: 320, color: 'red', speed: 1.4 },
-            { name: '상대4', role: '피보', x: 450, y: 200, color: 'red', speed: 1.5 },
-            { name: '상대5', role: '서브', x: 650, y: 300, color: 'red', speed: 1.4 }
-        ];
+        // 초기 데이터 로딩
+        async function initGameData() {
+            addComment("선수단 세부 능력치를 불러오고 있습니다...", true);
+            
+            for (let name of playerNames) {
+                const playerData = await fetchFutsalAPI({ action: 'getMemberInfo', memberName: name });
+                if (playerData && playerData.stats) {
+                    allPlayersData.push({
+                        이름: name,
+                        골레이로: parseFloat(playerData.stats[0]) || 0,
+                        아라: parseFloat(playerData.stats[1]) || 0,
+                        피보: parseFloat(playerData.stats[2]) || 0,
+                        픽소: parseFloat(playerData.stats[3]) || 0,
+                        스피드: parseFloat(playerData.stats[7]) || 10,
+                        패스: parseFloat(playerData.stats[23]) || 10
+                    });
+                }
+            }
+            
+            addComment(`총 ${allPlayersData.length}명의 데이터를 성공적으로 불러왔습니다!`, true);
+            populateUI();
+            
+            startBtn.innerText = "킥오프 (경기 시작)";
+            startBtn.disabled = false;
+        }
 
-        // 공 객체
-        let ball = { x: 400, y: 200, vx: 0, vy: 0 };
-
-        // 3. 바둑알(선수) 그리기
-        function drawPlayers(team) {
-            team.forEach(p => {
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, 12, 0, Math.PI * 2); // 바둑알 크기
-                ctx.fillStyle = p.color;
-                ctx.fill();
-                ctx.strokeStyle = 'white';
-                ctx.stroke();
-                
-                // 이름 표시
-                ctx.fillStyle = 'white';
-                ctx.font = '10px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText(p.name, p.x, p.y - 15);
+        function populateUI() {
+            const sqA = document.getElementById('squadA');
+            const sqB = document.getElementById('squadB');
+            allPlayersData.forEach((p, idx) => {
+                sqA.add(new Option(`${p.이름} (스피드:${p.스피드})`, idx));
+                sqB.add(new Option(`${p.이름} (스피드:${p.스피드})`, idx));
             });
         }
 
-        // 공 그리기
+        window.onload = () => {
+            initGameData();
+            drawPitch();
+        };
+
+        // --- [매치 엔진 영역 (V3 로직)] ---
+        const canvas = document.getElementById('pitch');
+        const ctx = canvas.getContext('2d');
+        
+        let gameState = 'STOPPED'; 
+        let matchTime = 0; 
+        const MAX_TIME = 780; // 13분 (초 단위)
+        let score = { A: 0, B: 0 };
+        
+        let ball = { x: 400, y: 200, vx: 0, vy: 0 };
+        let activePlayers = []; // 캔버스 위에 그려질 선수 객체들
+
+        function drawPitch() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 라인 그리기
+            ctx.strokeStyle = 'white'; ctx.lineWidth = 2;
+            ctx.strokeRect(5, 5, canvas.width - 10, canvas.height - 10);
+            ctx.beginPath(); ctx.moveTo(400, 5); ctx.lineTo(400, 395); ctx.stroke();
+            ctx.beginPath(); ctx.arc(400, 200, 50, 0, Math.PI * 2); ctx.stroke();
+            
+            // 골대
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.fillRect(5, 120, 30, 160);
+            ctx.fillRect(765, 120, 30, 160);
+        }
+
         function drawBall() {
             ctx.beginPath();
             ctx.arc(ball.x, ball.y, 6, 0, Math.PI * 2);
-            ctx.fillStyle = 'white';
-            ctx.fill();
-            ctx.strokeStyle = 'black';
-            ctx.stroke();
+            ctx.fillStyle = 'white'; ctx.fill();
+            ctx.strokeStyle = 'black'; ctx.lineWidth = 1; ctx.stroke();
         }
 
-        // 4. 로직 업데이트 (간단한 공 쫓아가기 AI)
-        function updateLogic() {
-            // 데모용: 공이 무작위로 조금씩 움직임
-            ball.x += (Math.random() - 0.5) * 4;
-            ball.y += (Math.random() - 0.5) * 4;
+        function drawPlayers() {
+            activePlayers.forEach(p => {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 12, 0, Math.PI * 2);
+                ctx.fillStyle = p.team === 'A' ? '#cddc39' : '#e67e22'; // 형광 vs 주황
+                ctx.fill();
+                ctx.strokeStyle = '#333'; ctx.lineWidth = 2; ctx.stroke();
+                
+                ctx.fillStyle = 'white';
+                ctx.font = '11px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(p.name, p.x, p.y - 16);
+            });
+        }
 
-            // 경기장 밖으로 안 나가게 제한
-            if(ball.x < 0) ball.x = 0;
-            if(ball.x > 800) ball.x = 800;
-            if(ball.y < 0) ball.y = 0;
-            if(ball.y > 400) ball.y = 400;
+        function updateGame() {
+            if (gameState !== 'PLAYING') return;
 
-            // 모든 선수가 공을 향해 조금씩 이동 (스피드 스탯 비례)
-            const moveToBall = (p) => {
+            matchTime += 1/60; 
+            const min = String(Math.floor(matchTime / 60)).padStart(2, '0');
+            const sec = String(Math.floor(matchTime % 60)).padStart(2, '0');
+            document.getElementById('timer').innerText = `${min}:${sec}`;
+
+            if (matchTime >= MAX_TIME) {
+                gameState = 'STOPPED';
+                addComment("주심의 휘슬과 함께 전후반 13분 경기가 모두 종료되었습니다!");
+                startBtn.disabled = false;
+                return;
+            }
+
+            // 단순 물리 로직: 선수들이 공을 향해 이동 (스피드 스탯 비례)
+            activePlayers.forEach(p => {
                 let dx = ball.x - p.x;
                 let dy = ball.y - p.y;
-                let dist = Math.sqrt(dx * dx + dy * dy);
+                let dist = Math.sqrt(dx*dx + dy*dy);
                 
-                // 공과 일정 거리 이상 떨어져 있을 때만 이동
-                if (dist > 15) { 
-                    p.x += (dx / dist) * (p.speed * 0.5); // 스피드 능력치 적용
-                    p.y += (dy / dist) * (p.speed * 0.5);
+                if(dist > 10) {
+                    // 스피드 스탯(예: 13~16)을 이동 속도로 스케일링
+                    let moveSpeed = (p.speed / 10) * 0.8; 
+                    p.x += (dx / dist) * moveSpeed;
+                    p.y += (dy / dist) * moveSpeed;
                 }
-            };
+            });
 
-            teamA.forEach(moveToBall);
-            teamB.forEach(moveToBall);
+            // 공 움직임 (데모용 무작위)
+            ball.x += (Math.random() - 0.5) * 6;
+            ball.y += (Math.random() - 0.5) * 6;
+
+            // 아웃 및 골 판정 로직
+            if (ball.x <= 35 && ball.y >= 120 && ball.y <= 280) goalScored('B');
+            else if (ball.x >= 765 && ball.y >= 120 && ball.y <= 280) goalScored('A');
+            else if (ball.x < 5 || ball.x > 795 || ball.y < 5 || ball.y > 395) {
+                ball.x = 400; ball.y = 200; // 임시: 밖으로 나가면 중앙으로 리셋
+            }
         }
 
-        // 5. 게임 루프 (60FPS로 화면 갱신)
-        function gameLoop() {
-            drawPitch();
-            updateLogic();
-            drawPlayers(teamA);
-            drawPlayers(teamB);
-            drawBall();
+        function goalScored(teamName) {
+            gameState = 'GOAL';
+            score[teamName]++;
+            document.getElementById(`score${teamName}`).innerText = score[teamName];
+            addComment(`GOAL!!! ${teamName}팀의 엄청난 득점입니다!`);
             
-            requestAnimationFrame(gameLoop);
+            setTimeout(() => {
+                ball = { x: 400, y: 200, vx: 0, vy: 0 };
+                gameState = 'PLAYING';
+                addComment("경기가 중앙에서 재개됩니다.");
+            }, 3000);
         }
 
-        // 게임 시작
-        gameLoop();
+        function loop() {
+            drawPitch();
+            if(gameState === 'PLAYING') updateGame();
+            drawPlayers();
+            drawBall();
+            requestAnimationFrame(loop);
+        }
+
+        function startGame() {
+            const selA = Array.from(document.getElementById('squadA').selectedOptions).map(o => allPlayersData[o.value]);
+            const selB = Array.from(document.getElementById('squadB').selectedOptions).map(o => allPlayersData[o.value]);
+            
+            if (selA.length === 0 || selB.length === 0) return alert("각 팀에 선수를 최소 1명 이상 선택하세요.");
+            
+            startBtn.disabled = true;
+            matchTime = 0;
+            score = { A: 0, B: 0 };
+            document.getElementById('scoreA').innerText = 0; document.getElementById('scoreB').innerText = 0;
+            commentBox.innerHTML = '';
+            
+            // 캔버스에 그릴 선수 객체 생성 및 초기 위치 세팅
+            activePlayers = [];
+            selA.forEach((p, i) => {
+                activePlayers.push({ name: p.이름, team: 'A', speed: p.스피드, x: 200, y: 100 + (i * 50) });
+            });
+            selB.forEach((p, i) => {
+                activePlayers.push({ name: p.이름, team: 'B', speed: p.스피드, x: 600, y: 100 + (i * 50) });
+            });
+
+            addComment("주심의 휘슬과 함께 풋고추FC 자체전이 시작됩니다!");
+            gameState = 'PLAYING';
+        }
+
+        loop(); // 렌더링 루프 시작
     </script>
 </body>
 </html>
