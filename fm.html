@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>풋고추FC 매치 엔진 V6.1 (버그 픽스)</title>
+    <title>풋고추FC 매치 엔진 V6.2 (포지션 분산 AI)</title>
     <style>
         body { background-color: #1a252f; color: white; font-family: 'Malgun Gothic', sans-serif; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 20px; }
         h1 { margin-top: 0; color: #f1c40f; margin-bottom: 10px; }
@@ -55,7 +55,7 @@
     </style>
 </head>
 <body>
-    <h1>풋고추FC 실시간 시뮬레이터 V6.1</h1>
+    <h1>풋고추FC 실시간 시뮬레이터 V6.2</h1>
     
     <div id="main-container">
         <div id="left-panel">
@@ -245,7 +245,7 @@
 
         window.onload = initApp;
 
-        // --- [매치 엔진 그래픽/로직 영역 V6.1] ---
+        // --- [매치 엔진 그래픽/로직 영역 V6.2] ---
         const canvas = document.getElementById('pitch');
         const ctx = canvas.getContext('2d');
         let gameState = 'STOPPED'; // PLAYING, DEAD_BALL, KICK_OFF
@@ -312,7 +312,7 @@
         function handleDeadBallState() {
             deadBallTimer -= 1/60;
             
-            // 데드볼 상황 시 선수들은 자기 진영(Home)으로 복귀
+            // 데드볼 시 진영(Home)으로 자연스럽게 복귀
             activePlayers.forEach(p => {
                 let dx = p.homeX - p.x; let dy = p.homeY - p.y;
                 let dist = Math.hypot(dx, dy);
@@ -348,7 +348,6 @@
                 updateStatsUI(); addLog("경기 종료!"); alert("경기가 종료되었습니다!"); return; 
             }
 
-            // 공리 물리 처리
             if (!ball.owner) {
                 ball.x += ball.vx; ball.y += ball.vy;
                 ball.vx *= 0.95; ball.vy *= 0.95; 
@@ -358,7 +357,6 @@
                 ball.lastTouchedTeam = ball.owner.team;
             }
 
-            // 소유권 획득
             if (!ball.owner) {
                 activePlayers.forEach(p => {
                     let dist = Math.hypot(ball.x - p.x, ball.y - p.y);
@@ -376,7 +374,6 @@
                 let distToBall = Math.hypot(ball.x - p.x, ball.y - p.y);
 
                 if (p === ball.owner) {
-                    // 공격자 AI
                     let targetGoalX = p.team === 'A' ? canvas.width - 5 : 5;
                     let distToGoal = Math.hypot(targetGoalX - p.x, 175 - p.y);
 
@@ -416,7 +413,7 @@
                             }
                         }
                     } else {
-                        targetX = targetGoalX; targetY = 175; // 드리블 전진
+                        targetX = targetGoalX; targetY = 175; 
                     }
                 } else if (isOffense) {
                     if (p.position === '피보') targetX = p.team === 'A' ? canvas.width - 50 : 50; 
@@ -444,7 +441,6 @@
                                 matchStats[p.team].fouls++;
                                 addLog(`[반칙] ⚠️ ${p.name} 거친 반칙! 사이드에서 킥인으로 진행`);
                                 ball.owner = null; ball.vx = 0; ball.vy = 0;
-                                // 💡 사이드로 공 이동 시 무한 루프 방지를 위해 안전하게 안쪽 15px 지점으로 설정
                                 ball.y = ball.y < canvas.height/2 ? 15 : canvas.height - 15;
                                 deadBallTimer = 2; gameState = 'DEAD_BALL';
                             }
@@ -462,24 +458,20 @@
                     p.x += (dx / dist) * moveSpeed; p.y += (dy / dist) * moveSpeed;
                 }
                 
-                // 💡 선수들이 맵 밖으로 벗어나지 않게 투명벽(Clamp) 적용
                 p.x = Math.max(15, Math.min(canvas.width - 15, p.x));
                 p.y = Math.max(15, Math.min(canvas.height - 15, p.y));
             });
 
-            // 💡 [버그 픽스] 주인이 없는 공(루즈볼)일 때만 아웃 판정을 수행하도록 변경
             if (!ball.owner) {
                 if (ball.x <= 10 && ball.y >= 140 && ball.y <= 210) goalScored('B');
                 else if (ball.x >= canvas.width - 10 && ball.y >= 140 && ball.y <= 210) goalScored('A');
                 else if (ball.y <= 5 || ball.y >= canvas.height - 5) {
-                    // 사이드 아웃: 라인에서 15px 안쪽으로 킥인 위치 보정
                     ball.vx = 0; ball.vy = 0;
                     ball.y = ball.y <= 5 ? 15 : canvas.height - 15; 
                     addLog(`[사이드 아웃] ${ball.lastTouchedTeam === 'A' ? 'B' : 'A'}팀의 킥인으로 재개됩니다.`);
                     deadBallTimer = 2; gameState = 'DEAD_BALL';
                 }
                 else if (ball.x <= 5 || ball.x >= canvas.width - 5) {
-                    // 골 클리어런스: 골키퍼 앞 안전지대 보정
                     ball.vx = 0; ball.vy = 0;
                     ball.x = ball.x <= 5 ? 25 : canvas.width - 25; 
                     ball.y = 175;
@@ -521,29 +513,43 @@
             
             activePlayers = []; ball.owner = null; ball.x = 300; ball.y = 175; ball.lastTouchedTeam = 'B';
             
-            const getHomePos = (team, pos, posCount) => {
-                let x, y;
-                if(pos === '골레이로') { x = 30; y = 175; }
-                else if(pos === '픽소') { x = 130; y = 175; }
-                else if(pos === '아라') { x = 230; y = posCount === 0 ? 60 : 290; }
-                else if(pos === '피보') { x = 330; y = 175; }
+            // 💡 [핵심수정] 1. 팀별 포지션 인원수 사전 계산 (분산 배치를 위함)
+            let pTotalA = { '골레이로': 0, '아라': 0, '픽소': 0, '피보': 0 };
+            teamA.forEach(n => pTotalA[document.getElementById(`pos-A-${n}`).value]++);
+            let pTotalB = { '골레이로': 0, '아라': 0, '픽소': 0, '피보': 0 };
+            teamB.forEach(n => pTotalB[document.getElementById(`pos-B-${n}`).value]++);
+
+            // 💡 [핵심수정] 2. 포지션에 배치된 인원수(totalInPos)를 받아 겹치지 않게 Y좌표를 계산
+            const getHomePos = (team, pos, posCount, totalInPos) => {
+                let x, y = 175;
+                if(pos === '골레이로') x = 30;
+                else if(pos === '픽소') x = 140;
+                else if(pos === '아라') x = 240;
+                else if(pos === '피보') x = 330;
+                
+                if (totalInPos === 1) y = 175; // 1명일때 중앙
+                else if (totalInPos === 2) y = posCount === 0 ? 80 : 270; // 2명일때 위, 아래 넓게 분산
+                else if (totalInPos === 3) y = posCount === 0 ? 175 : (posCount === 1 ? 70 : 280); // 3명일때 상,중,하
+                else y = 70 + (posCount * 55); // 4명 이상일 때 순서대로 간격 벌리기
+
                 if (team === 'B') x = canvas.width - x; 
                 return {x, y};
             };
 
             let pCa = { '골레이로': 0, '아라': 0, '픽소': 0, '피보': 0 };
             teamA.forEach(name => {
-                const s = allPlayersData[name];
+                // 💡 [핵심수정] 3. 데이터 로드 실패 시 무조건 실행되도록 Fallback(기본값) 능력치 보장
+                const s = allPlayersData[name] || { 스피드: 10, 슛: 10, 패스: 10, 롱패스: 10 }; 
                 const pos = document.getElementById(`pos-A-${name}`).value;
-                const home = getHomePos('A', pos, pCa[pos]++);
+                const home = getHomePos('A', pos, pCa[pos]++, pTotalA[pos]);
                 activePlayers.push({ name: name, team: 'A', stats: s, position: pos, x: home.x, y: home.y, homeX: home.x, homeY: home.y });
             });
 
             let pCb = { '골레이로': 0, '아라': 0, '픽소': 0, '피보': 0 };
             teamB.forEach(name => {
-                const s = allPlayersData[name];
+                const s = allPlayersData[name] || { 스피드: 10, 슛: 10, 패스: 10, 롱패스: 10 };
                 const pos = document.getElementById(`pos-B-${name}`).value;
-                const home = getHomePos('B', pos, pCb[pos]++);
+                const home = getHomePos('B', pos, pCb[pos]++, pTotalB[pos]);
                 activePlayers.push({ name: name, team: 'B', stats: s, position: pos, x: home.x, y: home.y, homeX: home.x, homeY: home.y });
             });
 
