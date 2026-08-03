@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>풋고추FC 매치 엔진 V5.2 (실시간 스탯 및 로그)</title>
+    <title>풋고추FC 매치 엔진 V5.5 (AI 360도 시야 & 실수 반영)</title>
     <style>
         body { background-color: #1a252f; color: white; font-family: 'Malgun Gothic', sans-serif; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 20px; }
         h1 { margin-top: 0; color: #f1c40f; margin-bottom: 10px; }
@@ -25,19 +25,17 @@
         .pos-select { padding: 4px; font-size: 12px; background: #ecf0f1; color: #333; border-radius: 4px; border: none; outline: none; }
         .remove-btn { background: #e74c3c; color: white; border: none; border-radius: 4px; padding: 4px 8px; font-size: 11px; cursor: pointer; font-weight: bold; }
         
-        /* 우측 패널 (스코어 + 실시간 통계 + 로그) */
         #right-panel { display: flex; flex-direction: column; gap: 15px; flex: 1.2; }
         #ui-panel { background: #2c3e50; padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
         #scoreboard { font-size: 22px; font-weight: bold; text-align: center; margin-bottom: 10px; border-bottom: 2px solid #34495e; padding-bottom: 10px; background: #1abc9c; border-radius: 4px; padding: 10px;}
         #timer { font-size: 20px; color: #f1c40f; text-align: center; margin-bottom: 10px; font-weight: bold; }
         
-        /* 실시간 매치 스탯판 스타일 */
+        /* 실시간 매치 스탯판 (패스 성공률 추가) */
         .stats-board { display: grid; grid-template-columns: 1fr auto 1fr; gap: 5px; font-size: 12px; text-align: center; background: #111; padding: 8px; border-radius: 4px; margin-bottom: 10px; }
         .stats-label { color: #bdc3c7; font-size: 11px; grid-column: 2; }
         .stat-val-a { color: #cddc39; font-weight: bold; text-align: left; padding-left: 10px; }
         .stat-val-b { color: #e67e22; font-weight: bold; text-align: right; padding-right: 10px; }
 
-        /* 실시간 해설/로그 박스 */
         #match-log { height: 130px; background: #111; border: 1px solid #7f8c8d; border-radius: 4px; padding: 8px; overflow-y: auto; font-size: 11px; color: #ecf0f1; margin-bottom: 10px; display: flex; flex-direction: column; gap: 4px; }
         .log-line { border-bottom: 1px dashed #222; padding-bottom: 2px; line-height: 1.3; }
 
@@ -59,7 +57,7 @@
     </style>
 </head>
 <body>
-    <h1>풋고추FC 실시간 시뮬레이터 V5.2</h1>
+    <h1>풋고추FC 실시간 시뮬레이터 V5.5</h1>
     
     <div id="main-container">
         <div id="left-panel">
@@ -82,13 +80,11 @@
             </div>
         </div>
         
-        <!-- 우측 패널 (스코어 + 실시간 통계판 + 로그) -->
         <div id="right-panel">
             <div id="ui-panel">
                 <div id="scoreboard">A팀 <span id="scoreA">0</span> : <span id="scoreB">0</span> B팀</div>
-                <div id="timer">00:00</div>
+                <div id="timer">00:00 / 13:00</div>
 
-                <!-- 💡 실시간 경기 스탯판 -->
                 <div class="stats-board">
                     <div class="stat-val-a" id="stat-pos-a">50%</div>
                     <div class="stats-label">점유율</div>
@@ -98,9 +94,9 @@
                     <div class="stats-label">슈팅</div>
                     <div class="stat-val-b" id="stat-shot-b">0</div>
 
-                    <div class="stat-val-a" id="stat-pass-a">0</div>
-                    <div class="stats-label">패스</div>
-                    <div class="stat-val-b" id="stat-pass-b">0</div>
+                    <div class="stat-val-a" id="stat-pass-a">0% (0/0)</div>
+                    <div class="stats-label">패스 성공률</div>
+                    <div class="stat-val-b" id="stat-pass-b">0% (0/0)</div>
 
                     <div class="stat-val-a" id="stat-fou-a">0</div>
                     <div class="stats-label">반칙</div>
@@ -115,7 +111,6 @@
                     <div class="stat-val-b" id="stat-out-b">0</div>
                 </div>
 
-                <!-- 💡 실시간 이벤트 로그 -->
                 <div id="match-log">
                     <div class="log-line" style="color:#f1c40f;">[시스템] 경기를 준비 중입니다...</div>
                 </div>
@@ -143,10 +138,10 @@
         let teamA = []; 
         let teamB = []; 
 
-        // 💡 실시간 경기 통계 객체
+        // 💡 패스 성공률 처리를 위해 passSucc, passFail 세분화
         let matchStats = {
-            A: { possessionTicks: 1, shots: 0, passes: 0, fouls: 0, cornerKicks: 0, lineOuts: 0 },
-            B: { possessionTicks: 1, shots: 0, passes: 0, fouls: 0, cornerKicks: 0, lineOuts: 0 }
+            A: { possessionTicks: 1, shots: 0, passSucc: 0, passFail: 0, fouls: 0, cornerKicks: 0, lineOuts: 0 },
+            B: { possessionTicks: 1, shots: 0, passSucc: 0, passFail: 0, fouls: 0, cornerKicks: 0, lineOuts: 0 }
         };
 
         function addLog(text) {
@@ -156,7 +151,7 @@
             const line = document.createElement('div');
             line.className = 'log-line';
             line.innerHTML = `<span style="color:#f1c40f;">[${min}:${sec}]</span> ${text}`;
-            logBox.prepend(line); // 최신 로그가 위로
+            logBox.prepend(line);
         }
 
         async function fetchFutsalAPI(data) {
@@ -170,13 +165,14 @@
 
         async function initApp() {
             const poolDiv = document.getElementById('player-pool');
-            poolDiv.innerHTML = '<span style="color:#f1c40f; font-size:14px; font-weight:bold;">서버에서 데이터 로딩 중...</span>';
+            poolDiv.innerHTML = '<span style="color:#f1c40f; font-size:14px; font-weight:bold;">서버에서 선수 명단을 가져오는 중입니다...</span>';
             const listData = await fetchFutsalAPI({ action: 'getMemberList' });
             availablePlayers = (listData && Array.isArray(listData)) ? listData : ["강승지", "강한팀", "김동섭", "김진혁", "배장원", "송정환"];
 
-            for (let i = 0; i < availablePlayers.length; i++) {
+            const total = availablePlayers.length;
+            for (let i = 0; i < total; i++) {
                 const name = availablePlayers[i];
-                poolDiv.innerHTML = `<span style="color:#3498db; font-size:14px; font-weight:bold;">데이터 로딩 중... (${i + 1}/${availablePlayers.length})</span>`;
+                poolDiv.innerHTML = `<span style="color:#3498db; font-size:14px; font-weight:bold;">데이터 로딩 중... [총 ${total}명 중 완료: ${i + 1}명] (${name})</span>`;
                 if (!allPlayersData[name]) {
                     const playerData = await fetchFutsalAPI({ action: 'getMemberInfo', memberName: name });
                     if (playerData && playerData.stats) {
@@ -288,12 +284,12 @@
 
         window.onload = initApp;
 
-        // --- [매치 엔진 그래픽/로직 영역 V5.2] ---
+        // --- [매치 엔진 그래픽/로직 영역] ---
         const canvas = document.getElementById('pitch');
         const ctx = canvas.getContext('2d');
         let gameState = 'STOPPED'; 
         let matchTime = 0; 
-        const MAX_TIME = 780; 
+        const MAX_TIME = 780; // 13분 (초 단위)
         let score = { A: 0, B: 0 };
         
         let ball = { x: 300, y: 175, vx: 0, vy: 0, owner: null };
@@ -339,50 +335,60 @@
             let posA = Math.round((matchStats.A.possessionTicks / total) * 100);
             let posB = 100 - posA;
 
+            // 💡 패스 성공률 계산
+            let totalPassA = matchStats.A.passSucc + matchStats.A.passFail;
+            let rateA = totalPassA > 0 ? Math.round((matchStats.A.passSucc / totalPassA) * 100) : 0;
+            let totalPassB = matchStats.B.passSucc + matchStats.B.passFail;
+            let rateB = totalPassB > 0 ? Math.round((matchStats.B.passSucc / totalPassB) * 100) : 0;
+
             document.getElementById('stat-pos-a').innerText = posA + '%';
             document.getElementById('stat-pos-b').innerText = posB + '%';
             document.getElementById('stat-shot-a').innerText = matchStats.A.shots;
             document.getElementById('stat-shot-b').innerText = matchStats.B.shots;
-            document.getElementById('stat-pass-a').innerText = matchStats.A.passes;
-            document.getElementById('stat-pass-b').innerText = matchStats.B.passes;
+            
+            document.getElementById('stat-pass-a').innerText = `${rateA}% (${matchStats.A.passSucc}/${totalPassA})`;
+            document.getElementById('stat-pass-b').innerText = `${rateB}% (${matchStats.B.passSucc}/${totalPassB})`;
+            
             document.getElementById('stat-fou-a').innerText = matchStats.A.fouls;
             document.getElementById('stat-fou-b').innerText = matchStats.B.fouls;
             document.getElementById('stat-ck-a').innerText = matchStats.A.cornerKicks;
             document.getElementById('stat-ck-b').innerText = matchStats.B.cornerKicks;
             document.getElementById('stat-out-a').innerText = matchStats.A.lineOuts;
             document.getElementById('stat-out-b').innerText = matchStats.B.lineOuts;
+
+            const min = String(Math.floor(matchTime / 60)).padStart(2, '0');
+            const sec = String(Math.floor(matchTime % 60)).padStart(2, '0');
+            document.getElementById('timer').innerText = `${min}:${sec} / 13:00`;
         }
 
         function updateGame() {
             if (gameState !== 'PLAYING') return;
-            matchTime += 1/60; 
-            const min = String(Math.floor(matchTime / 60)).padStart(2, '0');
-            const sec = String(Math.floor(matchTime % 60)).padStart(2, '0');
-            document.getElementById('timer').innerText = `${min}:${sec}`;
+
+            // 💡 시간 압축: 현실 1초가 게임 내 약 6.5초로 흐름 (13분이 2분만에 종료됨)
+            matchTime += (1/60) * 6.5; 
 
             if (matchTime >= MAX_TIME) { 
                 gameState = 'STOPPED'; 
-                addLog("주심의 휘슬과 함께 경기가 종료되었습니다!");
+                matchTime = MAX_TIME;
+                updateStatsUI();
+                addLog("주심의 휘슬과 함께 전후반 13분 경기가 모두 종료되었습니다!");
                 alert("경기가 종료되었습니다!"); 
                 return; 
             }
 
-            // 점유율 집계
             if (ball.owner) {
                 matchStats[ball.owner.team].possessionTicks++;
             }
 
-            // 1. 공 물리 처리
             if (!ball.owner) {
                 ball.x += ball.vx; ball.y += ball.vy;
-                ball.vx *= 0.96; ball.vy *= 0.96; 
+                ball.vx *= 0.95; ball.vy *= 0.95; 
                 if(ball.y < 5 || ball.y > canvas.height - 5) ball.vy *= -1;
             } else {
                 ball.x = ball.owner.x + (ball.owner.team === 'A' ? 8 : -8);
                 ball.y = ball.owner.y + 5;
             }
 
-            // 2. 소유권 획득
             if (!ball.owner) {
                 activePlayers.forEach(p => {
                     let dist = Math.hypot(ball.x - p.x, ball.y - p.y);
@@ -392,7 +398,6 @@
                 });
             }
 
-            // 3. 선수 AI 및 이벤트 판단
             const teamWithBall = ball.owner ? ball.owner.team : null;
 
             activePlayers.forEach(p => {
@@ -404,24 +409,52 @@
                     let targetGoalX = p.team === 'A' ? canvas.width - 5 : 5;
                     let distToGoal = Math.hypot(targetGoalX - p.x, 175 - p.y);
 
-                    if (distToGoal < 160 && Math.random() < (p.stats.슛 / 90)) {
-                        // 슈팅 시도
+                    if (distToGoal < 160 && Math.random() < 0.05) {
+                        // 💡 [실수 AI] 슈팅 로직
                         ball.owner = null;
                         matchStats[p.team].shots++;
-                        addLog(`[슈팅] ${p.team}팀 ${p.name} 선수의 강력한 슈팅!`);
-                        let angle = Math.atan2(175 + (Math.random()-0.5)*40 - p.y, targetGoalX - p.x);
-                        let power = 8 + (p.stats.슛 / 4);
-                        ball.vx = Math.cos(angle) * power; ball.vy = Math.sin(angle) * power;
-                    } else if (Math.random() < 0.04) {
-                        // 패스 시도
+                        
+                        let shootAccuracy = p.stats.슛 || 10;
+                        let isGoalShot = Math.random() * 20 <= shootAccuracy + 5; 
+
+                        if (isGoalShot) {
+                            addLog(`⚽ [슈팅] ${p.team}팀 ${p.name} 선수의 날카로운 슈팅!`);
+                            let angle = Math.atan2(175 + (Math.random()-0.5)*30 - p.y, targetGoalX - p.x);
+                            let power = 8 + (shootAccuracy / 4);
+                            ball.vx = Math.cos(angle) * power; ball.vy = Math.sin(angle) * power;
+                        } else {
+                            addLog(`❌ [실수] ${p.team}팀 ${p.name} 슈팅 미스! 크게 벗어납니다.`);
+                            // 골대를 크게 벗어나는 엉뚱한 각도 계산
+                            let angle = Math.atan2(175 + (Math.random()-0.5)*150 - p.y, targetGoalX - p.x);
+                            let power = 9;
+                            ball.vx = Math.cos(angle) * power; ball.vy = Math.sin(angle) * power;
+                        }
+
+                    } else if (Math.random() < 0.06) {
+                        // 💡 [360도 스캔 및 실수 AI] 패스 로직
                         let teammates = activePlayers.filter(t => t.team === p.team && t !== p);
-                        let targetMate = teammates[Math.floor(Math.random() * teammates.length)];
-                        ball.owner = null;
-                        matchStats[p.team].passes++;
-                        addLog(`[패스] ${p.team}팀 ${p.name} ➔ ${targetMate.name} 연결 성공`);
-                        let angle = Math.atan2(targetMate.y - p.y, targetMate.x - p.x);
-                        let power = 5 + (p.stats.패스 / 5);
-                        ball.vx = Math.cos(angle) * power; ball.vy = Math.sin(angle) * power;
+                        if (teammates.length > 0) {
+                            // 360도 전방위에 있는 모든 동료들 중 하나를 스캔하여 선택
+                            let targetMate = teammates[Math.floor(Math.random() * teammates.length)];
+                            ball.owner = null;
+                            
+                            let passAccuracy = p.stats.패스 || 10;
+                            let isPassSucc = Math.random() * 20 <= passAccuracy + 2;
+
+                            if (isPassSucc) {
+                                matchStats[p.team].passSucc++;
+                                addLog(`[패스] ${p.team}팀 ${p.name} ➔ ${targetMate.name}`);
+                                let angle = Math.atan2(targetMate.y - p.y, targetMate.x - p.x);
+                                let power = 5 + (passAccuracy / 5);
+                                ball.vx = Math.cos(angle) * power; ball.vy = Math.sin(angle) * power;
+                            } else {
+                                matchStats[p.team].passFail++;
+                                addLog(`⚠️ [패스 실수] ${p.team}팀 ${p.name} 선수의 패스 미스!`);
+                                // 360도 랜덤 방향으로 엉뚱한 패스 발송
+                                let randomAngle = Math.random() * Math.PI * 2; 
+                                ball.vx = Math.cos(randomAngle) * 4; ball.vy = Math.sin(randomAngle) * 4;
+                            }
+                        }
                     } else {
                         targetX = targetGoalX; targetY = 175;
                     }
@@ -436,7 +469,6 @@
                         else {
                             targetX = p.homeX; 
                             if(distToBall < 100) { targetX = ball.x; targetY = ball.y; }
-                            // 💡 무작위 반칙(태클 파울) 발생 로직 (0.1% 확률)
                             if(distToBall < 15 && Math.random() < 0.001) {
                                 matchStats[p.team].fouls++;
                                 addLog(`[반칙] ⚠️ ${p.team}팀 ${p.name} 선수의 거친 태클로 반칙 선언!`);
@@ -458,7 +490,6 @@
             if (ball.x <= 10 && ball.y >= 140 && ball.y <= 210) goalScored('B');
             else if (ball.x >= canvas.width - 10 && ball.y >= 140 && ball.y <= 210) goalScored('A');
             else if (ball.x < 5 || ball.x > canvas.width - 5 || ball.y < 5 || ball.y > canvas.height - 5) {
-                // 💡 코너킥 vs 라인아웃 판정
                 ball.owner = null;
                 if (ball.y <= 5 || ball.y >= canvas.height - 5) {
                     matchStats.A.lineOuts++; matchStats.B.lineOuts++;
@@ -480,7 +511,7 @@
             gameState = 'GOAL';
             score[teamName]++;
             document.getElementById(`score${teamName}`).innerText = score[teamName];
-            addLog(`⚽ [득점] GOAL!!! ${teamName}팀의 환상적인 골 득점! 스코어 ${score.A}:${score.B}`);
+            addLog(`⚽ [득점] GOAL!!! ${teamName}팀의 완벽한 득점입니다! 스코어 ${score.A}:${score.B}`);
             setTimeout(() => {
                 ball = { x: canvas.width/2, y: canvas.height/2, vx: 0, vy: 0, owner: null };
                 gameState = 'PLAYING';
@@ -504,12 +535,12 @@
             
             matchTime = 0; score = { A: 0, B: 0 };
             matchStats = {
-                A: { possessionTicks: 1, shots: 0, passes: 0, fouls: 0, cornerKicks: 0, lineOuts: 0 },
-                B: { possessionTicks: 1, shots: 0, passes: 0, fouls: 0, cornerKicks: 0, lineOuts: 0 }
+                A: { possessionTicks: 1, shots: 0, passSucc: 0, passFail: 0, fouls: 0, cornerKicks: 0, lineOuts: 0 },
+                B: { possessionTicks: 1, shots: 0, passSucc: 0, passFail: 0, fouls: 0, cornerKicks: 0, lineOuts: 0 }
             };
             document.getElementById('scoreA').innerText = 0; document.getElementById('scoreB').innerText = 0;
             document.getElementById('match-log').innerHTML = '';
-            addLog("주심의 휘슬과 함께 풋고추FC 경기가 시작되었습니다!");
+            addLog("주심의 휘슬과 함께 경기가 시작되었습니다!");
 
             activePlayers = []; ball.owner = null; ball.x = 300; ball.y = 175;
             
