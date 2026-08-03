@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>풋고추FC 매치 엔진 V3.1 (전체 선수 연동)</title>
+    <title>풋고추FC 매치 엔진 V3.2 (안정화 버전)</title>
     <style>
         body { background-color: #1a252f; color: white; font-family: 'Malgun Gothic', sans-serif; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 20px; }
         h1 { margin-top: 0; color: #f1c40f; }
@@ -58,7 +58,6 @@
     
     <div id="game-board">
         <canvas id="pitch" width="800" height="400"></canvas>
-        
         <div id="ui-panel">
             <div id="scoreboard">A팀 <span id="scoreA">0</span> : <span id="scoreB">0</span> B팀</div>
             <div id="timer">00:00</div>
@@ -69,20 +68,23 @@
         </div>
     </div>
 
-    <script src="js/common.js"></script>
-
     <script>
         // --- [API 및 데이터 연동 영역] ---
         const API_URL = "https://script.google.com/macros/s/AKfycbzdLjnfQEFuF0c6sH75D7gLyaPUg4LJWSDJLAym5kWKucot-CbY-QEkrDI7DnaxRYpe/exec";
         
-        let allPlayersData = []; // 서버에서 받아온 가공된 선수 데이터
+        // 💡 여기에 풋고추FC 전체 팀원 이름을 추가해 주세요! 
+        const ALL_PLAYER_NAMES = [
+            "강승지", "강한팀", "김동섭", "김진혁", "배장원", "송정환"
+            // "이름1", "이름2", "이름3" ... 계속 추가
+        ]; 
+
+        let allPlayersData = []; 
         let teamAPlayers = [];
         let teamBPlayers = [];
 
         const commentBox = document.getElementById('commentary');
         const startBtn = document.getElementById('startBtn');
 
-        // 해설 출력 함수
         function addComment(text, isSystem = false) {
             const timeStr = isSystem ? "[시스템]" : `[${document.getElementById('timer').innerText}]`;
             const newComment = document.createElement('div');
@@ -91,7 +93,6 @@
             commentBox.prepend(newComment);
         }
 
-        // 서버 통신 함수
         async function fetchFutsalAPI(data) {
             try {
                 const response = await fetch(API_URL, { 
@@ -107,40 +108,41 @@
             }
         }
 
-        // 초기 데이터 로딩 (전체 선수단 호출 및 서버 과부하 방지 적용)
         async function initGameData() {
-            // common.js에 있는 전체 선수 명단(memberList)을 가져옵니다. 
-            // 만약 로드가 안 됐다면 임시 배열을 사용합니다.
-            const targetPlayers = (typeof memberList !== 'undefined') ? memberList : ["강승지", "강한팀", "김동섭", "김진혁", "배장원", "송정환"];
+            addComment(`총 ${ALL_PLAYER_NAMES.length}명의 선수단 데이터를 서버에 요청합니다...`, true);
             
-            addComment(`총 ${targetPlayers.length}명의 선수단 세부 능력치를 서버에 요청합니다...`, true);
-            
-            for (let name of targetPlayers) {
-                const playerData = await fetchFutsalAPI({ action: 'getMemberInfo', memberName: name });
-                
-                if (playerData && playerData.stats) {
-                    allPlayersData.push({
-                        이름: name,
-                        골레이로: parseFloat(playerData.stats[0]) || 0,
-                        아라: parseFloat(playerData.stats[1]) || 0,
-                        피보: parseFloat(playerData.stats[2]) || 0,
-                        픽소: parseFloat(playerData.stats[3]) || 0,
-                        스피드: parseFloat(playerData.stats[7]) || 10,
-                        패스: parseFloat(playerData.stats[23]) || 10
-                    });
-                    // 콘솔창에 로드 진행 상황 출력
-                    console.log(`${name} 선수 데이터 로드 완료`); 
+            for (let name of ALL_PLAYER_NAMES) {
+                try {
+                    const playerData = await fetchFutsalAPI({ action: 'getMemberInfo', memberName: name });
+                    
+                    if (playerData && playerData.stats) {
+                        allPlayersData.push({
+                            이름: name,
+                            골레이로: parseFloat(playerData.stats[0]) || 0,
+                            아라: parseFloat(playerData.stats[1]) || 0,
+                            피보: parseFloat(playerData.stats[2]) || 0,
+                            픽소: parseFloat(playerData.stats[3]) || 0,
+                            스피드: parseFloat(playerData.stats[7]) || 10,
+                            패스: parseFloat(playerData.stats[23]) || 10
+                        });
+                        console.log(`${name} 선수 데이터 로드 완료`); 
+                    }
+                } catch (error) {
+                    console.error(`${name} 로드 실패:`, error);
                 }
 
-                // 💡 핵심 해결책: 구글 서버가 차단하지 않도록 요청 사이에 0.3초 대기 시간(Delay) 적용
+                // 서버 과부하 방지 0.3초 대기
                 await new Promise(resolve => setTimeout(resolve, 300));
             }
             
-            addComment(`전체 ${allPlayersData.length}명의 데이터를 성공적으로 불러왔습니다!`, true);
-            populateUI();
-            
-            startBtn.innerText = "킥오프 (경기 시작)";
-            startBtn.disabled = false;
+            if(allPlayersData.length > 0) {
+                addComment(`전체 ${allPlayersData.length}명의 데이터를 성공적으로 불러왔습니다!`, true);
+                populateUI();
+                startBtn.innerText = "킥오프 (경기 시작)";
+                startBtn.disabled = false;
+            } else {
+                addComment("[오류] 데이터를 한 명도 불러오지 못했습니다. F12를 눌러 확인해 주세요.", true);
+            }
         }
 
         function populateUI() {
@@ -157,28 +159,24 @@
             drawPitch();
         };
 
-        // --- [매치 엔진 영역 (V3 로직)] ---
+        // --- [매치 엔진 영역] ---
         const canvas = document.getElementById('pitch');
         const ctx = canvas.getContext('2d');
         
         let gameState = 'STOPPED'; 
         let matchTime = 0; 
-        const MAX_TIME = 780; // 13분 (초 단위)
+        const MAX_TIME = 780; 
         let score = { A: 0, B: 0 };
         
         let ball = { x: 400, y: 200, vx: 0, vy: 0 };
-        let activePlayers = []; // 캔버스 위에 그려질 선수 객체들
+        let activePlayers = []; 
 
         function drawPitch() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // 라인 그리기
             ctx.strokeStyle = 'white'; ctx.lineWidth = 2;
             ctx.strokeRect(5, 5, canvas.width - 10, canvas.height - 10);
             ctx.beginPath(); ctx.moveTo(400, 5); ctx.lineTo(400, 395); ctx.stroke();
             ctx.beginPath(); ctx.arc(400, 200, 50, 0, Math.PI * 2); ctx.stroke();
-            
-            // 골대
             ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
             ctx.fillRect(5, 120, 30, 160);
             ctx.fillRect(765, 120, 30, 160);
@@ -195,10 +193,9 @@
             activePlayers.forEach(p => {
                 ctx.beginPath();
                 ctx.arc(p.x, p.y, 12, 0, Math.PI * 2);
-                ctx.fillStyle = p.team === 'A' ? '#cddc39' : '#e67e22'; // 형광 vs 주황
+                ctx.fillStyle = p.team === 'A' ? '#cddc39' : '#e67e22'; 
                 ctx.fill();
                 ctx.strokeStyle = '#333'; ctx.lineWidth = 2; ctx.stroke();
-                
                 ctx.fillStyle = 'white';
                 ctx.font = '11px Arial';
                 ctx.textAlign = 'center';
@@ -221,29 +218,25 @@
                 return;
             }
 
-            // 단순 물리 로직: 선수들이 공을 향해 이동 (스피드 스탯 비례)
             activePlayers.forEach(p => {
                 let dx = ball.x - p.x;
                 let dy = ball.y - p.y;
                 let dist = Math.sqrt(dx*dx + dy*dy);
                 
                 if(dist > 10) {
-                    // 스피드 스탯(예: 13~16)을 이동 속도로 스케일링
                     let moveSpeed = (p.speed / 10) * 0.8; 
                     p.x += (dx / dist) * moveSpeed;
                     p.y += (dy / dist) * moveSpeed;
                 }
             });
 
-            // 공 움직임 (데모용 무작위)
             ball.x += (Math.random() - 0.5) * 6;
             ball.y += (Math.random() - 0.5) * 6;
 
-            // 아웃 및 골 판정 로직
             if (ball.x <= 35 && ball.y >= 120 && ball.y <= 280) goalScored('B');
             else if (ball.x >= 765 && ball.y >= 120 && ball.y <= 280) goalScored('A');
             else if (ball.x < 5 || ball.x > 795 || ball.y < 5 || ball.y > 395) {
-                ball.x = 400; ball.y = 200; // 임시: 밖으로 나가면 중앙으로 리셋
+                ball.x = 400; ball.y = 200; 
             }
         }
 
@@ -280,7 +273,6 @@
             document.getElementById('scoreA').innerText = 0; document.getElementById('scoreB').innerText = 0;
             commentBox.innerHTML = '';
             
-            // 캔버스에 그릴 선수 객체 생성 및 초기 위치 세팅
             activePlayers = [];
             selA.forEach((p, i) => {
                 activePlayers.push({ name: p.이름, team: 'A', speed: p.스피드, x: 200, y: 100 + (i * 50) });
@@ -293,7 +285,7 @@
             gameState = 'PLAYING';
         }
 
-        loop(); // 렌더링 루프 시작
+        loop(); 
     </script>
 </body>
 </html>
