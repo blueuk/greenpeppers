@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>풋고추FC 6v6 매치 엔진 V2</title>
+    <style>
+        body { background-color: #1a252f; color: white; font-family: 'Malgun Gothic', sans-serif; display: flex; flex-direction: column; align-items: center; }
+        #game-board { display: flex; gap: 20px; margin-top: 20px; }
+        canvas { background-color: #27ae60; border: 3px solid #fff; }
+        #ui-panel { width: 300px; background: #2c3e50; padding: 15px; border-radius: 8px; }
+        #scoreboard { font-size: 24px; font-weight: bold; text-align: center; margin-bottom: 10px; border-bottom: 2px solid #34495e; padding-bottom: 10px; }
+        #timer { font-size: 18px; color: #f1c40f; text-align: center; margin-bottom: 20px; }
+        #commentary { height: 150px; background: #111; padding: 10px; overflow-y: auto; font-size: 13px; color: #ecf0f1; border-radius: 4px; margin-bottom: 20px;}
+        .comment-line { margin-bottom: 5px; border-bottom: 1px dashed #333; padding-bottom: 2px; }
+        select, button { width: 100%; padding: 8px; margin-bottom: 10px; background: #34495e; color: white; border: none; cursor: pointer; }
+        button { background: #e74c3c; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h2>풋고추FC 시뮬레이터</h2>
+    
+    <div id="game-board">
+        <canvas id="pitch" width="800" height="400"></canvas>
+        
+        <div id="ui-panel">
+            <div id="scoreboard">TEAM A <span id="scoreA">0</span> : <span id="scoreB">0</span> TEAM B</div>
+            <div id="timer">00:00 / 13:00</div>
+            
+            <div id="commentary">
+                <div class="comment-line">[시스템] 경기를 준비 중입니다...</div>
+            </div>
+
+            <label>TEAM A 포메이션</label>
+            <select id="formA">
+                <option value="1221">1-2-2-1</option>
+                <option value="1311">1-3-1-1</option>
+            </select>
+
+            <label>TEAM B 포메이션</label>
+            <select id="formB">
+                <option value="1212">1-2-1-2</option>
+                <option value="1221">1-2-2-1</option>
+            </select>
+
+            <button onclick="startGame()">킥오프 (경기 시작)</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('pitch');
+        const ctx = canvas.getContext('2d');
+        const commentBox = document.getElementById('commentary');
+        
+        // 게임 상태 관리
+        let gameState = 'STOPPED'; // STOPPED, PLAYING, KICK_IN, GOAL, FOUL
+        let matchTime = 0; // 초 단위 (13분 = 780초)
+        const MAX_TIME = 780; 
+        let score = { A: 0, B: 0 };
+        let ball = { x: 400, y: 200, vx: 0, vy: 0 };
+
+        // 해설 추가 함수
+        function addComment(text) {
+            const min = String(Math.floor(matchTime / 60)).padStart(2, '0');
+            const sec = String(Math.floor(matchTime % 60)).padStart(2, '0');
+            const newComment = document.createElement('div');
+            newComment.className = 'comment-line';
+            newComment.innerText = `[${min}:${sec}] ${text}`;
+            commentBox.prepend(newComment); // 최신 해설이 위로 오도록
+        }
+
+        // 경기장 그리기
+        function drawPitch() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(0, 0, canvas.width, canvas.height); // 사이드/엔드라인
+            ctx.beginPath(); ctx.moveTo(400, 0); ctx.lineTo(400, 400); ctx.stroke(); // 하프라인
+            ctx.beginPath(); ctx.arc(400, 200, 50, 0, Math.PI * 2); ctx.stroke(); // 센터서클
+            
+            // 골대 영역 (간이 구현)
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.fillRect(0, 150, 20, 100); // A팀 골대
+            ctx.fillRect(780, 150, 20, 100); // B팀 골대
+        }
+
+        function drawBall() {
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, 5, 0, Math.PI * 2);
+            ctx.fillStyle = 'white'; ctx.fill();
+            ctx.strokeStyle = 'black'; ctx.stroke();
+        }
+
+        // 게임 틱 (핵심 로직)
+        function gameTick() {
+            if (gameState !== 'PLAYING') return;
+
+            // 시간 업데이트 (현실보다 빠르게 흐르게 설정 가능, 현재는 1틱당 1/60초)
+            matchTime += 1/60; 
+            
+            const min = String(Math.floor(matchTime / 60)).padStart(2, '0');
+            const sec = String(Math.floor(matchTime % 60)).padStart(2, '0');
+            document.getElementById('timer').innerText = `${min}:${sec} / 13:00`;
+
+            if (matchTime >= MAX_TIME) {
+                gameState = 'STOPPED';
+                addComment("주심의 휘슬과 함께 경기가 종료되었습니다!");
+                return;
+            }
+
+            // 공 움직임 (테스트용 무작위)
+            ball.x += (Math.random() - 0.5) * 10;
+            ball.y += (Math.random() - 0.5) * 10;
+
+            // 1. 골 판정 (엔드라인 중앙)
+            if (ball.x <= 0 && ball.y >= 150 && ball.y <= 250) {
+                goalScored('B');
+            } else if (ball.x >= 800 && ball.y >= 150 && ball.y <= 250) {
+                goalScored('A');
+            }
+            // 2. 아웃 (사이드라인 / 엔드라인)
+            else if (ball.x <= 0 || ball.x >= 800 || ball.y <= 0 || ball.y >= 400) {
+                outOfBounds();
+            }
+            
+            // 3. 무작위 파울 이벤트 (테스트용: 0.1% 확률)
+            if (Math.random() < 0.001) {
+                foulEvent();
+            }
+        }
+
+        // 이벤트 함수들
+        function goalScored(team) {
+            gameState = 'GOAL';
+            score[team]++;
+            document.getElementById(`score${team}`).innerText = score[team];
+            addComment(`GOAL!!! 팀 ${team}의 득점입니다! 관중들이 열광합니다!`);
+            
+            setTimeout(() => {
+                ball = { x: 400, y: 200, vx: 0, vy: 0 };
+                gameState = 'PLAYING';
+                addComment("경기가 중앙에서 다시 시작됩니다.");
+            }, 3000); // 3초 세리머니 후 재시작
+        }
+
+        function outOfBounds() {
+            gameState = 'KICK_IN';
+            addComment("공이 라인 밖으로 나갔습니다. 킥인으로 이어집니다.");
+            
+            // 공을 안쪽으로 살짝 이동 후 재개
+            ball.x = Math.max(10, Math.min(ball.x, 790));
+            ball.y = Math.max(10, Math.min(ball.y, 390));
+            
+            setTimeout(() => {
+                gameState = 'PLAYING';
+                addComment("킥인으로 경기 재개됩니다.");
+            }, 2000);
+        }
+
+        function foulEvent() {
+            gameState = 'FOUL';
+            addComment("주심이 휘슬을 붑니다! 거친 태클로 반칙이 선언됩니다.");
+            setTimeout(() => {
+                gameState = 'PLAYING';
+                addComment("프리킥으로 경기 다시 진행됩니다.");
+            }, 2000);
+        }
+
+        // 렌더링 루프
+        function renderLoop() {
+            drawPitch();
+            drawBall();
+            // TODO: 바둑알(선수) 그리기 로직 추가
+            
+            if(gameState === 'PLAYING') gameTick();
+            requestAnimationFrame(renderLoop);
+        }
+
+        function startGame() {
+            if(gameState === 'PLAYING') return;
+            
+            const formA = document.getElementById('formA').value;
+            const formB = document.getElementById('formB').value;
+            
+            matchTime = 0;
+            score = { A: 0, B: 0 };
+            document.getElementById('scoreA').innerText = 0;
+            document.getElementById('scoreB').innerText = 0;
+            commentBox.innerHTML = ''; // 해설 초기화
+            
+            addComment(`팀 A는 ${formA} 포메이션, 팀 B는 ${formB} 포메이션을 들고 나왔습니다.`);
+            addComment("주심의 휘슬과 함께 풋고추FC 매치 시작합니다!");
+            
+            gameState = 'PLAYING';
+        }
+
+        renderLoop(); // 초기 화면 렌더링 시작
+    </script>
+</body>
+</html>
