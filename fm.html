@@ -2,88 +2,117 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>풋고추FC 매치 엔진 V3.2 (안정화 버전)</title>
+    <title>풋고추FC 매치 엔진 V4.1 (스마트 스카우팅)</title>
     <style>
         body { background-color: #1a252f; color: white; font-family: 'Malgun Gothic', sans-serif; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 20px; }
-        h1 { margin-top: 0; color: #f1c40f; }
+        h1 { margin-top: 0; color: #f1c40f; margin-bottom: 10px; }
         
-        #setup-panel { background: #34495e; padding: 20px; border-radius: 8px; margin-bottom: 20px; width: 800px; display: flex; justify-content: space-between; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
-        .team-setup { width: 45%; }
-        .team-setup h3 { margin-top: 0; border-bottom: 2px solid #7f8c8d; padding-bottom: 5px; }
+        /* 드래프트 UI 스타일 */
+        #draft-panel { background: #34495e; padding: 20px; border-radius: 8px; margin-bottom: 20px; width: 850px; display: flex; gap: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .panel-section { flex: 1; display: flex; flex-direction: column; }
+        .panel-section h3 { margin-top: 0; border-bottom: 2px solid #7f8c8d; padding-bottom: 5px; font-size: 16px; text-align: center; }
         
-        #game-board { display: flex; gap: 20px; }
+        select.list-box { width: 100%; height: 200px; background: #2c3e50; color: white; border: 1px solid #7f8c8d; border-radius: 4px; padding: 5px; font-size: 14px; }
+        
+        /* 능력치 표 스타일 */
+        #stats-container { flex: 1.5; background: #2c3e50; padding: 15px; border-radius: 8px; border: 1px solid #7f8c8d; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; text-align: center; font-size: 13px; }
+        th, td { border: 1px solid #7f8c8d; padding: 8px; }
+        th { background-color: #1abc9c; color: white; font-weight: bold; }
+        .highlight-stat { color: #f1c40f; font-weight: bold; font-size: 14px; background: rgba(241, 196, 15, 0.1); }
+        
+        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
+        .btn-group button { flex: 1; padding: 10px; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-a { background: #cddc39; color: #333; }
+        .btn-b { background: #e67e22; color: white; }
+        
+        /* 게임 보드 스타일 */
+        #game-board { display: flex; gap: 20px; width: 890px; justify-content: center; }
         canvas { background-color: #27ae60; border: 4px solid #ecf0f1; border-radius: 4px; box-shadow: 0 0 15px rgba(0,0,0,0.5); }
-        
-        #ui-panel { width: 300px; background: #2c3e50; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
-        #scoreboard { font-size: 24px; font-weight: bold; text-align: center; margin-bottom: 10px; border-bottom: 2px solid #34495e; padding-bottom: 10px; background: #1abc9c; border-radius: 4px; padding: 10px;}
-        #timer { font-size: 22px; color: #f1c40f; text-align: center; margin-bottom: 20px; font-weight: bold; font-variant-numeric: tabular-nums; }
-        
-        #commentary { flex-grow: 1; background: #111; padding: 10px; overflow-y: auto; font-size: 13px; color: #ecf0f1; border-radius: 4px; margin-bottom: 10px; border: 1px solid #7f8c8d; }
-        .comment-line { margin-bottom: 6px; border-bottom: 1px dashed #333; padding-bottom: 4px; line-height: 1.4; }
-        
-        select { width: 100%; padding: 8px; margin-bottom: 15px; background: #2c3e50; color: white; border: 1px solid #7f8c8d; border-radius: 4px; }
-        .player-select { height: 120px; }
-        
-        button { width: 100%; padding: 12px; background: #e74c3c; color: white; font-weight: bold; font-size: 16px; border: none; border-radius: 4px; cursor: pointer; transition: background 0.2s; }
-        button:hover { background: #c0392b; }
-        button:disabled { background: #7f8c8d; cursor: not-allowed; }
+        #ui-panel { width: 280px; background: #2c3e50; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; }
+        #scoreboard { font-size: 22px; font-weight: bold; text-align: center; margin-bottom: 10px; border-bottom: 2px solid #34495e; padding-bottom: 10px; background: #1abc9c; border-radius: 4px; padding: 10px;}
+        #timer { font-size: 20px; color: #f1c40f; text-align: center; margin-bottom: 15px; font-weight: bold; }
+        #commentary { flex-grow: 1; background: #111; padding: 10px; overflow-y: auto; font-size: 12px; color: #ecf0f1; border-radius: 4px; margin-bottom: 10px; border: 1px solid #7f8c8d; height: 150px; }
+        .comment-line { margin-bottom: 5px; border-bottom: 1px dashed #333; padding-bottom: 4px; }
+        .start-btn { width: 100%; padding: 12px; background: #e74c3c; color: white; font-weight: bold; font-size: 16px; border: none; border-radius: 4px; cursor: pointer; }
+        .start-btn:disabled { background: #7f8c8d; cursor: not-allowed; }
     </style>
 </head>
 <body>
     <h1>풋고추FC 실시간 시뮬레이터</h1>
     
-    <div id="setup-panel">
-        <div class="team-setup">
-            <h3>TEAM A (형광)</h3>
-            <label>포메이션</label>
-            <select id="formA">
-                <option value="1221">1-2-2-1</option>
-                <option value="1311">1-3-1-1</option>
-            </select>
-            <label>선발 명단 (Ctrl+클릭 다중선택)</label>
-            <select id="squadA" class="player-select" multiple></select>
+    <div id="draft-panel">
+        <div class="panel-section">
+            <h3>대기 명단 (API 연동)</h3>
+            <select id="player-pool" class="list-box" size="10" onchange="loadSelectedPlayerStats()"></select>
         </div>
         
-        <div class="team-setup">
-            <h3>TEAM B (주황)</h3>
-            <label>포메이션</label>
-            <select id="formB">
-                <option value="1212">1-2-1-2</option>
-                <option value="1221">1-2-2-1</option>
-            </select>
-            <label>선발 명단 (Ctrl+클릭 다중선택)</label>
-            <select id="squadB" class="player-select" multiple></select>
+        <div id="stats-container" class="panel-section">
+            <h3 id="stat-name">선수를 선택해주세요</h3>
+            <table id="stats-table" style="display:none;">
+                <tr>
+                    <th style="background:#2980b9;">포지션</th>
+                    <th>골레이로</th><th>아라</th><th>피보</th><th>픽소</th>
+                </tr>
+                <tr>
+                    <td style="background:#34495e; font-weight:bold;">점수</td>
+                    <td id="s-gol">0</td><td id="s-ala">0</td><td id="s-piv">0</td><td id="s-fix">0</td>
+                </tr>
+                <tr>
+                    <th style="background:#e67e22;">핵심 장점</th>
+                    <th id="stat-h1">-</th><th id="stat-h2">-</th><th id="stat-h3">-</th><th id="stat-h4">-</th>
+                </tr>
+                <tr>
+                    <td style="background:#34495e; font-weight:bold;">점수</td>
+                    <td id="s-1">0</td><td id="s-2">0</td><td id="s-3">0</td><td id="s-4">0</td>
+                </tr>
+            </table>
+            <div class="btn-group">
+                <button class="btn-a" onclick="assignToTeam('A')">A팀 (형광) 배정 ◀</button>
+                <button class="btn-b" onclick="assignToTeam('B')">▶ B팀 (주황) 배정</button>
+            </div>
+            <p id="stat-loading" style="text-align:center; color:#f1c40f; display:none; margin-top:20px;">데이터를 분석하는 중...</p>
+        </div>
+
+        <div class="panel-section">
+            <h3>TEAM A</h3>
+            <select id="team-a-list" class="list-box" size="10" ondblclick="removeFromTeam('A')"></select>
+        </div>
+        
+        <div class="panel-section">
+            <h3>TEAM B</h3>
+            <select id="team-b-list" class="list-box" size="10" ondblclick="removeFromTeam('B')"></select>
         </div>
     </div>
     
     <div id="game-board">
-        <canvas id="pitch" width="800" height="400"></canvas>
+        <canvas id="pitch" width="550" height="350"></canvas>
         <div id="ui-panel">
             <div id="scoreboard">A팀 <span id="scoreA">0</span> : <span id="scoreB">0</span> B팀</div>
             <div id="timer">00:00</div>
             <div id="commentary">
-                <div class="comment-line" style="color: #f1c40f;">[시스템] 풋고추FC 데이터베이스에 연결 중...</div>
+                <div class="comment-line" style="color: #f1c40f;">[시스템] API 서버와 통신을 시작합니다...</div>
             </div>
-            <button id="startBtn" onclick="startGame()" disabled>데이터 로딩 중...</button>
+            <button id="startBtn" class="start-btn" onclick="startGame()">킥오프 (경기 시작)</button>
         </div>
     </div>
 
     <script>
-        // --- [API 및 데이터 연동 영역] ---
         const API_URL = "https://script.google.com/macros/s/AKfycbzdLjnfQEFuF0c6sH75D7gLyaPUg4LJWSDJLAym5kWKucot-CbY-QEkrDI7DnaxRYpe/exec";
         
-        // 💡 여기에 풋고추FC 전체 팀원 이름을 추가해 주세요! 
-        const ALL_PLAYER_NAMES = [
-            "강승지", "강한팀", "김동섭", "김진혁", "배장원", "송정환"
-            // "이름1", "이름2", "이름3" ... 계속 추가
-        ]; 
+        // 엑셀 헤더 순서 기반의 스탯 이름 매핑
+        const STAT_LABELS = [
+            "골레이로", "아라", "피보", "픽소", // 0~3 (포지션)
+            "몸싸움", "균형감", "체력", "스피드", // 4~7
+            "리더십", "의사소통", "집중력", "대담성", "침착성", // 8~12
+            "일대일수비", "수비지원", "수비위치선정", "대인마크", "가로채기", // 13~17
+            "반사신경", "공중볼처리", "일대일돌파", "연계플레이", "공격위치선정", // 18~22
+            "슛", "슛정확도", "패스", "롱패스", "드리블" // 23~27
+        ];
 
-        let allPlayersData = []; 
-        let teamAPlayers = [];
-        let teamBPlayers = [];
-
+        let allPlayersData = {}; 
+        let selectedPlayerName = ""; 
         const commentBox = document.getElementById('commentary');
-        const startBtn = document.getElementById('startBtn');
 
         function addComment(text, isSystem = false) {
             const timeStr = isSystem ? "[시스템]" : `[${document.getElementById('timer').innerText}]`;
@@ -95,10 +124,7 @@
 
         async function fetchFutsalAPI(data) {
             try {
-                const response = await fetch(API_URL, { 
-                    method: 'POST', 
-                    body: JSON.stringify(data) 
-                });
+                const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(data) });
                 const result = await response.json();
                 if (!result.success) throw new Error(result.error);
                 return result.data;
@@ -108,58 +134,134 @@
             }
         }
 
-        async function initGameData() {
-            addComment(`총 ${ALL_PLAYER_NAMES.length}명의 선수단 데이터를 서버에 요청합니다...`, true);
+        async function loadPlayerList() {
+            addComment("서버에서 선수 명단을 가져오고 있습니다...", true);
+            const listData = await fetchFutsalAPI({ action: 'getMemberList' });
             
-            for (let name of ALL_PLAYER_NAMES) {
-                try {
-                    const playerData = await fetchFutsalAPI({ action: 'getMemberInfo', memberName: name });
-                    
-                    if (playerData && playerData.stats) {
-                        allPlayersData.push({
-                            이름: name,
-                            골레이로: parseFloat(playerData.stats[0]) || 0,
-                            아라: parseFloat(playerData.stats[1]) || 0,
-                            피보: parseFloat(playerData.stats[2]) || 0,
-                            픽소: parseFloat(playerData.stats[3]) || 0,
-                            스피드: parseFloat(playerData.stats[7]) || 10,
-                            패스: parseFloat(playerData.stats[23]) || 10
-                        });
-                        console.log(`${name} 선수 데이터 로드 완료`); 
-                    }
-                } catch (error) {
-                    console.error(`${name} 로드 실패:`, error);
-                }
-
-                // 서버 과부하 방지 0.3초 대기
-                await new Promise(resolve => setTimeout(resolve, 300));
-            }
-            
-            if(allPlayersData.length > 0) {
-                addComment(`전체 ${allPlayersData.length}명의 데이터를 성공적으로 불러왔습니다!`, true);
-                populateUI();
-                startBtn.innerText = "킥오프 (경기 시작)";
-                startBtn.disabled = false;
+            let playerNames = [];
+            if (listData && Array.isArray(listData)) {
+                playerNames = listData;
+                addComment("API에서 전체 명단을 성공적으로 불러왔습니다.", true);
             } else {
-                addComment("[오류] 데이터를 한 명도 불러오지 못했습니다. F12를 눌러 확인해 주세요.", true);
+                playerNames = ["강승지", "강한팀", "김동섭", "김진혁", "배장원", "송정환"];
+                addComment("명단 API 확인 불가로 임시 명단을 불러옵니다.", true);
             }
-        }
 
-        function populateUI() {
-            const sqA = document.getElementById('squadA');
-            const sqB = document.getElementById('squadB');
-            allPlayersData.forEach((p, idx) => {
-                sqA.add(new Option(`${p.이름} (스피드:${p.스피드})`, idx));
-                sqB.add(new Option(`${p.이름} (스피드:${p.스피드})`, idx));
+            const poolSelect = document.getElementById('player-pool');
+            playerNames.forEach(name => {
+                poolSelect.add(new Option(name, name));
             });
         }
 
+        // 💡 [핵심] 가장 높은 스탯(장점)을 추출하는 스마트 스카우팅 함수
+        async function loadSelectedPlayerStats() {
+            const poolSelect = document.getElementById('player-pool');
+            const name = poolSelect.value;
+            if (!name) return;
+
+            selectedPlayerName = name;
+            document.getElementById('stat-name').innerText = `${name} 선수의 스카우팅 리포트`;
+            document.getElementById('stats-table').style.display = 'none';
+            document.getElementById('stat-loading').style.display = 'block';
+
+            if (!allPlayersData[name]) {
+                const playerData = await fetchFutsalAPI({ action: 'getMemberInfo', memberName: name });
+                if (playerData && playerData.stats) {
+                    allPlayersData[name] = {
+                        이름: name,
+                        골레이로: parseFloat(playerData.stats[0]) || 0,
+                        아라: parseFloat(playerData.stats[1]) || 0,
+                        피보: parseFloat(playerData.stats[2]) || 0,
+                        픽소: parseFloat(playerData.stats[3]) || 0,
+                        스피드: parseFloat(playerData.stats[7]) || 10,
+                        패스: parseFloat(playerData.stats[25]) || 10,
+                        rawStats: playerData.stats // 세부 스탯 비교를 위해 원본 저장
+                    };
+                }
+            }
+
+            const stats = allPlayersData[name];
+            if (stats) {
+                // 1. 포지션 점수 비교 및 하이라이트 처리
+                const positions = [
+                    { id: 's-gol', val: stats.골레이로 },
+                    { id: 's-ala', val: stats.아라 },
+                    { id: 's-piv', val: stats.피보 },
+                    { id: 's-fix', val: stats.픽소 }
+                ];
+                
+                // 초기화
+                positions.forEach(p => {
+                    const el = document.getElementById(p.id);
+                    el.innerText = p.val;
+                    el.className = ''; 
+                });
+
+                // 가장 높은 점수의 포지션 찾기
+                const bestPos = positions.reduce((max, p) => p.val > max.val ? p : max, positions[0]);
+                document.getElementById(bestPos.id).className = 'highlight-stat'; // CSS 클래스 적용
+
+                // 2. 전체 세부 능력치(인덱스 4번~27번) 중 가장 높은 TOP 4 찾기
+                let abilities = [];
+                if (stats.rawStats) {
+                    for(let i = 4; i <= 27; i++) {
+                        if(stats.rawStats[i] !== undefined && stats.rawStats[i] !== '') {
+                            abilities.push({ name: STAT_LABELS[i] || `스탯${i}`, val: parseFloat(stats.rawStats[i]) || 0 });
+                        }
+                    }
+                }
+                
+                // 내림차순 정렬 후 상위 4개 추출
+                abilities.sort((a, b) => b.val - a.val);
+                const top4 = abilities.slice(0, 4);
+
+                // 3. UI에 동적 렌더링
+                for(let i = 0; i < 4; i++) {
+                    if (top4[i]) {
+                        document.getElementById(`stat-h${i+1}`).innerText = top4[i].name;
+                        document.getElementById(`s-${i+1}`).innerText = top4[i].val;
+                    } else {
+                        document.getElementById(`stat-h${i+1}`).innerText = "-";
+                        document.getElementById(`s-${i+1}`).innerText = "-";
+                    }
+                }
+                
+                document.getElementById('stat-loading').style.display = 'none';
+                document.getElementById('stats-table').style.display = 'table';
+            } else {
+                document.getElementById('stat-loading').innerText = "데이터를 불러오지 못했습니다.";
+            }
+        }
+
+        function assignToTeam(teamId) {
+            const poolSelect = document.getElementById('player-pool');
+            const targetList = document.getElementById(teamId === 'A' ? 'team-a-list' : 'team-b-list');
+            if (poolSelect.selectedIndex === -1) return alert("배정할 선수를 먼저 선택해주세요.");
+            const selectedOption = poolSelect.options[poolSelect.selectedIndex];
+            if (!allPlayersData[selectedOption.value]) return alert("선수 데이터를 먼저 불러와주세요.");
+            
+            targetList.add(new Option(selectedOption.text, selectedOption.value));
+            poolSelect.remove(poolSelect.selectedIndex);
+            document.getElementById('stats-table').style.display = 'none';
+            document.getElementById('stat-name').innerText = "선수를 선택해주세요";
+        }
+
+        function removeFromTeam(teamId) {
+            const teamList = document.getElementById(teamId === 'A' ? 'team-a-list' : 'team-b-list');
+            const poolSelect = document.getElementById('player-pool');
+            if (teamList.selectedIndex !== -1) {
+                const selectedOption = teamList.options[teamList.selectedIndex];
+                poolSelect.add(new Option(selectedOption.text, selectedOption.value));
+                teamList.remove(teamList.selectedIndex);
+            }
+        }
+
         window.onload = () => {
-            initGameData();
+            loadPlayerList();
             drawPitch();
         };
 
-        // --- [매치 엔진 영역] ---
+        // --- [매치 엔진 그래픽/로직 영역] ---
         const canvas = document.getElementById('pitch');
         const ctx = canvas.getContext('2d');
         
@@ -167,24 +269,23 @@
         let matchTime = 0; 
         const MAX_TIME = 780; 
         let score = { A: 0, B: 0 };
-        
-        let ball = { x: 400, y: 200, vx: 0, vy: 0 };
+        let ball = { x: 275, y: 175, vx: 0, vy: 0 };
         let activePlayers = []; 
 
         function drawPitch() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.strokeStyle = 'white'; ctx.lineWidth = 2;
             ctx.strokeRect(5, 5, canvas.width - 10, canvas.height - 10);
-            ctx.beginPath(); ctx.moveTo(400, 5); ctx.lineTo(400, 395); ctx.stroke();
-            ctx.beginPath(); ctx.arc(400, 200, 50, 0, Math.PI * 2); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(canvas.width/2, 5); ctx.lineTo(canvas.width/2, canvas.height-5); ctx.stroke();
+            ctx.beginPath(); ctx.arc(canvas.width/2, canvas.height/2, 40, 0, Math.PI * 2); ctx.stroke();
             ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-            ctx.fillRect(5, 120, 30, 160);
-            ctx.fillRect(765, 120, 30, 160);
+            ctx.fillRect(5, 100, 25, 150);
+            ctx.fillRect(canvas.width - 30, 100, 25, 150);
         }
 
         function drawBall() {
             ctx.beginPath();
-            ctx.arc(ball.x, ball.y, 6, 0, Math.PI * 2);
+            ctx.arc(ball.x, ball.y, 5, 0, Math.PI * 2);
             ctx.fillStyle = 'white'; ctx.fill();
             ctx.strokeStyle = 'black'; ctx.lineWidth = 1; ctx.stroke();
         }
@@ -192,14 +293,14 @@
         function drawPlayers() {
             activePlayers.forEach(p => {
                 ctx.beginPath();
-                ctx.arc(p.x, p.y, 12, 0, Math.PI * 2);
+                ctx.arc(p.x, p.y, 10, 0, Math.PI * 2);
                 ctx.fillStyle = p.team === 'A' ? '#cddc39' : '#e67e22'; 
                 ctx.fill();
-                ctx.strokeStyle = '#333'; ctx.lineWidth = 2; ctx.stroke();
+                ctx.strokeStyle = '#333'; ctx.lineWidth = 1.5; ctx.stroke();
                 ctx.fillStyle = 'white';
-                ctx.font = '11px Arial';
+                ctx.font = '10px Arial';
                 ctx.textAlign = 'center';
-                ctx.fillText(p.name, p.x, p.y - 16);
+                ctx.fillText(p.name, p.x, p.y - 14);
             });
         }
 
@@ -213,8 +314,7 @@
 
             if (matchTime >= MAX_TIME) {
                 gameState = 'STOPPED';
-                addComment("주심의 휘슬과 함께 전후반 13분 경기가 모두 종료되었습니다!");
-                startBtn.disabled = false;
+                addComment("경기가 종료되었습니다!");
                 return;
             }
 
@@ -222,21 +322,20 @@
                 let dx = ball.x - p.x;
                 let dy = ball.y - p.y;
                 let dist = Math.sqrt(dx*dx + dy*dy);
-                
-                if(dist > 10) {
-                    let moveSpeed = (p.speed / 10) * 0.8; 
+                if(dist > 8) {
+                    let moveSpeed = (p.speed / 10) * 0.7; 
                     p.x += (dx / dist) * moveSpeed;
                     p.y += (dy / dist) * moveSpeed;
                 }
             });
 
-            ball.x += (Math.random() - 0.5) * 6;
-            ball.y += (Math.random() - 0.5) * 6;
+            ball.x += (Math.random() - 0.5) * 5;
+            ball.y += (Math.random() - 0.5) * 5;
 
-            if (ball.x <= 35 && ball.y >= 120 && ball.y <= 280) goalScored('B');
-            else if (ball.x >= 765 && ball.y >= 120 && ball.y <= 280) goalScored('A');
-            else if (ball.x < 5 || ball.x > 795 || ball.y < 5 || ball.y > 395) {
-                ball.x = 400; ball.y = 200; 
+            if (ball.x <= 30 && ball.y >= 100 && ball.y <= 250) goalScored('B');
+            else if (ball.x >= canvas.width - 30 && ball.y >= 100 && ball.y <= 250) goalScored('A');
+            else if (ball.x < 5 || ball.x > canvas.width - 5 || ball.y < 5 || ball.y > canvas.height - 5) {
+                ball.x = canvas.width/2; ball.y = canvas.height/2; 
             }
         }
 
@@ -244,12 +343,10 @@
             gameState = 'GOAL';
             score[teamName]++;
             document.getElementById(`score${teamName}`).innerText = score[teamName];
-            addComment(`GOAL!!! ${teamName}팀의 엄청난 득점입니다!`);
-            
+            addComment(`GOAL!!! ${teamName}팀 득점!`);
             setTimeout(() => {
-                ball = { x: 400, y: 200, vx: 0, vy: 0 };
+                ball = { x: canvas.width/2, y: canvas.height/2, vx: 0, vy: 0 };
                 gameState = 'PLAYING';
-                addComment("경기가 중앙에서 재개됩니다.");
             }, 3000);
         }
 
@@ -262,26 +359,29 @@
         }
 
         function startGame() {
-            const selA = Array.from(document.getElementById('squadA').selectedOptions).map(o => allPlayersData[o.value]);
-            const selB = Array.from(document.getElementById('squadB').selectedOptions).map(o => allPlayersData[o.value]);
+            const listA = document.getElementById('team-a-list');
+            const listB = document.getElementById('team-b-list');
             
-            if (selA.length === 0 || selB.length === 0) return alert("각 팀에 선수를 최소 1명 이상 선택하세요.");
+            if (listA.options.length === 0 || listB.options.length === 0) {
+                alert("각 팀에 선수를 최소 1명 이상 배정해주세요.");
+                return;
+            }
             
-            startBtn.disabled = true;
-            matchTime = 0;
-            score = { A: 0, B: 0 };
+            matchTime = 0; score = { A: 0, B: 0 };
             document.getElementById('scoreA').innerText = 0; document.getElementById('scoreB').innerText = 0;
             commentBox.innerHTML = '';
-            
             activePlayers = [];
-            selA.forEach((p, i) => {
-                activePlayers.push({ name: p.이름, team: 'A', speed: p.스피드, x: 200, y: 100 + (i * 50) });
+            
+            Array.from(listA.options).forEach((opt, i) => {
+                const stats = allPlayersData[opt.value];
+                activePlayers.push({ name: stats.이름, team: 'A', speed: stats.스피드, x: 150, y: 70 + (i * 40) });
             });
-            selB.forEach((p, i) => {
-                activePlayers.push({ name: p.이름, team: 'B', speed: p.스피드, x: 600, y: 100 + (i * 50) });
+            Array.from(listB.options).forEach((opt, i) => {
+                const stats = allPlayersData[opt.value];
+                activePlayers.push({ name: stats.이름, team: 'B', speed: stats.스피드, x: 400, y: 70 + (i * 40) });
             });
 
-            addComment("주심의 휘슬과 함께 풋고추FC 자체전이 시작됩니다!");
+            addComment("경기 시작!");
             gameState = 'PLAYING';
         }
 
