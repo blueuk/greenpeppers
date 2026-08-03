@@ -2,12 +2,12 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>풋고추FC 매치 엔진 V5.1 (포지션 분산 배치)</title>
+    <title>풋고추FC 매치 엔진 V5.2 (실시간 스탯 및 로그)</title>
     <style>
         body { background-color: #1a252f; color: white; font-family: 'Malgun Gothic', sans-serif; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 20px; }
         h1 { margin-top: 0; color: #f1c40f; margin-bottom: 10px; }
         
-        #main-container { display: flex; gap: 20px; width: 1000px; margin-bottom: 20px; }
+        #main-container { display: flex; gap: 20px; width: 1100px; margin-bottom: 20px; }
         
         #left-panel { display: flex; flex-direction: column; gap: 15px; flex: 1.5; }
         canvas { background-color: #27ae60; border: 4px solid #ecf0f1; border-radius: 4px; box-shadow: 0 0 15px rgba(0,0,0,0.5); width: 100%; }
@@ -25,26 +25,27 @@
         .pos-select { padding: 4px; font-size: 12px; background: #ecf0f1; color: #333; border-radius: 4px; border: none; outline: none; }
         .remove-btn { background: #e74c3c; color: white; border: none; border-radius: 4px; padding: 4px 8px; font-size: 11px; cursor: pointer; font-weight: bold; }
         
-        #right-panel { display: flex; flex-direction: column; gap: 15px; flex: 1; }
+        /* 우측 패널 (스코어 + 실시간 통계 + 로그) */
+        #right-panel { display: flex; flex-direction: column; gap: 15px; flex: 1.2; }
         #ui-panel { background: #2c3e50; padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
         #scoreboard { font-size: 22px; font-weight: bold; text-align: center; margin-bottom: 10px; border-bottom: 2px solid #34495e; padding-bottom: 10px; background: #1abc9c; border-radius: 4px; padding: 10px;}
-        #timer { font-size: 20px; color: #f1c40f; text-align: center; margin-bottom: 15px; font-weight: bold; }
-        .start-btn { width: 100%; padding: 12px; background: #e74c3c; color: white; font-weight: bold; font-size: 16px; border: none; border-radius: 4px; cursor: pointer; }
+        #timer { font-size: 20px; color: #f1c40f; text-align: center; margin-bottom: 10px; font-weight: bold; }
+        
+        /* 실시간 매치 스탯판 스타일 */
+        .stats-board { display: grid; grid-template-columns: 1fr auto 1fr; gap: 5px; font-size: 12px; text-align: center; background: #111; padding: 8px; border-radius: 4px; margin-bottom: 10px; }
+        .stats-label { color: #bdc3c7; font-size: 11px; grid-column: 2; }
+        .stat-val-a { color: #cddc39; font-weight: bold; text-align: left; padding-left: 10px; }
+        .stat-val-b { color: #e67e22; font-weight: bold; text-align: right; padding-right: 10px; }
+
+        /* 실시간 해설/로그 박스 */
+        #match-log { height: 130px; background: #111; border: 1px solid #7f8c8d; border-radius: 4px; padding: 8px; overflow-y: auto; font-size: 11px; color: #ecf0f1; margin-bottom: 10px; display: flex; flex-direction: column; gap: 4px; }
+        .log-line { border-bottom: 1px dashed #222; padding-bottom: 2px; line-height: 1.3; }
+
+        .start-btn { width: 100%; padding: 10px; background: #e74c3c; color: white; font-weight: bold; font-size: 15px; border: none; border-radius: 4px; cursor: pointer; }
         .start-btn:disabled { background: #7f8c8d; cursor: not-allowed; }
         
-        #stats-container { background: #34495e; padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); flex-grow: 1; display: flex; flex-direction: column;}
-        #stats-container h3 { margin-top: 0; border-bottom: 2px solid #7f8c8d; padding-bottom: 5px; font-size: 16px; text-align: center; }
-        
-        #full-stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; margin-top: 10px; font-size: 11px; text-align: center; display: none; }
-        .stat-cell { background: #2c3e50; padding: 5px 2px; border: 1px solid #7f8c8d; }
-        .stat-header { background: #2980b9; color: white; font-weight: bold; }
-        .stat-value { font-weight: bold; color: #ecf0f1; }
-        .stat-highlight { color: #f1c40f; }
-        .stat-msg { text-align: center; color: #bdc3c7; font-size: 13px; margin-top: 50px; }
-
-        #bottom-panel { width: 1000px; background: #34495e; padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); display: flex; flex-direction: column; gap: 10px; }
+        #bottom-panel { width: 1100px; background: #34495e; padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); display: flex; flex-direction: column; gap: 10px; }
         #bottom-panel h3 { margin: 0; border-bottom: 2px solid #7f8c8d; padding-bottom: 5px; font-size: 16px; }
-        
         #player-pool { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 0; min-height: 50px; align-items: center; }
         
         .player-chip { background: #ecf0f1; color: #2c3e50; padding: 8px 15px; border-radius: 20px; font-size: 14px; font-weight: bold; cursor: pointer; user-select: none; transition: all 0.1s; border: 2px solid transparent; }
@@ -52,14 +53,13 @@
         .player-chip.selected { background: #3498db; color: white; border-color: #2980b9; }
         
         .assign-controls { display: flex; gap: 15px; justify-content: center; margin-top: 10px; }
-        .assign-btn { padding: 12px 30px; font-weight: bold; font-size: 15px; border: none; border-radius: 25px; cursor: pointer; color: #333; transition: transform 0.1s; }
-        .assign-btn:active { transform: scale(0.95); }
+        .assign-btn { padding: 12px 30px; font-weight: bold; font-size: 15px; border: none; border-radius: 25px; cursor: pointer; color: #333; }
         .btn-a { background: #cddc39; }
         .btn-b { background: #e67e22; color: white; }
     </style>
 </head>
 <body>
-    <h1>풋고추FC 실시간 시뮬레이터 V5.1</h1>
+    <h1>풋고추FC 실시간 시뮬레이터 V5.2</h1>
     
     <div id="main-container">
         <div id="left-panel">
@@ -68,60 +68,59 @@
                 <div class="team-box">
                     <div class="team-box-header">
                         <h3>TEAM A <span class="team-count" id="count-a">0/6</span></h3>
-                        <button class="auto-btn" onclick="autoAssignPositions('A')">⚡ AI 자동배치</button>
+                        <button class="auto-btn" onclick="autoAssignPositions('A')">⚡ 자동배치</button>
                     </div>
                     <div id="team-a-list" class="team-members"></div>
                 </div>
                 <div class="team-box">
                     <div class="team-box-header">
                         <h3>TEAM B <span class="team-count" id="count-b">0/6</span></h3>
-                        <button class="auto-btn" onclick="autoAssignPositions('B')">⚡ AI 자동배치</button>
+                        <button class="auto-btn" onclick="autoAssignPositions('B')">⚡ 자동배치</button>
                     </div>
                     <div id="team-b-list" class="team-members"></div>
                 </div>
             </div>
         </div>
         
+        <!-- 우측 패널 (스코어 + 실시간 통계판 + 로그) -->
         <div id="right-panel">
             <div id="ui-panel">
                 <div id="scoreboard">A팀 <span id="scoreA">0</span> : <span id="scoreB">0</span> B팀</div>
                 <div id="timer">00:00</div>
-                <button id="startBtn" class="start-btn" onclick="startGame()" disabled>선수 데이터 로딩 중...</button>
-            </div>
-            
-            <div id="stats-container">
-                <h3 id="stat-title">스카우팅 리포트</h3>
-                <div id="stat-msg" class="stat-msg">대기 명단에서 <strong>선수 1명</strong>을 선택하면<br>상세 능력치가 표시됩니다.</div>
-                <div id="full-stats-grid">
-                    <div class="stat-cell stat-header">골레이로</div><div class="stat-cell stat-value" id="st-0">0</div>
-                    <div class="stat-cell stat-header">아라</div><div class="stat-cell stat-value" id="st-1">0</div>
-                    <div class="stat-cell stat-header">피보</div><div class="stat-cell stat-value" id="st-2">0</div>
-                    <div class="stat-cell stat-header">픽소</div><div class="stat-cell stat-value" id="st-3">0</div>
-                    <div class="stat-cell stat-header">몸싸움</div><div class="stat-cell stat-value" id="st-4">0</div>
-                    <div class="stat-cell stat-header">균형감</div><div class="stat-cell stat-value" id="st-5">0</div>
-                    <div class="stat-cell stat-header">체력</div><div class="stat-cell stat-value" id="st-6">0</div>
-                    <div class="stat-cell stat-header">스피드</div><div class="stat-cell stat-value" id="st-7">0</div>
-                    <div class="stat-cell stat-header">리더십</div><div class="stat-cell stat-value" id="st-8">0</div>
-                    <div class="stat-cell stat-header">의사소통</div><div class="stat-cell stat-value" id="st-9">0</div>
-                    <div class="stat-cell stat-header">집중력</div><div class="stat-cell stat-value" id="st-10">0</div>
-                    <div class="stat-cell stat-header">대담성</div><div class="stat-cell stat-value" id="st-11">0</div>
-                    <div class="stat-cell stat-header">침착성</div><div class="stat-cell stat-value" id="st-12">0</div>
-                    <div class="stat-cell stat-header">1:1수비</div><div class="stat-cell stat-value" id="st-13">0</div>
-                    <div class="stat-cell stat-header">수비지원</div><div class="stat-cell stat-value" id="st-14">0</div>
-                    <div class="stat-cell stat-header">위치선정</div><div class="stat-cell stat-value" id="st-15">0</div>
-                    <div class="stat-cell stat-header">대인마크</div><div class="stat-cell stat-value" id="st-16">0</div>
-                    <div class="stat-cell stat-header">가로채기</div><div class="stat-cell stat-value" id="st-17">0</div>
-                    <div class="stat-cell stat-header">반사신경</div><div class="stat-cell stat-value" id="st-18">0</div>
-                    <div class="stat-cell stat-header">공중볼</div><div class="stat-cell stat-value" id="st-19">0</div>
-                    <div class="stat-cell stat-header">1:1돌파</div><div class="stat-cell stat-value" id="st-20">0</div>
-                    <div class="stat-cell stat-header">연계</div><div class="stat-cell stat-value" id="st-21">0</div>
-                    <div class="stat-cell stat-header">공격위치</div><div class="stat-cell stat-value" id="st-22">0</div>
-                    <div class="stat-cell stat-header">슛</div><div class="stat-cell stat-value" id="st-23">0</div>
-                    <div class="stat-cell stat-header">슛정확도</div><div class="stat-cell stat-value" id="st-24">0</div>
-                    <div class="stat-cell stat-header">패스</div><div class="stat-cell stat-value" id="st-25">0</div>
-                    <div class="stat-cell stat-header">롱패스</div><div class="stat-cell stat-value" id="st-26">0</div>
-                    <div class="stat-cell stat-header">드리블</div><div class="stat-cell stat-value" id="st-27">0</div>
+
+                <!-- 💡 실시간 경기 스탯판 -->
+                <div class="stats-board">
+                    <div class="stat-val-a" id="stat-pos-a">50%</div>
+                    <div class="stats-label">점유율</div>
+                    <div class="stat-val-b" id="stat-pos-b">50%</div>
+
+                    <div class="stat-val-a" id="stat-shot-a">0</div>
+                    <div class="stats-label">슈팅</div>
+                    <div class="stat-val-b" id="stat-shot-b">0</div>
+
+                    <div class="stat-val-a" id="stat-pass-a">0</div>
+                    <div class="stats-label">패스</div>
+                    <div class="stat-val-b" id="stat-pass-b">0</div>
+
+                    <div class="stat-val-a" id="stat-fou-a">0</div>
+                    <div class="stats-label">반칙</div>
+                    <div class="stat-val-b" id="stat-fou-b">0</div>
+
+                    <div class="stat-val-a" id="stat-ck-a">0</div>
+                    <div class="stats-label">코너킥</div>
+                    <div class="stat-val-b" id="stat-ck-b">0</div>
+
+                    <div class="stat-val-a" id="stat-out-a">0</div>
+                    <div class="stats-label">라인아웃</div>
+                    <div class="stat-val-b" id="stat-out-b">0</div>
                 </div>
+
+                <!-- 💡 실시간 이벤트 로그 -->
+                <div id="match-log">
+                    <div class="log-line" style="color:#f1c40f;">[시스템] 경기를 준비 중입니다...</div>
+                </div>
+
+                <button id="startBtn" class="start-btn" onclick="startGame()" disabled>선수 데이터 로딩 중...</button>
             </div>
         </div>
     </div>
@@ -144,6 +143,22 @@
         let teamA = []; 
         let teamB = []; 
 
+        // 💡 실시간 경기 통계 객체
+        let matchStats = {
+            A: { possessionTicks: 1, shots: 0, passes: 0, fouls: 0, cornerKicks: 0, lineOuts: 0 },
+            B: { possessionTicks: 1, shots: 0, passes: 0, fouls: 0, cornerKicks: 0, lineOuts: 0 }
+        };
+
+        function addLog(text) {
+            const logBox = document.getElementById('match-log');
+            const min = String(Math.floor(matchTime / 60)).padStart(2, '0');
+            const sec = String(Math.floor(matchTime % 60)).padStart(2, '0');
+            const line = document.createElement('div');
+            line.className = 'log-line';
+            line.innerHTML = `<span style="color:#f1c40f;">[${min}:${sec}]</span> ${text}`;
+            logBox.prepend(line); // 최신 로그가 위로
+        }
+
         async function fetchFutsalAPI(data) {
             try {
                 const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(data) });
@@ -161,7 +176,7 @@
 
             for (let i = 0; i < availablePlayers.length; i++) {
                 const name = availablePlayers[i];
-                poolDiv.innerHTML = `<span style="color:#3498db; font-size:14px; font-weight:bold;">데이터 일괄 로딩 중... (${i + 1}/${availablePlayers.length})</span>`;
+                poolDiv.innerHTML = `<span style="color:#3498db; font-size:14px; font-weight:bold;">데이터 로딩 중... (${i + 1}/${availablePlayers.length})</span>`;
                 if (!allPlayersData[name]) {
                     const playerData = await fetchFutsalAPI({ action: 'getMemberInfo', memberName: name });
                     if (playerData && playerData.stats) {
@@ -174,7 +189,6 @@
                             스피드: parseFloat(playerData.stats[7]) || 10,
                             슛: parseFloat(playerData.stats[23]) || 10,
                             패스: parseFloat(playerData.stats[25]) || 10,
-                            드리블: parseFloat(playerData.stats[27]) || 10,
                             rawStats: playerData.stats
                         };
                     }
@@ -190,7 +204,6 @@
         function renderPool() {
             const poolDiv = document.getElementById('player-pool');
             poolDiv.innerHTML = '';
-            if(availablePlayers.length === 0) return poolDiv.innerHTML = '<span style="color:#7f8c8d; font-size:14px;">대기 명단 없음</span>';
             availablePlayers.forEach(name => {
                 const chip = document.createElement('div');
                 chip.className = `player-chip ${selectedPoolPlayers.includes(name) ? 'selected' : ''}`;
@@ -255,30 +268,6 @@
             if (idx > -1) selectedPoolPlayers.splice(idx, 1);
             else selectedPoolPlayers.push(name);
             renderPool();
-            updateStatsView();
-        }
-
-        function updateStatsView() {
-            const msg = document.getElementById('stat-msg'), grid = document.getElementById('full-stats-grid'), title = document.getElementById('stat-title');
-            if (selectedPoolPlayers.length === 1) {
-                const stats = allPlayersData[selectedPoolPlayers[0]];
-                if (stats && stats.rawStats) {
-                    title.innerText = `${stats.이름} 선수의 전체 능력치`;
-                    msg.style.display = 'none'; grid.style.display = 'grid';
-                    for(let i = 0; i <= 27; i++) {
-                        const el = document.getElementById(`st-${i}`);
-                        if(el) {
-                            const val = parseFloat(stats.rawStats[i]) || 0;
-                            el.innerText = val; el.className = 'stat-cell stat-value'; 
-                            if (val >= 15) el.classList.add('stat-highlight'); 
-                        }
-                    }
-                }
-            } else {
-                title.innerText = "스카우팅 리포트";
-                msg.innerHTML = "대기 명단에서 <strong>선수 1명</strong>을 선택하면<br>상세 능력치가 표시됩니다.";
-                msg.style.display = 'block'; grid.style.display = 'none';
-            }
         }
 
         function assignSelected(teamId) {
@@ -287,7 +276,7 @@
             if (targetArr.length + selectedPoolPlayers.length > 6) return alert("팀 당 최대 6명까지만 등록할 수 있습니다.");
             selectedPoolPlayers.forEach(name => { targetArr.push(name); availablePlayers = availablePlayers.filter(p => p !== name); });
             selectedPoolPlayers = []; 
-            renderPool(); renderTeams(); updateStatsView();
+            renderPool(); renderTeams();
         }
 
         function removeFromTeam(teamId, name) {
@@ -299,7 +288,7 @@
 
         window.onload = initApp;
 
-        // --- [매치 엔진 그래픽/로직 영역 V5.1] ---
+        // --- [매치 엔진 그래픽/로직 영역 V5.2] ---
         const canvas = document.getElementById('pitch');
         const ctx = canvas.getContext('2d');
         let gameState = 'STOPPED'; 
@@ -307,7 +296,6 @@
         const MAX_TIME = 780; 
         let score = { A: 0, B: 0 };
         
-        // 볼 물리 엔진 객체
         let ball = { x: 300, y: 175, vx: 0, vy: 0, owner: null };
         let activePlayers = []; 
 
@@ -318,12 +306,10 @@
             ctx.beginPath(); ctx.moveTo(canvas.width/2, 5); ctx.lineTo(canvas.width/2, canvas.height-5); ctx.stroke();
             ctx.beginPath(); ctx.arc(canvas.width/2, canvas.height/2, 40, 0, Math.PI * 2); ctx.stroke();
             
-            // 페널티 에어리어
             ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
             ctx.fillRect(5, 100, 60, 150);
             ctx.fillRect(canvas.width - 65, 100, 60, 150);
             
-            // 골대
             ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
             ctx.fillRect(0, 140, 10, 70);
             ctx.fillRect(canvas.width - 10, 140, 10, 70);
@@ -348,6 +334,25 @@
             });
         }
 
+        function updateStatsUI() {
+            let total = matchStats.A.possessionTicks + matchStats.B.possessionTicks;
+            let posA = Math.round((matchStats.A.possessionTicks / total) * 100);
+            let posB = 100 - posA;
+
+            document.getElementById('stat-pos-a').innerText = posA + '%';
+            document.getElementById('stat-pos-b').innerText = posB + '%';
+            document.getElementById('stat-shot-a').innerText = matchStats.A.shots;
+            document.getElementById('stat-shot-b').innerText = matchStats.B.shots;
+            document.getElementById('stat-pass-a').innerText = matchStats.A.passes;
+            document.getElementById('stat-pass-b').innerText = matchStats.B.passes;
+            document.getElementById('stat-fou-a').innerText = matchStats.A.fouls;
+            document.getElementById('stat-fou-b').innerText = matchStats.B.fouls;
+            document.getElementById('stat-ck-a').innerText = matchStats.A.cornerKicks;
+            document.getElementById('stat-ck-b').innerText = matchStats.B.cornerKicks;
+            document.getElementById('stat-out-a').innerText = matchStats.A.lineOuts;
+            document.getElementById('stat-out-b').innerText = matchStats.B.lineOuts;
+        }
+
         function updateGame() {
             if (gameState !== 'PLAYING') return;
             matchTime += 1/60; 
@@ -355,7 +360,17 @@
             const sec = String(Math.floor(matchTime % 60)).padStart(2, '0');
             document.getElementById('timer').innerText = `${min}:${sec}`;
 
-            if (matchTime >= MAX_TIME) { gameState = 'STOPPED'; alert("경기가 종료되었습니다!"); return; }
+            if (matchTime >= MAX_TIME) { 
+                gameState = 'STOPPED'; 
+                addLog("주심의 휘슬과 함께 경기가 종료되었습니다!");
+                alert("경기가 종료되었습니다!"); 
+                return; 
+            }
+
+            // 점유율 집계
+            if (ball.owner) {
+                matchStats[ball.owner.team].possessionTicks++;
+            }
 
             // 1. 공 물리 처리
             if (!ball.owner) {
@@ -367,7 +382,7 @@
                 ball.y = ball.owner.y + 5;
             }
 
-            // 2. 소유권 획득 로직
+            // 2. 소유권 획득
             if (!ball.owner) {
                 activePlayers.forEach(p => {
                     let dist = Math.hypot(ball.x - p.x, ball.y - p.y);
@@ -377,7 +392,7 @@
                 });
             }
 
-            // 3. 선수 AI 로직
+            // 3. 선수 AI 및 이벤트 판단
             const teamWithBall = ball.owner ? ball.owner.team : null;
 
             activePlayers.forEach(p => {
@@ -389,15 +404,21 @@
                     let targetGoalX = p.team === 'A' ? canvas.width - 5 : 5;
                     let distToGoal = Math.hypot(targetGoalX - p.x, 175 - p.y);
 
-                    if (distToGoal < 150 && Math.random() < (p.stats.슛 / 100)) {
+                    if (distToGoal < 160 && Math.random() < (p.stats.슛 / 90)) {
+                        // 슈팅 시도
                         ball.owner = null;
+                        matchStats[p.team].shots++;
+                        addLog(`[슈팅] ${p.team}팀 ${p.name} 선수의 강력한 슈팅!`);
                         let angle = Math.atan2(175 + (Math.random()-0.5)*40 - p.y, targetGoalX - p.x);
                         let power = 8 + (p.stats.슛 / 4);
                         ball.vx = Math.cos(angle) * power; ball.vy = Math.sin(angle) * power;
-                    } else if (Math.random() < 0.03) {
+                    } else if (Math.random() < 0.04) {
+                        // 패스 시도
                         let teammates = activePlayers.filter(t => t.team === p.team && t !== p);
                         let targetMate = teammates[Math.floor(Math.random() * teammates.length)];
                         ball.owner = null;
+                        matchStats[p.team].passes++;
+                        addLog(`[패스] ${p.team}팀 ${p.name} ➔ ${targetMate.name} 연결 성공`);
                         let angle = Math.atan2(targetMate.y - p.y, targetMate.x - p.x);
                         let power = 5 + (p.stats.패스 / 5);
                         ball.vx = Math.cos(angle) * power; ball.vy = Math.sin(angle) * power;
@@ -411,11 +432,16 @@
                         if(distToBall < 60 && p.team !== teamWithBall) { targetX = ball.x; targetY = ball.y; }
                     } else {
                         let pushForward = p.team === 'A' ? 80 : -80; 
-                        if (isOffense) {
-                            targetX = p.homeX + pushForward; 
-                        } else {
+                        if (isOffense) { targetX = p.homeX + pushForward; } 
+                        else {
                             targetX = p.homeX; 
                             if(distToBall < 100) { targetX = ball.x; targetY = ball.y; }
+                            // 💡 무작위 반칙(태클 파울) 발생 로직 (0.1% 확률)
+                            if(distToBall < 15 && Math.random() < 0.001) {
+                                matchStats[p.team].fouls++;
+                                addLog(`[반칙] ⚠️ ${p.team}팀 ${p.name} 선수의 거친 태클로 반칙 선언!`);
+                                ball.owner = null; ball.vx = 0; ball.vy = 0;
+                            }
                         }
                     }
                 }
@@ -428,18 +454,33 @@
                 }
             });
 
-            // 4. 골 판정
+            // 4. 골 및 아웃 판정
             if (ball.x <= 10 && ball.y >= 140 && ball.y <= 210) goalScored('B');
             else if (ball.x >= canvas.width - 10 && ball.y >= 140 && ball.y <= 210) goalScored('A');
-            else if (ball.x < 0 || ball.x > canvas.width) {
-                ball.owner = null; ball.x = canvas.width/2; ball.y = canvas.height/2; ball.vx=0; ball.vy=0;
+            else if (ball.x < 5 || ball.x > canvas.width - 5 || ball.y < 5 || ball.y > canvas.height - 5) {
+                // 💡 코너킥 vs 라인아웃 판정
+                ball.owner = null;
+                if (ball.y <= 5 || ball.y >= canvas.height - 5) {
+                    matchStats.A.lineOuts++; matchStats.B.lineOuts++;
+                    addLog(`[라인아웃] 공이 사이드라인 밖으로 나갔습니다.`);
+                } else if (ball.x < 5) {
+                    matchStats.A.cornerKicks++;
+                    addLog(`[코너킥] A팀의 코너킥 기회!`);
+                } else {
+                    matchStats.B.cornerKicks++;
+                    addLog(`[코너킥] B팀의 코너킥 기회!`);
+                }
+                ball.x = canvas.width/2; ball.y = canvas.height/2; ball.vx=0; ball.vy=0;
             }
+
+            updateStatsUI();
         }
 
         function goalScored(teamName) {
             gameState = 'GOAL';
             score[teamName]++;
             document.getElementById(`score${teamName}`).innerText = score[teamName];
+            addLog(`⚽ [득점] GOAL!!! ${teamName}팀의 환상적인 골 득점! 스코어 ${score.A}:${score.B}`);
             setTimeout(() => {
                 ball = { x: canvas.width/2, y: canvas.height/2, vx: 0, vy: 0, owner: null };
                 gameState = 'PLAYING';
@@ -462,10 +503,16 @@
             if (gkCountA !== 1 || gkCountB !== 1) return alert("🚨 각 팀에 골레이로(GK)가 반드시 1명씩 배치되어야 합니다.");
             
             matchTime = 0; score = { A: 0, B: 0 };
+            matchStats = {
+                A: { possessionTicks: 1, shots: 0, passes: 0, fouls: 0, cornerKicks: 0, lineOuts: 0 },
+                B: { possessionTicks: 1, shots: 0, passes: 0, fouls: 0, cornerKicks: 0, lineOuts: 0 }
+            };
             document.getElementById('scoreA').innerText = 0; document.getElementById('scoreB').innerText = 0;
+            document.getElementById('match-log').innerHTML = '';
+            addLog("주심의 휘슬과 함께 풋고추FC 경기가 시작되었습니다!");
+
             activePlayers = []; ball.owner = null; ball.x = 300; ball.y = 175;
             
-            // 💡 [핵심 업데이트] 포지션 중복 시 Y축으로 자동 분산 배치하는 로직
             const getHomePos = (team, pos, posCount) => {
                 let x, y;
                 if(pos === '골레이로') { x = 30; y = 175; }
@@ -475,13 +522,11 @@
                 
                 if (team === 'B') x = canvas.width - x; 
                 
-                // 동일 포지션 겹침 방지 (Y축 간격 벌리기)
                 if (pos === '아라') {
-                    if (posCount === 0) y = 70;       // 위쪽 사이드
-                    else if (posCount === 1) y = 280; // 아래쪽 사이드
+                    if (posCount === 0) y = 70;       
+                    else if (posCount === 1) y = 280; 
                     else y = 175 + (posCount * 25);
                 } else if (pos !== '골레이로') {
-                    // 픽소나 피보가 다중일 경우 위아래로 분산
                     if (posCount === 1) y = 100;
                     else if (posCount === 2) y = 250;
                     else if (posCount > 2) y = 175 + (posCount * 25);
@@ -494,8 +539,7 @@
                 const stats = allPlayersData[name] || { 스피드: 10, 패스: 10, 슛: 10 };
                 const pos = document.getElementById(`pos-A-${name}`).value;
                 const home = getHomePos('A', pos, posCounterA[pos]);
-                posCounterA[pos]++; // 해당 팀의 동일 포지션 카운트 1 증가
-                
+                posCounterA[pos]++; 
                 activePlayers.push({ name: name, team: 'A', stats: stats, position: pos, x: home.x, y: home.y, homeX: home.x, homeY: home.y });
             });
 
@@ -505,7 +549,6 @@
                 const pos = document.getElementById(`pos-B-${name}`).value;
                 const home = getHomePos('B', pos, posCounterB[pos]);
                 posCounterB[pos]++; 
-                
                 activePlayers.push({ name: name, team: 'B', stats: stats, position: pos, x: home.x, y: home.y, homeX: home.x, homeY: home.y });
             });
 
