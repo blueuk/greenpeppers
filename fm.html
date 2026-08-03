@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>풋고추FC 매치 엔진 V17.0 (포지션 스위칭 & 픽소 AI)</title>
+    <title>풋고추FC 매치 엔진 V18.0 (빌드업 AI & 밸런스 패치)</title>
     <style>
         body { background-color: #1a252f; color: white; font-family: 'Malgun Gothic', sans-serif; margin: 0; padding: 20px; min-width: 1240px; }
         h1 { margin-top: 0; color: #f1c40f; margin-bottom: 10px; text-align: center; }
@@ -71,7 +71,7 @@
     </style>
 </head>
 <body>
-    <h1>풋고추FC 실시간 시뮬레이터 V17.0 (포지션 파괴 & 리베로 AI)</h1>
+    <h1>풋고추FC 실시간 시뮬레이터 V18.0 (빌드업 완전판)</h1>
     
     <div id="main-container">
         <div id="left-panel">
@@ -369,7 +369,7 @@
                     ctx.fillStyle = '#e74c3c'; ctx.fill();
                 }
 
-                if(p.isLineBreaking && gameState === 'PLAYING') {
+                if((p.isLineBreaking || p.isIsolating) && gameState === 'PLAYING') {
                     ctx.beginPath(); ctx.moveTo(p.x, p.y); 
                     ctx.lineTo(p.x + Math.cos(p.heading)*15, p.y + Math.sin(p.heading)*15);
                     ctx.strokeStyle = '#f39c12'; ctx.lineWidth = 2; ctx.stroke(); ctx.lineWidth = 1.5;
@@ -488,7 +488,7 @@
             let teamToPlay = ball.owner ? ball.owner.team : (ball.lastTouchedTeam === 'A' ? 'B' : 'A');
             
             activePlayers.forEach(p => {
-                p.isLineBreaking = false; p.stunTimer = 0; 
+                p.isLineBreaking = false; p.isIsolating = false; p.stunTimer = 0; 
                 let targetX = p.homeX, targetY = p.homeY;
                 let dir = p.team === 'A' ? 1 : -1;
                 let oppGoalX = p.team === 'A' ? canvas.width - 20 : 20;
@@ -497,26 +497,21 @@
                     if (p.team === teamToPlay) {
                         if (p.position !== '골레이로' && !p.isSetPiece) {
                             if (p.position === '피보') {
-                                targetX = oppGoalX; 
-                                targetY = ball.y > 190 ? 70 : 310; 
+                                targetX = oppGoalX; targetY = ball.y > 190 ? 70 : 310; 
                             } else if (p.position === '아라') {
-                                targetX = ball.x + dir * 30; 
-                                targetY = ball.y > 190 ? ball.y - 40 : ball.y + 40;
+                                targetX = ball.x + dir * 30; targetY = ball.y > 190 ? ball.y - 40 : ball.y + 40;
                             } else if (p.position === '픽소') {
-                                targetX = canvas.width / 2; 
-                                targetY = 190;
+                                targetX = canvas.width / 2; targetY = 190;
                             }
                         }
                     } else {
                         let myGoalX = p.team === 'A' ? 30 : canvas.width - 30;
-                        targetX = myGoalX + dir * 50; 
-                        targetY = 190 + (p.homeY - 190) * 0.5;
+                        targetX = myGoalX + dir * 50; targetY = 190 + (p.homeY - 190) * 0.5;
                     }
                 }
                 
                 let dx = targetX - p.x; let dy = targetY - p.y;
                 let dist = Math.hypot(dx, dy);
-                
                 if(dist > 5) { p.x += (dx/dist)*4; p.y += (dy/dist)*4; }
                 p.heading = Math.atan2(dy, dx);
             });
@@ -592,7 +587,6 @@
                     if(Math.abs(ball.vz) < 1) ball.vz = 0;
                     ball.vx *= 0.82; ball.vy *= 0.82; 
                 }
-                
                 ball.x = Math.max(10, Math.min(canvas.width - 10, ball.x));
                 ball.y = Math.max(10, Math.min(canvas.height - 10, ball.y));
 
@@ -691,14 +685,14 @@
                 let myGoalX = p.team === 'A' ? 5 : canvas.width - 5;
                 
                 p.isLineBreaking = false; 
+                p.isIsolating = false; // 💡 [핵심 V18.0] 무한 속도 증가 버그 수정 (매 프레임 초기화)
                 let tState = teamTactics[p.team];
                 
-                // 💡 [핵심 V17.0] 패턴 대기 중인지 체크 (백패스 방지용)
                 let isPatternWaiting = false;
 
                 if (p === ball.owner) {
                     let distToGoal = Math.hypot(oppGoalX - p.x, 190 - p.y);
-                    let shootProb = ((p.team === 'A' && p.x < canvas.width/2) || (p.team === 'B' && p.x > canvas.width/2)) ? 0.005 : (distToGoal < 100 ? 0.25 : 0.05 + ((canvas.width/2 - distToGoal) / (canvas.width/2)) * 0.05);
+                    let shootProb = ((p.team === 'A' && p.x < canvas.width/2) || (p.team === 'B' && p.x > canvas.width/2)) ? 0.005 : (distToGoal < 120 ? 0.35 : 0.05 + ((canvas.width/2 - distToGoal) / (canvas.width/2)) * 0.1);
                     if (tState.offMode === 'POSSESSION') shootProb *= 0.5; 
 
                     let nearestDefDistFront = 9999;
@@ -713,7 +707,7 @@
                     // 💡 [패턴 플레이 제어부] 
                     if (tState.currentPattern === 'PIVO_TARGET') {
                         if (p.position === '픽소' && tState.step === 1) {
-                            isPatternWaiting = true; // 픽소는 공 잡고 대기
+                            isPatternWaiting = true; 
                             let ala = activePlayers.find(a => a.team === p.team && a.position === '아라');
                             if(ala && ala.isLineBreaking) {
                                 ball.owner = null; p.rec.passSucc++; matchStats[p.team].passSucc++; ball.lastPasser = p;
@@ -723,7 +717,7 @@
                             }
                         } 
                         else if (p.position === '피보' && tState.step === 2) {
-                            isPatternWaiting = true; // 피보는 공 잡고 컷인 대기
+                            isPatternWaiting = true; 
                             let runningAla = activePlayers.find(a => a.team === p.team && a.position === '아라');
                             if(runningAla) {
                                 ball.owner = null; p.rec.passSucc++; matchStats[p.team].passSucc++; ball.lastPasser = p;
@@ -806,7 +800,7 @@
                         p.heading += getAngleDiff(angleToGoal, p.heading) * 0.2 * (angleToGoal > p.heading ? 1 : -1);
                         targetX = p.x + Math.cos(p.heading) * 50; 
                         targetY = p.y + Math.sin(p.heading) * 50;
-                        p.currentMoveSpeed *= 1.6; 
+                        p.isIsolating = true; // 💡 [핵심 V18.0] 폭주 버그 수정
                         if(Math.random() < 0.05) addLog(`⚡ [단독 돌파] 공간이 열리자 ${p.name} 선수가 매섭게 전진 드리블을 시도합니다!`);
                     }
                     else if (Math.random() < shootProb && curShoot >= 10 && !isPatternWaiting) {
@@ -848,7 +842,12 @@
                             if (breakers.length > 0 && Math.random() < (p.position === '피보' ? 0.85 : 0.7) && tState.offMode !== 'POSSESSION') { 
                                 targetMate = breakers[Math.floor(Math.random() * breakers.length)]; isKillerPass = true;
                             } else {
-                                visibleMates.sort((a,b) => Math.abs(b.y - p.y) - Math.abs(a.y - p.y));
+                                // 💡 [핵심 V18.0] 볼 돌리기 방지: 전방(상대 골대 쪽)에 있는 동료를 우선 타겟팅
+                                visibleMates.sort((a,b) => {
+                                    let aProg = dir === 1 ? a.x : -a.x;
+                                    let bProg = dir === 1 ? b.x : -b.x;
+                                    return bProg - aProg; 
+                                });
                                 targetMate = visibleMates[Math.floor(Math.random() * Math.min(2, visibleMates.length))];
                             }
                             
@@ -883,17 +882,16 @@
                             p.heading += (Math.random() > 0.5 ? Math.PI/2 : -Math.PI/2);
                         }
                     } else {
-                        // 💡 패턴 대기 중이 아닐 때만 공격적인 드리블
                         let angleToGoal = Math.atan2(190 - p.y, oppGoalX - p.x);
                         
-                        // 💡 [핵심 버그 수정] 패턴 대기 중에는 뒤로 돌지 않고 앞을 보면서 속도만 줄임 (템포 유지)
                         if (isPatternWaiting) {
-                            p.heading = angleToGoal; // 앞을 봄
+                            p.heading = angleToGoal; 
                             targetX = p.x + Math.cos(p.heading) * 5; 
                             targetY = p.y + Math.sin(p.heading) * 5; 
                         } else {
+                            // 💡 [핵심 V18.0] 전진 드리블 시 볼 돌리지 않고 앞으로 밀고 나감
                             p.heading += getAngleDiff(angleToGoal, p.heading) * 0.1 * (angleToGoal > p.heading ? 1 : -1);
-                            targetX = p.x + Math.cos(p.heading) * 30; targetY = p.y + Math.sin(p.heading) * 30;
+                            targetX = p.x + Math.cos(p.heading) * 40; targetY = p.y + Math.sin(p.heading) * 40;
                         }
                     }
                 } 
@@ -923,11 +921,11 @@
                             } else if (p.position === '픽소') { targetX = ball.x - dir * 20; targetY = ball.y; }
                         } 
                         else if (tState.offMode === 'POSSESSION') {
+                            // 💡 점유율 플레이 시에도 약간씩 전진
                             targetX = ball.x - dir * 40 + (p.homeY > 190 ? 20 : -20); targetY = ball.y + (p.homeY > 190 ? 40 : -40);
-                            if(p.position === '피보') targetX = oppGoalX - dir * 80; 
+                            if(p.position === '피보') targetX = oppGoalX - dir * 100; 
                         } 
                         else {
-                            // 💡 [핵심 V17.0] 포지션 스위칭 & 프리롤 움직임
                             if (p.position === '피보') { 
                                 if (p.role === '라인 브레이커') {
                                     targetX = oppGoalX - dir * 15; targetY = 190 + Math.sin(matchTime * 2 + p.id) * 90; p.isLineBreaking = true;
@@ -942,21 +940,25 @@
                                     targetY = p.role === '중앙 침투' ? 190 + (p.homeY < 190 ? -25 : 25) : (p.homeY < 190 ? 20 : 360); 
                                     p.isLineBreaking = true;
                                 } else {
-                                    // 💡 아라 스위칭: 시간에 따라 Y 좌표를 위아래로 크게 흔들어버림
-                                    let switchWave = Math.sin(matchTime / 4 + p.alaIndex * Math.PI); // 서로 엇갈리게
-                                    let dynamicY = 190 + switchWave * 120; // 70 ~ 310 사이를 오감
+                                    let switchWave = Math.sin(matchTime / 4 + p.alaIndex * Math.PI); 
+                                    let dynamicY = 190 + switchWave * 120; 
                                     
-                                    if (p.role === '측면 돌파') { targetX = ball.x + dir * 60; targetY = dynamicY; } 
+                                    // 💡 [핵심 V18.0] 패스 받기 좋은 적절한 거리(40~60px) 유지
+                                    if (p.role === '측면 돌파') { targetX = ball.x + dir * 30; targetY = dynamicY; } 
                                     else { 
-                                        targetX = ball.x + dir * 40;
-                                        targetY = 190 + switchWave * 60; // 중앙 쪽으로 조금 더 좁힘
+                                        targetX = ball.x + dir * 20;
+                                        targetY = 190 + switchWave * 60; 
                                     }
                                 }
                             } 
                             else if (p.position === '픽소') { 
-                                // 💡 [핵심 V17.0] 픽소의 공격 가담 리베로 움직임
-                                targetX = ball.x - dir * 45; // 공을 가진 선수 뒤쪽 45px까지 바짝 다가옴
-                                targetY = ball.y + Math.sin(matchTime)*30; 
+                                // 💡 [핵심 V18.0] 빌드업 거리 조절 (너무 가깝지 않게 55px 이격)
+                                if (p.role === '빌드업 리더') {
+                                    targetX = ball.x - dir * 55; 
+                                    targetY = ball.y + Math.sin(matchTime)*30; 
+                                } else {
+                                    targetX = p.homeX + (ball.x - p.homeX)*0.5; targetY = 190;
+                                }
                             }
                             else if (p.position === '골레이로') { targetX = myGoalX + dir * 60; targetY = 190; }
                         }
@@ -1004,10 +1006,9 @@
                                 blockX = myGoalX + dir * 150; compact = 0.5; 
                             }
                             
-                            // 💡 [핵심 V17.0] 픽소 수비 시 공의 Y좌표를 적극적으로 따라감 (홈Y 족쇄 해제)
                             if (p.position === '픽소') {
                                 targetX = myGoalX + dir * 50; 
-                                targetY = Math.max(120, Math.min(260, ball.y)); // 골대 근처를 Y축으로 쓸고 다님
+                                targetY = Math.max(120, Math.min(260, ball.y)); 
                             } else {
                                 targetX = p.homeX + (blockX - p.homeX) * 0.8 + defShiftX; 
                                 targetY = p.homeY + (ball.y - p.homeY) * compact * 0.9;
@@ -1026,7 +1027,7 @@
                 let targetSpeed = 0;
                 if(dist > 3) {
                     targetSpeed = (curSpeed / 10) * (p === ball.owner ? 0.65 : 0.85); 
-                    if(p.isLineBreaking || (tState.currentPattern !== 'NONE' && p.team === teamWithBall)) targetSpeed *= 1.4; 
+                    if(p.isLineBreaking || p.isIsolating || (tState.currentPattern !== 'NONE' && p.team === teamWithBall)) targetSpeed *= 1.4; 
                 }
 
                 let accelRate = 0.05 + (p.stats.스피드 / 100); 
@@ -1143,9 +1144,8 @@
                 const role = document.getElementById(`role-${team}-${name}`).value;
                 const home = getHomePos(team, pos, pCountObj[pos]++, pTotalObj[pos]);
                 const rec = { goals: 0, assists: 0, shots: 0, sot: 0, passSucc: 0, passFail: 0, saves: 0, tackles: 0, mistakes: 0, tackled: 0 };
-                // 💡 [V17.0] 고유 ID(p.id)와 아라 인덱스 할당 (스위칭 계산용)
                 let alaIndex = pos === '아라' ? pCountObj['아라'] : 0;
-                activePlayers.push({ name, team, stats: s, position: pos, role: role, x: home.x, y: home.y, homeX: home.x, homeY: home.y, rec, curStaminaFactor: 1.0, currentMoveSpeed: 0, isSetPiece: false, isLineBreaking: false, heading: (team==='A'? 0 : Math.PI), stunTimer: 0, justIntercepted: false, id: Math.random()*100, alaIndex: alaIndex });
+                activePlayers.push({ name, team, stats: s, position: pos, role: role, x: home.x, y: home.y, homeX: home.x, homeY: home.y, rec, curStaminaFactor: 1.0, currentMoveSpeed: 0, isSetPiece: false, isLineBreaking: false, isIsolating: false, heading: (team==='A'? 0 : Math.PI), stunTimer: 0, justIntercepted: false, id: Math.random()*100, alaIndex: alaIndex });
             };
 
             let pCa = { '골레이로': 0, '아라': 0, '픽소': 0, '피보': 0 }; teamA.forEach(n => initPlayer(n, 'A', pCa, pTotalA));
