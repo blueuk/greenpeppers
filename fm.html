@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>풋고추FC 매치 엔진 V15.0 (전술특화 & 물리엔진 강화)</title>
+    <title>풋고추FC 매치 엔진 V15.1 (랜덤 6:6 배정)</title>
     <style>
         body { background-color: #1a252f; color: white; font-family: 'Malgun Gothic', sans-serif; margin: 0; padding: 20px; min-width: 1240px; }
         h1 { margin-top: 0; color: #f1c40f; margin-bottom: 10px; text-align: center; }
@@ -64,12 +64,14 @@
         .player-chip { background: #ecf0f1; color: #2c3e50; padding: 8px 15px; border-radius: 20px; font-size: 14px; font-weight: bold; cursor: pointer; user-select: none; transition: all 0.1s; border: 2px solid transparent; }
         .player-chip.selected { background: #3498db; color: white; border-color: #2980b9; }
         .assign-controls { display: flex; gap: 15px; justify-content: center; margin-top: 10px; }
-        .assign-btn { padding: 12px 30px; font-weight: bold; font-size: 15px; border: none; border-radius: 25px; cursor: pointer; color: #333; }
+        .assign-btn { padding: 12px 30px; font-weight: bold; font-size: 15px; border: none; border-radius: 25px; cursor: pointer; color: #333; transition: opacity 0.2s; }
+        .assign-btn:hover { opacity: 0.8; }
         .btn-a { background: #cddc39; } .btn-b { background: #e67e22; color: white; }
+        .btn-random { background: #9b59b6; color: white; } /* 랜덤 버튼 스타일 */
     </style>
 </head>
 <body>
-    <h1>풋고추FC 실시간 시뮬레이터 V15.0</h1>
+    <h1>풋고추FC 실시간 시뮬레이터 V15.1</h1>
     
     <div id="main-container">
         <div id="left-panel">
@@ -135,6 +137,10 @@
         <div id="player-pool"></div>
         <div class="assign-controls">
             <button class="assign-btn btn-a" onclick="assignSelected('A')">◀ A팀 (형광) 배정</button>
+            
+            <!-- 💡 랜덤 팀 배정 버튼 추가 -->
+            <button class="assign-btn btn-random" onclick="randomAssignTeams()">🎲 6:6 랜덤 팀 배정</button>
+            
             <button class="assign-btn btn-b" onclick="assignSelected('B')">B팀 (주황) 배정 ▶</button>
         </div>
     </div>
@@ -286,6 +292,39 @@
             const targetArr = teamId === 'A' ? teamA : teamB;
             targetArr.splice(targetArr.indexOf(name), 1); availablePlayers.push(name); renderPool(); renderTeams();
         }
+
+        // 💡 랜덤 팀 배정 로직
+        function randomAssignTeams() {
+            // 현재 대기풀 + A팀 + B팀 모두 합치기
+            let allPool = [...availablePlayers, ...teamA, ...teamB];
+            
+            if (allPool.length < 12) {
+                return alert("총 로딩된 선수가 12명 이상이어야 랜덤 6:6 배정이 가능합니다.");
+            }
+
+            // 배열 셔플 (Fisher-Yates)
+            for (let i = allPool.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [allPool[i], allPool[j]] = [allPool[j], allPool[i]];
+            }
+
+            // A팀 6명, B팀 6명 분배, 나머지는 대기풀
+            teamA = allPool.slice(0, 6);
+            teamB = allPool.slice(6, 12);
+            availablePlayers = allPool.slice(12);
+            selectedPoolPlayers = [];
+
+            renderPool();
+            renderTeams();
+
+            // 분배 직후 포지션 스탯 기반 자동 배치 연동
+            setTimeout(() => {
+                autoAssignPositions('A');
+                autoAssignPositions('B');
+                alert("무작위 추첨 및 포지션 자동 배치가 완료되었습니다!");
+            }, 50);
+        }
+
         window.onload = initApp;
 
         const canvas = document.getElementById('pitch'); const ctx = canvas.getContext('2d');
@@ -451,7 +490,6 @@
             let fixo = activePlayers.find(p => p.team === team && p.position === '픽소');
             let ala = activePlayers.find(p => p.team === team && p.position === '아라');
 
-            // 💡 패턴 플레이 확률 대폭 상향 (50% ~ 60%)
             if (ball.owner === fixo && pivo && ala && Math.random() < 0.5) { 
                 teamTactics[team].currentPattern = 'PIVO_TARGET';
                 teamTactics[team].step = 1; teamTactics[team].timer = 4.0;
@@ -501,7 +539,6 @@
                 let dx = targetX - p.x; let dy = targetY - p.y;
                 let dist = Math.hypot(dx, dy);
                 
-                // 세트피스 포지셔닝 중에는 가속도 무시하고 빠르게 이동
                 if(dist > 5) { p.x += (dx/dist)*4; p.y += (dy/dist)*4; }
                 p.heading = Math.atan2(dy, dx);
             });
@@ -569,14 +606,13 @@
                 }
             });
 
-            // 💡 [물리 엔진 강화] 공의 무게감, 중력 증가, 바운드 하락
             if (!ball.owner) {
                 ball.x += ball.vx; ball.y += ball.vy; ball.z += ball.vz;
-                ball.vz -= 1.5; // 중력 강화
+                ball.vz -= 1.5; 
                 if (ball.z <= 0) {
-                    ball.z = 0; ball.vz *= -0.2; // 바운드 최소화
+                    ball.z = 0; ball.vz *= -0.2; 
                     if(Math.abs(ball.vz) < 1) ball.vz = 0;
-                    ball.vx *= 0.82; ball.vy *= 0.82; // 잔디 마찰 대폭 증가
+                    ball.vx *= 0.82; ball.vy *= 0.82; 
                 }
                 
                 ball.x = Math.max(10, Math.min(canvas.width - 10, ball.x));
@@ -737,7 +773,6 @@
                             let nearest = mates.slice().sort((a,b) => Math.hypot(a.x - p.x, a.y - p.y) - Math.hypot(b.x - p.x, b.y - p.y))[0];
                             let targetMate;
                             
-                            // 💡 킥인 세트피스 발동 확률
                             if (pivo && Math.random() < 0.6) {
                                 targetMate = pivo;
                                 addLog(`🔥 [세트피스 패턴] ${p.name}, 반대편 포스트를 향해 길게 띄워줍니다!`);
@@ -775,7 +810,7 @@
                     }
                     else if (Math.random() < shootProb && curShoot >= 10) {
                         ball.owner = null; p.justIntercepted = false; matchStats[p.team].shots++; p.rec.shots++;
-                        let isGoal = Math.random() * 20 <= (curShoot + 2); // 💡 슈팅 성공률 대폭 상승
+                        let isGoal = Math.random() * 20 <= (curShoot + 2); 
                         let isSot = isGoal || Math.random() * 20 <= (curShoot + 5);
                         let shotPower = 6 + (curShoot * 0.2); 
 
@@ -796,7 +831,6 @@
                         } else {
                             addLog(`❌ [실수] ${p.name} 슛이 빗나갑니다.`);
                             p.rec.mistakes++;
-                            // 💡 슛 미스 시 전방에서 살짝만 빗나가게 수정
                             let angle = Math.atan2(190 - p.y, oppGoalX - p.x) + (Math.random()-0.5)*0.5;
                             ball.vx = Math.cos(angle) * shotPower; ball.vy = Math.sin(angle) * shotPower;
                             ball.vz = 4 + Math.random() * 3; 
@@ -822,7 +856,6 @@
                             let passAccuracy = distToMate > 160 ? curLongPass : curPass;
                             if (tState.offMode === 'POSSESSION' && distToMate < 100) passAccuracy += 3;
                             
-                            // 💡 패스 성공률 대폭 상승 보정 (+5 ~ +8)
                             let isPassSucc = Math.random() * 20 <= passAccuracy + (isKillerPass ? 5 : 8);
                             let angle = Math.atan2(targetMate.y - p.y, targetMate.x - p.x);
                             
@@ -837,7 +870,6 @@
                             } else {
                                 p.rec.passFail++; matchStats[p.team].passFail++; p.rec.mistakes++; ball.lastPasser = null;
                                 addLog(`⚠️ [패스 실수] ${p.name} 패스 미스!`);
-                                // 💡 패스 미스 시 엉뚱한 방향 방지 (전진성 유지)
                                 let randomAngle = p.heading + (Math.random()-0.5)*1.5; 
                                 ball.vx = Math.cos(randomAngle) * 4; ball.vy = Math.sin(randomAngle) * 4;
                             }
@@ -961,7 +993,6 @@
                 let dx = targetX - p.x; let dy = targetY - p.y;
                 let dist = Math.hypot(dx, dy);
                 
-                // 💡 [핵심] 가속도(Acceleration) 물리 엔진 적용
                 let targetSpeed = 0;
                 if(dist > 3) {
                     targetSpeed = (curSpeed / 10) * (p === ball.owner ? 0.65 : 0.85); 
