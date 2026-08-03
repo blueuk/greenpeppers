@@ -2,12 +2,14 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>풋고추FC 매치 엔진 V7.0 (전술 AI & 평점 시스템)</title>
+    <title>풋고추FC 매치 엔진 V7.1 (레이아웃 픽스)</title>
     <style>
-        body { background-color: #1a252f; color: white; font-family: 'Malgun Gothic', sans-serif; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 20px; }
-        h1 { margin-top: 0; color: #f1c40f; margin-bottom: 10px; }
+        /* 💡 버그 수정: body의 강제 중앙 정렬(align-items: center)을 제거하고 여백 정렬로 변경 */
+        body { background-color: #1a252f; color: white; font-family: 'Malgun Gothic', sans-serif; margin: 0; padding: 20px; min-width: 1240px; /* 화면이 작아져도 레이아웃이 깨지지 않도록 최소 너비 보장 */ }
+        h1 { margin-top: 0; color: #f1c40f; margin-bottom: 10px; text-align: center; }
         
-        #main-container { display: flex; gap: 20px; width: 1200px; margin-bottom: 20px; }
+        /* 💡 버그 수정: margin: 0 auto; 를 통해 중앙 정렬을 하되, 화면이 작아지면 왼쪽이 안 잘리게 만듦 */
+        #main-container { display: flex; gap: 20px; width: 1200px; margin: 0 auto 20px auto; }
         
         #left-panel { display: flex; flex-direction: column; gap: 15px; flex: 1.5; }
         canvas { background-color: #27ae60; border: 4px solid #ecf0f1; border-radius: 4px; box-shadow: 0 0 15px rgba(0,0,0,0.5); width: 100%; }
@@ -39,7 +41,6 @@
         #match-log { height: 90px; background: #111; border: 1px solid #7f8c8d; border-radius: 4px; padding: 6px; overflow-y: auto; font-size: 11px; color: #ecf0f1; margin-bottom: 10px; display: flex; flex-direction: column; gap: 3px; }
         .log-line { border-bottom: 1px dashed #222; padding-bottom: 2px; line-height: 1.2; }
 
-        /* 개인 스탯 테이블 추가 */
         #player-stats-container { background: #111; border: 1px solid #7f8c8d; border-radius: 4px; padding: 5px; max-height: 140px; overflow-y: auto; }
         #player-stats-table { width: 100%; border-collapse: collapse; font-size: 10px; text-align: center; color: white; }
         #player-stats-table th { background: #34495e; padding: 4px; position: sticky; top: 0; }
@@ -49,7 +50,8 @@
         .start-btn { width: 100%; padding: 10px; background: #e74c3c; color: white; font-weight: bold; font-size: 15px; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px;}
         .start-btn:disabled { background: #7f8c8d; cursor: not-allowed; }
         
-        #bottom-panel { width: 1200px; background: #34495e; padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); display: flex; flex-direction: column; gap: 10px; }
+        /* 💡 버그 수정: width 조정 및 margin 중앙 정렬 도입 */
+        #bottom-panel { width: 1200px; margin: 0 auto; background: #34495e; padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); display: flex; flex-direction: column; gap: 10px; box-sizing: border-box; }
         #bottom-panel h3 { margin: 0; border-bottom: 2px solid #7f8c8d; padding-bottom: 5px; font-size: 16px; }
         #player-pool { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 0; min-height: 50px; align-items: center; }
         .player-chip { background: #ecf0f1; color: #2c3e50; padding: 8px 15px; border-radius: 20px; font-size: 14px; font-weight: bold; cursor: pointer; user-select: none; transition: all 0.1s; border: 2px solid transparent; }
@@ -60,7 +62,7 @@
     </style>
 </head>
 <body>
-    <h1>풋고추FC 실시간 시뮬레이터 V7.0</h1>
+    <h1>풋고추FC 실시간 시뮬레이터 V7.1</h1>
     
     <div id="main-container">
         <div id="left-panel">
@@ -102,7 +104,6 @@
                     <div class="log-line" style="color:#f1c40f;">[시스템] 경기를 준비 중입니다...</div>
                 </div>
                 
-                <!-- 실시간 개인 스탯/평점 판 -->
                 <div id="player-stats-container">
                     <table id="player-stats-table">
                         <thead>
@@ -248,7 +249,7 @@
         }
         window.onload = initApp;
 
-        // --- [매치 엔진 그래픽/로직 영역 V7.0] ---
+        // --- [매치 엔진 그래픽/로직 영역 V7.1] ---
         const canvas = document.getElementById('pitch'); const ctx = canvas.getContext('2d');
         let gameState = 'STOPPED'; // PLAYING, DEAD_BALL, KICK_OFF
         let deadBallTimer = 0; let matchTime = 0; const MAX_TIME = 780; 
@@ -279,7 +280,6 @@
                 ctx.fillStyle = p.team === 'A' ? '#cddc39' : '#e67e22'; 
                 ctx.fill(); ctx.strokeStyle = '#333'; ctx.stroke();
                 
-                // 셋피스(패스강제) 상태일때 테두리 하이라이트
                 if(p.isSetPiece) {
                     ctx.beginPath(); ctx.arc(p.x, p.y, 14, 0, Math.PI * 2);
                     ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)'; ctx.setLineDash([3, 2]); ctx.stroke(); ctx.setLineDash([]);
@@ -317,10 +317,8 @@
             else if (gameState === 'DEAD_BALL') stateText = "데드볼: 선수들 진영 복귀 중...";
             document.getElementById('state-display').innerText = stateText;
 
-            // 평점판 업데이트 (1초마다 갱신)
             if(statUpdateCounter++ % 60 === 0) {
                 const tbody = document.getElementById('player-stats-body'); tbody.innerHTML = '';
-                // 평점순 정렬
                 let sorted = [...activePlayers].sort((a, b) => calcRating(b.rec) - calcRating(a.rec));
                 sorted.forEach(p => {
                     let r = p.rec; let rtg = calcRating(r).toFixed(1);
@@ -356,7 +354,7 @@
                 });
                 if(kicker) {
                     ball.owner = kicker; kicker.x = ball.x; kicker.y = ball.y;
-                    kicker.isSetPiece = true; // 💡 킥인 시 1패스 강제 발동
+                    kicker.isSetPiece = true; 
                 }
                 gameState = 'PLAYING';
             }
@@ -376,11 +374,9 @@
                 ball.lastTouchedTeam = ball.owner.team;
             }
 
-            // 루즈볼 획득 및 GK 선방 판정
             if (!ball.owner) {
                 activePlayers.forEach(p => {
                     let dist = Math.hypot(ball.x - p.x, ball.y - p.y);
-                    // 💡 슈팅된 공을 상대 GK가 만지면 선방(Save) 처리
                     if(ball.isShot && p.position === '골레이로' && p.team !== ball.lastTouchedTeam && dist < 18) {
                         p.rec.saves++; matchStats[p.team].saves++; ball.isShot = false;
                         addLog(`🧤 [선방] ${p.name} 골키퍼의 멋진 세이브!`);
@@ -401,7 +397,6 @@
                     let targetGoalX = p.team === 'A' ? canvas.width - 5 : 5;
                     let distToGoal = Math.hypot(targetGoalX - p.x, 190 - p.y);
                     
-                    // 💡 1패스 강제 룰 적용 (킥인, 킥오프 직후)
                     if(p.isSetPiece) {
                         let mates = activePlayers.filter(t => t.team === p.team && t !== p);
                         if(mates.length > 0) {
@@ -413,7 +408,6 @@
                             addLog(`[킥인/진행] ${p.name} ➔ ${mate.name} 패스 출발`);
                         }
                     } 
-                    // [슈팅 판단] 거리가 가깝거나, 거리가 좀 있어도 능력치가 좋으면 기습 슈팅
                     else if ((distToGoal < 160 || (distToGoal < 250 && p.stats.슛 >= 14)) && Math.random() < 0.08) {
                         ball.owner = null; matchStats[p.team].shots++; p.rec.shots++;
                         let isGoal = Math.random() * 20 <= (p.stats.슛 - 2); 
@@ -438,11 +432,9 @@
                             ball.vx = Math.cos(angle) * 11; ball.vy = Math.sin(angle) * 11;
                         }
                     } 
-                    // [패스 판단] 좌우로 넓게 벌려주는 패스 확률 증가
                     else if (Math.random() < 0.08) {
                         let mates = activePlayers.filter(t => t.team === p.team && t !== p);
                         if (mates.length > 0) {
-                            // 💡 반대 전환 로직: Y거리(상하 거리)가 먼 선수에게 높은 가중치 부여
                             mates.sort((a,b) => Math.abs(b.y - p.y) - Math.abs(a.y - p.y));
                             let targetMate = mates[Math.floor(Math.random() * Math.min(3, mates.length))];
                             
@@ -465,20 +457,17 @@
                             }
                         }
                     } else {
-                        // 💡 빈 공간 드리블 전진
                         targetX = p.x + (p.team === 'A' ? 30 : -30); targetY = p.y;
                     }
                 } else if (isOff) {
-                    // 💡 [넓은 오프더볼 지원] 피보는 끝까지 침투, 아라는 넓게 위아래로 흔듦
                     if (p.position === '피보') { 
                         targetX = p.team === 'A' ? canvas.width - 25 : 25; 
-                        targetY = ball.y; // 공 높이에 맞춰 수직 이동
+                        targetY = ball.y; 
                     }
                     else if (p.position === '아라') {
                         targetX = ball.x + (p.team === 'A' ? 50 : -50);
-                        // 프리롤 스위칭 (위 아래로 크게 움직임)
                         let timeSec = Math.floor(matchTime);
-                        let oscillation = Math.sin(timeSec + p.y) * 120; // -120 ~ +120 진동
+                        let oscillation = Math.sin(timeSec + p.y) * 120;
                         targetY = 190 + oscillation;
                     } else if (p.position === '픽소') {
                         targetX = ball.x + (p.team === 'A' ? -60 : 60); targetY = ball.y;
@@ -495,7 +484,7 @@
                         });
 
                         if (p === nearestDef) {
-                            targetX = ball.x; targetY = ball.y; // 1명 압박
+                            targetX = ball.x; targetY = ball.y; 
                             if (distToBall < 15 && Math.random() < 0.002) {
                                 matchStats[p.team].fouls++; addLog(`[반칙] ⚠️ ${p.name} 거친 반칙! 상대팀 킥인`);
                                 ball.owner = null; ball.vx = 0; ball.vy = 0; ball.isShot = false;
@@ -503,7 +492,6 @@
                                 deadBallTimer = 2; gameState = 'DEAD_BALL';
                             }
                         } else {
-                            // 지역 방어: 공 위치에 따라 전체 라인 이동 (Team Block Shift)
                             targetX = p.homeX + (ball.x - canvas.width/2) * 0.3;
                             targetY = p.homeY + (ball.y - 190) * 0.3;
                         }
@@ -520,7 +508,6 @@
                 p.x = Math.max(15, Math.min(canvas.width - 15, p.x)); p.y = Math.max(15, Math.min(canvas.height - 15, p.y));
             });
 
-            // 라인 아웃 판정
             if (!ball.owner) {
                 if (ball.x <= 10 && ball.y >= 150 && ball.y <= 230) goalScored('B');
                 else if (ball.x >= canvas.width - 10 && ball.y >= 150 && ball.y <= 230) goalScored('A');
@@ -534,13 +521,11 @@
                     let outTeam = ball.lastTouchedTeam;
                     let defendingSide = ball.x <= 5 ? 'A' : 'B';
                     if (outTeam === defendingSide) {
-                        // 수비팀이 맞고 나감 -> 코너킥
                         matchStats[outTeam === 'A' ? 'B' : 'A'].corners++;
                         ball.x = ball.x <= 5 ? 15 : canvas.width - 15;
                         ball.y = ball.y < canvas.height/2 ? 15 : canvas.height - 15;
                         addLog(`[코너킥] ${outTeam === 'A' ? 'B' : 'A'}팀의 코너킥 찬스!`);
                     } else {
-                        // 공격팀이 차서 나감 -> 골 클리어런스
                         ball.x = ball.x <= 5 ? 25 : canvas.width - 25; ball.y = 190;
                         addLog(`[골 클리어런스] 골키퍼가 공을 던지며 재개합니다.`);
                     }
@@ -555,7 +540,6 @@
             gameState = 'STOPPED'; score[teamName]++;
             document.getElementById(`score${teamName}`).innerText = score[teamName];
             
-            // 마지막 터치 선수에게 골 기록
             let scorer = activePlayers.find(p => p.team === teamName && p === ball.owner);
             if(!scorer && ball.lastTouchedTeam === teamName) {
                 scorer = activePlayers.filter(p => p.team === teamName).sort((a,b)=>Math.hypot(a.x-ball.x,a.y-ball.y)-Math.hypot(b.x-ball.x,b.y-ball.y))[0];
@@ -608,7 +592,6 @@
                 const s = allPlayersData[name] || { 스피드: 10, 슛: 10, 패스: 10, 롱패스: 10 }; 
                 const pos = document.getElementById(`pos-${team}-${name}`).value;
                 const home = getHomePos(team, pos, pCountObj[pos]++, pTotalObj[pos]);
-                // 개인 기록 객체(rec) 초기화
                 const rec = { goals: 0, shots: 0, sot: 0, passSucc: 0, passFail: 0, saves: 0 };
                 activePlayers.push({ name, team, stats: s, position: pos, x: home.x, y: home.y, homeX: home.x, homeY: home.y, rec, isSetPiece: false });
             };
