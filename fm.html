@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>풋고추FC 매치 엔진 V10.4 (시야각 & 드리블/태클 고도화)</title>
+    <title>풋고추FC 매치 엔진 V12.0 (실전 전술 AI)</title>
     <style>
         body { background-color: #1a252f; color: white; font-family: 'Malgun Gothic', sans-serif; margin: 0; padding: 20px; min-width: 1240px; }
         h1 { margin-top: 0; color: #f1c40f; margin-bottom: 10px; text-align: center; }
@@ -38,7 +38,8 @@
 
         #scoreboard { font-size: 24px; font-weight: bold; text-align: center; margin-bottom: 5px; border-bottom: 2px solid #34495e; padding-bottom: 5px; background: #1abc9c; border-radius: 4px; padding: 5px; transition: all 0.3s;}
         #state-display { text-align: center; font-size: 13px; color: #f39c12; font-weight: bold; margin-bottom: 5px; min-height: 18px;}
-        #timer { font-size: 18px; color: #f1c40f; text-align: center; margin-bottom: 10px; font-weight: bold; }
+        #tactics-display { text-align: center; font-size: 11px; color: #bdc3c7; background: #111; padding: 4px; border-radius: 4px; margin-bottom: 10px; }
+        #timer { font-size: 18px; color: #f1c40f; text-align: center; margin-bottom: 5px; font-weight: bold; }
         
         .stats-board { display: grid; grid-template-columns: 1fr auto 1fr; gap: 4px; font-size: 11px; text-align: center; background: #111; padding: 8px; border-radius: 4px; margin-bottom: 10px; }
         .stats-label { color: #bdc3c7; font-size: 11px; grid-column: 2; }
@@ -68,7 +69,7 @@
     </style>
 </head>
 <body>
-    <h1>풋고추FC 실시간 시뮬레이터 V10.4 (시야각 & 태클 고도화)</h1>
+    <h1>풋고추FC 실시간 시뮬레이터 V12.0 (실전 매크로 전술 AI)</h1>
     
     <div id="main-container">
         <div id="left-panel">
@@ -95,6 +96,7 @@
             <div id="ui-panel">
                 <div id="scoreboard">A팀 <span id="scoreA">0</span> : <span id="scoreB">0</span> B팀</div>
                 <div id="state-display"></div>
+                <div id="tactics-display">전술 시스템 대기 중...</div>
                 <div id="timer">00:00 / 13:00</div>
 
                 <div class="stats-board">
@@ -156,6 +158,12 @@
             B: { posTicks: 1, shots: 0, sot: 0, passSucc: 0, passFail: 0, fouls: 0, saves: 0, corners: 0 }
         };
 
+        // 💡 [핵심] V12.0 팀 전술 상태 객체 (매크로 전술 추가)
+        let teamTactics = {
+            A: { currentPattern: 'NONE', timer: 0, mainTarget: null, defMode: 'NORMAL', offMode: 'NORMAL' },
+            B: { currentPattern: 'NONE', timer: 0, mainTarget: null, defMode: 'NORMAL', offMode: 'NORMAL' }
+        };
+
         function addLog(text) {
             const logBox = document.getElementById('match-log');
             const min = String(Math.floor(matchTime / 60)).padStart(2, '0');
@@ -195,7 +203,7 @@
                             롱패스: parseFloat(playerData.stats[26]) || 10, 드리블: parseFloat(playerData.stats[27]) || 10
                         };
                     }
-                    await new Promise(resolve => setTimeout(resolve, 30)); 
+                    await new Promise(resolve => setTimeout(resolve, 20)); 
                 }
             }
             document.getElementById('startBtn').innerText = "킥오프 (경기 시작)";
@@ -281,7 +289,7 @@
         }
         window.onload = initApp;
 
-        // --- [매치 엔진 그래픽/로직 영역 V10.4] ---
+        // --- [매치 엔진 그래픽/로직 영역 V12.0] ---
         const canvas = document.getElementById('pitch'); const ctx = canvas.getContext('2d');
         let gameState = 'STOPPED'; 
         let deadBallType = ''; 
@@ -290,6 +298,13 @@
         let ball = { x: 325, y: 190, z: 0, vx: 0, vy: 0, vz: 0, owner: null, lastTouchedTeam: null, lastPasser: null, isShot: false };
         let activePlayers = []; 
         let statUpdateCounter = 0;
+
+        function getAngleDiff(a1, a2) {
+            let diff = a1 - a2;
+            while(diff < -Math.PI) diff += Math.PI * 2;
+            while(diff > Math.PI) diff -= Math.PI * 2;
+            return Math.abs(diff);
+        }
 
         function drawPitch() {
             ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.strokeStyle = 'white'; ctx.lineWidth = 2;
@@ -313,12 +328,10 @@
         function drawBall() {
             let scale = 1 + (ball.z / 100); 
             let r = 5 * scale;
-            
             if(ball.z > 0) {
                 ctx.beginPath(); ctx.arc(ball.x, ball.y, 4, 0, Math.PI * 2);
                 ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fill();
             }
-
             let drawY = ball.y - ball.z;
             ctx.beginPath(); ctx.arc(ball.x, drawY, r, 0, Math.PI * 2);
             ctx.fillStyle = 'white'; ctx.fill(); ctx.strokeStyle = 'black'; ctx.lineWidth = 1; ctx.stroke();
@@ -332,20 +345,20 @@
                 ctx.fillStyle = p.team === 'A' ? '#cddc39' : '#e67e22'; 
                 ctx.fill(); ctx.strokeStyle = '#333'; ctx.lineWidth = 1.5; ctx.stroke();
                 
-                if(p.isSetPiece) {
-                    ctx.beginPath(); ctx.arc(p.x, p.y, 15, 0, Math.PI * 2);
-                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)'; ctx.setLineDash([3, 2]); ctx.stroke(); ctx.setLineDash([]);
+                if(teamTactics[p.team].currentPattern !== 'NONE' && (p === ball.owner || p === teamTactics[p.team].mainTarget)) {
+                    ctx.beginPath(); ctx.arc(p.x, p.y, 14, 0, Math.PI * 2);
+                    ctx.strokeStyle = 'rgba(241, 196, 15, 0.8)'; ctx.stroke();
                 }
+
+                if(p.stunTimer > 0) {
+                    ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+                    ctx.fillStyle = '#e74c3c'; ctx.fill();
+                }
+
                 if(p.isLineBreaking && gameState === 'PLAYING') {
                     ctx.beginPath(); ctx.moveTo(p.x, p.y); 
                     ctx.lineTo(p.x + Math.cos(p.heading)*15, p.y + Math.sin(p.heading)*15);
                     ctx.strokeStyle = '#f39c12'; ctx.lineWidth = 2; ctx.stroke(); ctx.lineWidth = 1.5;
-                }
-                
-                // 💡 스턴(경직) 효과 표시
-                if(p.stunTimer > 0) {
-                    ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
-                    ctx.fillStyle = '#e74c3c'; ctx.fill();
                 }
 
                 ctx.fillStyle = 'white'; ctx.font = '10px Arial'; ctx.textAlign = 'center';
@@ -375,6 +388,19 @@
             const m = String(Math.floor(matchTime / 60)).padStart(2, '0'); const s = String(Math.floor(matchTime % 60)).padStart(2, '0');
             document.getElementById('timer').innerText = `${m}:${s} / 13:00`;
             
+            // 💡 [핵심] UI 매크로 전술 표시
+            const getTacticStr = (mode) => {
+                if(mode === 'HIGH_PRESS') return '<span style="color:#e74c3c;">전방 압박</span>';
+                if(mode === 'HALF_BLOCK') return '<span style="color:#3498db;">라인 대기(지역)</span>';
+                if(mode === 'COUNTER') return '<span style="color:#f39c12;">빠른 역습</span>';
+                if(mode === 'POSSESSION') return '<span style="color:#2ecc71;">점유율 유지</span>';
+                return '기본 전술';
+            };
+            
+            document.getElementById('tactics-display').innerHTML = 
+                `A팀: 수비[${getTacticStr(teamTactics.A.defMode)}] / 공격[${getTacticStr(teamTactics.A.offMode)}] &nbsp; | &nbsp; 
+                 B팀: 수비[${getTacticStr(teamTactics.B.defMode)}] / 공격[${getTacticStr(teamTactics.B.offMode)}]`;
+
             let stateText = "";
             if (gameState === 'DEAD_BALL') {
                 if(deadBallType === 'KICK_OFF') stateText = "대기: 킥오프 준비 중...";
@@ -405,13 +431,33 @@
             return Math.max(1.0, Math.min(10.0, base));
         }
 
+        // 💡 [핵심] 시간에 따른 팀 단위 매크로 전술(Macro Tactics) 업데이트
+        function updateTeamStrategies() {
+            if(statUpdateCounter % 30 !== 0) return; // 0.5초마다 갱신
+            ['A', 'B'].forEach(team => {
+                let myScore = score[team];
+                let oppScore = score[team === 'A' ? 'B' : 'A'];
+                let timeRatio = matchTime / MAX_TIME;
+                
+                // 수비 모드 (지고 있고 후반전이면 전방압박, 이기고 있고 종반이면 하프블록)
+                if (myScore < oppScore && timeRatio > 0.5) teamTactics[team].defMode = 'HIGH_PRESS';
+                else if (myScore > oppScore && timeRatio > 0.6) teamTactics[team].defMode = 'HALF_BLOCK';
+                else teamTactics[team].defMode = 'NORMAL';
+                
+                // 공격 모드
+                if (teamTactics[team].defMode === 'HALF_BLOCK') teamTactics[team].offMode = 'COUNTER';
+                else if (myScore > oppScore && timeRatio > 0.5) teamTactics[team].offMode = 'POSSESSION';
+                else teamTactics[team].offMode = 'NORMAL';
+            });
+        }
+
         function handleDeadBallState() {
             deadBallTimer -= 1/60;
             let teamToPlay = ball.owner ? ball.owner.team : (ball.lastTouchedTeam === 'A' ? 'B' : 'A');
             
             activePlayers.forEach(p => {
                 p.isLineBreaking = false; 
-                p.stunTimer = 0; // 스턴 초기화
+                p.stunTimer = 0; 
                 let targetX = p.homeX, targetY = p.homeY;
                 let isOurHalf = (p.team === 'A' ? ball.x < canvas.width/2 : ball.x > canvas.width/2);
                 let oppGoalX = p.team === 'A' ? canvas.width - 20 : 20;
@@ -420,8 +466,7 @@
                     if (p.team === teamToPlay) {
                         if (p.position !== '골레이로' && !p.isSetPiece) {
                             if (p.position === '피보') {
-                                targetX = oppGoalX;
-                                targetY = canvas.height / 2 + Math.sin(p.x) * 40; 
+                                targetX = oppGoalX; targetY = canvas.height / 2 + Math.sin(p.x) * 40; 
                             } else if (isOurHalf) {
                                 if (p.position === '픽소') {
                                     targetX = ball.x + (p.team === 'A' ? -30 : 30);
@@ -445,7 +490,7 @@
                 let dx = targetX - p.x; let dy = targetY - p.y;
                 let dist = Math.hypot(dx, dy);
                 if(dist > 5) { p.x += (dx/dist)*3; p.y += (dy/dist)*3; }
-                p.heading = Math.atan2(dy, dx); // 헤딩 업데이트
+                p.heading = Math.atan2(dy, dx);
             });
 
             if (deadBallTimer <= 0) {
@@ -498,12 +543,27 @@
             }
         }
 
-        // 💡 [핵심] 두 각도 사이의 차이를 구하는 유틸 함수 (시야각 계산용)
-        function getAngleDiff(a1, a2) {
-            let diff = a1 - a2;
-            while(diff < -Math.PI) diff += Math.PI * 2;
-            while(diff > Math.PI) diff -= Math.PI * 2;
-            return Math.abs(diff);
+        function evaluatePatternTrigger(team) {
+            if (teamTactics[team].currentPattern !== 'NONE' || !ball.owner || ball.owner.team !== team) return;
+            
+            // 점유율 모드일 땐 무리한 패턴(컷인/오버랩 등 템포 올리는 전술) 자제
+            if (teamTactics[team].offMode === 'POSSESSION' && Math.random() < 0.7) return; 
+
+            let pivo = activePlayers.find(p => p.team === team && p.position === '피보');
+            let fixo = activePlayers.find(p => p.team === team && p.position === '픽소');
+            let alas = activePlayers.filter(p => p.team === team && p.position === '아라');
+
+            if (ball.owner === fixo && pivo && alas.length > 0 && Math.random() < 0.25) { 
+                teamTactics[team].currentPattern = 'PIVO_TARGET';
+                teamTactics[team].timer = 4.0; teamTactics[team].mainTarget = pivo;
+                addLog(`🔥 [전술 지시] ${team}팀, 피보를 활용한 3-1 컷인 패턴 전개!`);
+                return;
+            }
+            if (ball.owner.position === '아라' && fixo && Math.random() < 0.2) {
+                teamTactics[team].currentPattern = 'ALA_OVERLAP';
+                teamTactics[team].timer = 3.5; teamTactics[team].mainTarget = ball.owner; 
+                addLog(`🌪️ [전술 지시] ${team}팀, 측면 아라의 오버랩 패턴 시도!`);
+            }
         }
 
         function updateGame() {
@@ -512,6 +572,15 @@
 
             matchTime += (1/60) * 6.5; 
             if (matchTime >= MAX_TIME) { gameState = 'STOPPED'; matchTime = MAX_TIME; updateStatsUI(); addLog("경기 종료!"); alert("경기가 종료되었습니다!"); return; }
+
+            updateTeamStrategies();
+
+            ['A', 'B'].forEach(t => {
+                if(teamTactics[t].currentPattern !== 'NONE') {
+                    teamTactics[t].timer -= 1/60;
+                    if(teamTactics[t].timer <= 0) teamTactics[t].currentPattern = 'NONE';
+                }
+            });
 
             if (!ball.owner) {
                 ball.x += ball.vx; ball.y += ball.vy; ball.z += ball.vz;
@@ -533,17 +602,19 @@
                     });
                 }
             } else {
-                // 💡 [핵심] V10.4 헤딩(방향) 기반의 부드러운 드리블
+                let dir = ball.owner.team === 'A' ? 1 : -1;
                 ball.x = ball.owner.x + Math.cos(ball.owner.heading) * 12; 
                 ball.y = ball.owner.y + Math.sin(ball.owner.heading) * 12;
                 ball.z = 0; ball.vz = 0;
                 ball.lastTouchedTeam = ball.owner.team;
                 matchStats[ball.owner.team].posTicks++;
+
+                evaluatePatternTrigger(ball.owner.team); 
             }
 
             if (!ball.owner && ball.z < 15) { 
                 activePlayers.forEach(p => {
-                    if(p.stunTimer > 0) return; // 스턴 상태면 루즈볼도 못잡음
+                    if(p.stunTimer > 0) return; 
 
                     let dist = Math.hypot(ball.x - p.x, ball.y - p.y);
                     if(ball.isShot && p.position === '골레이로' && p.team !== ball.lastTouchedTeam && dist < 18) {
@@ -553,6 +624,17 @@
                     }
                     if (dist < 12 && Math.hypot(ball.vx, ball.vy) < 8) { 
                         ball.owner = p; ball.vx = 0; ball.vy = 0; ball.z = 0; 
+                        
+                        if(ball.lastTouchedTeam !== p.team && teamTactics[ball.lastTouchedTeam].currentPattern !== 'NONE') {
+                            addLog(`⚠️ [전술 실패] 수비에 가로막혀 패턴이 무산됩니다.`);
+                            teamTactics[ball.lastTouchedTeam].currentPattern = 'NONE';
+                        }
+                        
+                        // 역습 모드일 때 공을 탈취하면 즉시 발동
+                        if(ball.lastTouchedTeam !== p.team && teamTactics[p.team].offMode === 'COUNTER') {
+                            addLog(`🚀 [역습 전개] ${p.team}팀! 라인을 올리며 빠른 역습을 전개합니다!`);
+                        }
+                        
                         ball.lastTouchedTeam = p.team; ball.isShot = false;
                         if(ball.lastPasser && ball.lastPasser.team !== p.team) ball.lastPasser = null;
                     }
@@ -562,11 +644,7 @@
             const teamWithBall = ball.owner ? ball.owner.team : null;
 
             activePlayers.forEach(p => {
-                // 💡 [핵심] 스턴 타이머 차감
-                if(p.stunTimer > 0) {
-                    p.stunTimer -= 1/60;
-                    return; // 스턴 상태일때는 이동/판단 불가
-                }
+                if(p.stunTimer > 0) { p.stunTimer -= 1/60; return; }
 
                 let staminaStat = p.stats.체력 || 10;
                 let dropRate = (20 - staminaStat) * 0.03 * (matchTime / MAX_TIME); 
@@ -586,17 +664,60 @@
                 
                 p.isLineBreaking = false; 
 
+                let tState = teamTactics[p.team];
+
                 if (p === ball.owner) {
                     let distToGoal = Math.hypot(oppGoalX - p.x, 190 - p.y);
-                    let shootProb = 0;
-                    if ((p.team === 'A' && p.x < canvas.width/2) || (p.team === 'B' && p.x > canvas.width/2)) {
-                        shootProb = 0.005; 
-                    } else if (distToGoal < 100) {
-                        shootProb = 0.25; 
-                    } else {
-                        shootProb = 0.05 + ((canvas.width/2 - distToGoal) / (canvas.width/2)) * 0.05;
-                    }
+                    let shootProb = ((p.team === 'A' && p.x < canvas.width/2) || (p.team === 'B' && p.x > canvas.width/2)) ? 0.005 : (distToGoal < 100 ? 0.25 : 0.05 + ((canvas.width/2 - distToGoal) / (canvas.width/2)) * 0.05);
 
+                    // 점유율 모드일 땐 무리한 슛 자제
+                    if (tState.offMode === 'POSSESSION') shootProb *= 0.5; 
+
+                    if (tState.currentPattern === 'PIVO_TARGET') {
+                        if (p.position === '픽소' && tState.timer > 3.0) {
+                            ball.owner = null; p.rec.passSucc++; matchStats[p.team].passSucc++; ball.lastPasser = p;
+                            let angle = Math.atan2(tState.mainTarget.y - p.y, tState.mainTarget.x - p.x);
+                            let power = (curPass > 12) ? 11 : 9; 
+                            if (curPass < 8) power -= 3; 
+                            ball.vx = Math.cos(angle) * power; ball.vy = Math.sin(angle) * power;
+                            return;
+                        } 
+                        else if (p.position === '피보' && tState.timer < 3.8) {
+                            let runningAla = activePlayers.find(a => a.team === p.team && a.position === '아라');
+                            if(runningAla && Math.random() < 0.2) {
+                                ball.owner = null; p.rec.passSucc++; matchStats[p.team].passSucc++; ball.lastPasser = p;
+                                let angle = Math.atan2(runningAla.y - p.y, runningAla.x - p.x);
+                                ball.vx = Math.cos(angle) * 7; ball.vy = Math.sin(angle) * 7;
+                                addLog(`🎯 [약속된 플레이] 피보가 컷인하는 아라에게 완벽하게 내어줍니다!`);
+                                tState.currentPattern = 'NONE';
+                                return;
+                            }
+                        }
+                    } 
+                    else if (tState.currentPattern === 'ALA_OVERLAP') {
+                        if (p.position === '아라' && p === tState.mainTarget && tState.timer > 3.0) {
+                            let fixo = activePlayers.find(f => f.team === p.team && f.position === '픽소');
+                            if(fixo) {
+                                ball.owner = null; p.rec.passSucc++; matchStats[p.team].passSucc++; ball.lastPasser = p;
+                                let angle = Math.atan2(fixo.y - p.y, fixo.x - p.x);
+                                ball.vx = Math.cos(angle) * 8; ball.vy = Math.sin(angle) * 8;
+                                return;
+                            }
+                        }
+                        else if (p.position === '픽소' && tState.timer < 3.2) {
+                            let runningAla = tState.mainTarget;
+                            if(runningAla && Math.random() < 0.2) {
+                                ball.owner = null; p.rec.passSucc++; matchStats[p.team].passSucc++; ball.lastPasser = p;
+                                let targetSpaceX = runningAla.x + dir * 60;
+                                let angle = Math.atan2(runningAla.y - p.y, targetSpaceX - p.x);
+                                ball.vx = Math.cos(angle) * 10; ball.vy = Math.sin(angle) * 10;
+                                addLog(`🎯 [약속된 플레이] 오버랩하는 아라에게 픽소의 스루패스가 연결됩니다!`);
+                                tState.currentPattern = 'NONE';
+                                return;
+                            }
+                        }
+                    }
+                    
                     if(p.isSetPiece) {
                         let mates = activePlayers.filter(t => t.team === p.team && t !== p && t.position !== '골레이로');
                         if(mates.length > 0) {
@@ -604,8 +725,7 @@
                             let targetMate = (Math.random() < 0.5) ? mates[0] : (mates.filter(m => m.position === '피보')[0] || mates[mates.length - 1]);
                             
                             ball.owner = null; p.isSetPiece = false; p.justIntercepted = false;
-                            p.rec.passSucc++; matchStats[p.team].passSucc++;
-                            ball.lastPasser = p; 
+                            p.rec.passSucc++; matchStats[p.team].passSucc++; ball.lastPasser = p; 
                             
                             let angle = Math.atan2(targetMate.y - p.y, targetMate.x - p.x);
                             let distToMate = Math.hypot(targetMate.x - p.x, targetMate.y - p.y);
@@ -616,15 +736,9 @@
                             addLog(`[세트피스] ${p.name} ➔ ${targetMate.name}`);
                         }
                     } 
-                    // 💡 [핵심 V10.4] 탈취(인터셉트) 직후 빠른 패스 (회피 기동)
                     else if(p.justIntercepted && Math.random() < 0.4) {
                         let mates = activePlayers.filter(t => t.team === p.team && t !== p);
-                        // 시야각(±60도) 내에 있는 동료 찾기
-                        let validMates = mates.filter(m => {
-                            let a = Math.atan2(m.y - p.y, m.x - p.x);
-                            return getAngleDiff(p.heading, a) < Math.PI / 3; // 시야 60도
-                        });
-                        
+                        let validMates = mates.filter(m => getAngleDiff(p.heading, Math.atan2(m.y - p.y, m.x - p.x)) < Math.PI / 3);
                         if(validMates.length > 0) {
                             let targetMate = validMates[Math.floor(Math.random() * validMates.length)];
                             ball.owner = null; p.justIntercepted = false;
@@ -633,9 +747,8 @@
                             ball.vx = Math.cos(angle) * 7; ball.vy = Math.sin(angle) * 7;
                             addLog(`⚡ [원터치 패스] ${p.name} ➔ ${targetMate.name} (탈취 직후 역습!)`);
                         } else {
-                            // 주변에 동료가 없으면 좌우로 넓게 회피 드리블을 선택
                             p.justIntercepted = false;
-                            p.heading += (Math.random() > 0.5 ? Math.PI/2 : -Math.PI/2); // 90도 턴
+                            p.heading += (Math.random() > 0.5 ? Math.PI/2 : -Math.PI/2); 
                         }
                     }
                     else if (Math.random() < shootProb && curShoot >= 10) {
@@ -667,16 +780,16 @@
                             ball.vz = 6 + Math.random() * 5; 
                         }
                     } 
-                    else if (Math.random() < 0.12) {
+                    else if (Math.random() < (tState.offMode === 'POSSESSION' ? 0.2 : 0.12)) {
+                        // 점유율 전술 시 패스 빈도 크게 상승
                         let mates = activePlayers.filter(t => t.team === p.team && t !== p);
-                        // 💡 [핵심] 시야각 75도 이내의 선수만 패스 후보로 간주
                         let visibleMates = mates.filter(m => getAngleDiff(p.heading, Math.atan2(m.y - p.y, m.x - p.x)) < Math.PI / 2.5);
                         
                         if (visibleMates.length > 0) {
                             let breakers = visibleMates.filter(m => m.isLineBreaking);
                             let targetMate = null; let isKillerPass = false;
 
-                            if (breakers.length > 0 && Math.random() < 0.7) { 
+                            if (breakers.length > 0 && Math.random() < 0.7 && tState.offMode !== 'POSSESSION') { 
                                 targetMate = breakers[Math.floor(Math.random() * breakers.length)];
                                 isKillerPass = true;
                             } else {
@@ -687,6 +800,10 @@
                             ball.owner = null; p.justIntercepted = false;
                             let distToMate = Math.hypot(targetMate.x - p.x, targetMate.y - p.y);
                             let passAccuracy = distToMate > 160 ? curLongPass : curPass;
+                            
+                            // 점유율 모드일 땐 짧은 패스 성공률 보정
+                            if (tState.offMode === 'POSSESSION' && distToMate < 100) passAccuracy += 3;
+                            
                             let isPassSucc = Math.random() * 20 <= passAccuracy + (isKillerPass ? 3 : 5);
                             let angle = Math.atan2(targetMate.y - p.y, targetMate.x - p.x);
                             
@@ -705,59 +822,96 @@
                                 ball.vx = Math.cos(randomAngle) * 4; ball.vy = Math.sin(randomAngle) * 4;
                             }
                         } else {
-                            // 시야에 동료가 없으면 백패스나 방향 전환을 위해 헤딩 변경
                             p.heading += (Math.random() > 0.5 ? Math.PI/2 : -Math.PI/2);
                         }
                     } else {
-                        // 💡 [핵심] 전방 압박이 없을 때만 부드럽게 벡터 드리블 전진
                         let angleToGoal = Math.atan2(190 - p.y, oppGoalX - p.x);
-                        // 현재 헤딩을 목표 골대 방향으로 아주 천천히 부드럽게 꺾음 (지그재그 방지)
                         p.heading += getAngleDiff(angleToGoal, p.heading) * 0.1 * (angleToGoal > p.heading ? 1 : -1);
-                        
                         targetX = p.x + Math.cos(p.heading) * 30;
                         targetY = p.y + Math.sin(p.heading) * 30;
                     }
                 } else if (isOff) {
-                    if (p.position === '피보') { 
-                        if (p.role === '라인 브레이커') {
-                            targetX = oppGoalX - dir * 15; targetY = ball.y + Math.sin(matchTime * 4 + p.x) * 70;
+                    if (tState.currentPattern === 'PIVO_TARGET') {
+                        if (p.position === '아라') {
+                            targetX = oppGoalX - dir * 15; targetY = 190 + (p.homeY > 190 ? 20 : -20);
                             p.isLineBreaking = true;
-                        } else { 
-                            targetX = oppGoalX - dir * 60; targetY = 190 + Math.sin(matchTime * 2 + p.x) * 40; 
+                        } else if (p.position === '피보') {
+                            targetX = oppGoalX - dir * 80; targetY = 190;
+                        } else if (p.position === '픽소') {
+                            targetX = ball.x - dir * 25; targetY = ball.y;
                         }
                     }
-                    else if (p.position === '아라') {
-                        let hasPivoOwner = ball.owner && ball.owner.position === '피보' && Math.abs(ball.owner.y - 190) < 50;
-                        if(hasPivoOwner) {
-                            targetX = oppGoalX - dir * 20; 
-                            targetY = p.role === '중앙 침투' ? 190 : (p.homeY < 190 ? 20 : 360);
+                    else if (tState.currentPattern === 'ALA_OVERLAP') {
+                        if (p === tState.mainTarget) {
+                            targetX = oppGoalX - dir * 10; targetY = p.homeY;
                             p.isLineBreaking = true;
-                        } else {
-                            let timeOffset = Math.sin(matchTime * 3 + p.y) * 40;
-                            if (p.role === '측면 돌파') {
-                                targetX = ball.x + dir * 70; targetY = (p.homeY < 190 ? 30 : 350) + timeOffset; 
-                            } else { 
-                                targetX = ball.x + dir * 50;
-                                let isOppFlank = (ball.y < 190 && p.homeY > 190) || (ball.y > 190 && p.homeY < 190);
-                                targetY = isOppFlank ? 190 + (p.homeY < 190 ? -30 : 30) : (p.homeY < 190 ? 60 : 320);
+                        } else if (p.position === '픽소') {
+                            targetX = p.homeX + dir*20; targetY = 190;
+                        } else if (p.position === '피보') {
+                            targetX = oppGoalX - dir*30; targetY = 190;
+                        }
+                    }
+                    else {
+                        // 💡 [핵심 V12.0 공격 매크로 전술]
+                        if (tState.offMode === 'COUNTER') {
+                            // 역습 모드: 아라와 피보가 미친듯이 전방 질주
+                            if (p.position === '피보' || p.position === '아라') {
+                                targetX = oppGoalX - dir * 15;
+                                targetY = p.homeY;
+                                p.isLineBreaking = true;
+                            } else if (p.position === '픽소') {
+                                targetX = ball.x - dir * 20; targetY = ball.y; // 뒤에서 받쳐줌
+                            }
+                        } 
+                        else if (tState.offMode === 'POSSESSION') {
+                            // 점유율 모드: 전원이 공을 가진 선수 쪽으로 다가옴
+                            targetX = ball.x - dir * 40 + (p.homeY > 190 ? 20 : -20);
+                            targetY = ball.y + (p.homeY > 190 ? 40 : -40);
+                            if(p.position === '피보') targetX = oppGoalX - dir * 100; // 피보만 살짝 전방
+                        } 
+                        else {
+                            // 일반 오프더볼
+                            if (p.position === '피보') { 
+                                if (p.role === '라인 브레이커') {
+                                    targetX = oppGoalX - dir * 15; targetY = ball.y + Math.sin(matchTime * 4 + p.x) * 70;
+                                    p.isLineBreaking = true;
+                                } else { 
+                                    targetX = oppGoalX - dir * 60; targetY = 190 + Math.sin(matchTime * 2 + p.x) * 40; 
+                                }
+                            }
+                            else if (p.position === '아라') {
+                                let hasPivoOwner = ball.owner && ball.owner.position === '피보' && Math.abs(ball.owner.y - 190) < 50;
+                                if(hasPivoOwner) {
+                                    targetX = oppGoalX - dir * 20; targetY = p.role === '중앙 침투' ? 190 : (p.homeY < 190 ? 20 : 360);
+                                    p.isLineBreaking = true;
+                                } else {
+                                    let timeOffset = Math.sin(matchTime * 3 + p.y) * 40;
+                                    if (p.role === '측면 돌파') {
+                                        targetX = ball.x + dir * 70; targetY = (p.homeY < 190 ? 30 : 350) + timeOffset; 
+                                    } else { 
+                                        targetX = ball.x + dir * 50;
+                                        let isOppFlank = (ball.y < 190 && p.homeY > 190) || (ball.y > 190 && p.homeY < 190);
+                                        targetY = isOppFlank ? 190 + (p.homeY < 190 ? -30 : 30) : (p.homeY < 190 ? 60 : 320);
+                                    }
+                                }
+                            } 
+                            else if (p.position === '픽소') {
+                                targetX = p.homeX + (ball.x - p.homeX)*0.5; targetY = 190;
+                            }
+                            else if (p.position === '골레이로') {
+                                targetX = myGoalX + dir * 80; targetY = 190;
                             }
                         }
-                    } 
-                    else if (p.position === '픽소') {
-                        if (p.role === '빌드업 리더') {
-                            targetX = ball.x - dir * 25; targetY = ball.y + Math.sin(matchTime)*40; 
-                        } else { 
-                            targetX = p.homeX + (ball.x - p.homeX)*0.5; targetY = 190;
-                        }
-                    }
-                    else if (p.position === '골레이로') {
-                        targetX = myGoalX + dir * 80; targetY = 190;
                     }
                 } else {
                     if (p.position === '골레이로') {
                         targetX = myGoalX + dir * 15; targetY = Math.max(163, Math.min(217, ball.y)); 
                         if(distToBall < 60) { targetX = ball.x; targetY = ball.y; }
                     } else {
+                        // 💡 [핵심 V12.0 수비 매크로 전술]
+                        let defShiftX = 0;
+                        if(tState.defMode === 'HIGH_PRESS') defShiftX = dir * 60; // 전방 압박
+                        
                         let teammatesBack = activePlayers.filter(t => t.team === p.team && t !== p && Math.abs(t.x - myGoalX) < Math.abs(p.x - myGoalX));
                         if (p.position === '픽소' && teammatesBack.length <= 1) { 
                             targetX = myGoalX + dir * 60; targetY = 190; 
@@ -771,19 +925,16 @@
                             if (p === nearestDef) {
                                 targetX = ball.x; targetY = ball.y; 
                                 
-                                // 💡 [핵심 V10.4] 비비기 방지 및 스턴 부여 로직
                                 if (distToBall < 15 && ball.owner && ball.owner.team !== p.team) {
                                     let tackleChance = p.stats.가로채기 ? (p.stats.가로채기 / 100) : 0.05;
                                     if(Math.random() < tackleChance) {
                                         let loser = ball.owner;
                                         loser.rec.mistakes++; loser.rec.tackled = (loser.rec.tackled||0) + 1;
-                                        
-                                        // 빼앗긴 선수는 1.5초 스턴 및 살짝 뒤로 밀림 (비비기 완벽 방지)
                                         loser.stunTimer = 1.5; 
                                         loser.x -= (loser.team === 'A' ? -15 : 15);
                                         
                                         ball.owner = p; p.rec.tackles = (p.rec.tackles||0) + 1; ball.lastPasser = null;
-                                        p.justIntercepted = true; // 탈취 직후 빠른 전개를 위함
+                                        p.justIntercepted = true; 
                                         addLog(`🛡️ [태클 성공] ${p.name} 훌륭한 차단으로 소유권을 뺏어옵니다!`);
                                     } else if (Math.random() < 0.002) {
                                         matchStats[p.team].fouls++; addLog(`[반칙] ⚠️ ${p.name} 거친 반칙! 상대팀 프리킥`);
@@ -795,7 +946,14 @@
                             } else {
                                 let blockX = ball.x - dir * 60; 
                                 let compact = Math.max(0.2, 1 - Math.abs(myGoalX - ball.x)/300);
-                                targetX = p.homeX + (blockX - p.homeX) * 0.7;
+                                
+                                if(tState.defMode === 'HALF_BLOCK') {
+                                    // 하프블록: 중앙선을 넘지 않고 촘촘하게 수비
+                                    blockX = myGoalX + dir * 150; 
+                                    compact = 0.5; // 간격 좁힘
+                                }
+                                
+                                targetX = p.homeX + (blockX - p.homeX) * 0.7 + defShiftX;
                                 targetY = p.homeY + (ball.y - p.homeY) * compact * 0.8;
                                 
                                 if (Math.abs(p.x - myGoalX) < 150) {
@@ -809,15 +967,13 @@
 
                 let dx = targetX - p.x; let dy = targetY - p.y;
                 let dist = Math.hypot(dx, dy);
+                
                 if(dist > 3) {
                     let moveSpeed = (curSpeed / 10) * (p === ball.owner ? 0.65 : 0.85); 
-                    if(p.isLineBreaking) moveSpeed *= 1.25; 
+                    if(p.isLineBreaking || (tState.currentPattern !== 'NONE' && p.team === teamWithBall)) moveSpeed *= 1.3; 
                     p.x += (dx / dist) * moveSpeed; p.y += (dy / dist) * moveSpeed;
-                    
-                    // 이동 방향에 맞춰 헤딩(시야각) 갱신 (공을 안가졌을때 자연스러운 움직임)
                     if(p !== ball.owner) p.heading = Math.atan2(dy, dx);
                 }
-                
                 p.x = Math.max(15, Math.min(canvas.width - 15, p.x)); p.y = Math.max(15, Math.min(canvas.height - 15, p.y));
             });
 
@@ -832,7 +988,6 @@
                 }
                 else if (ball.y <= 5 || ball.y >= canvas.height - 5) {
                     ball.vx = 0; ball.vy = 0; ball.isShot = false; ball.y = ball.y <= 5 ? 15 : canvas.height - 15; 
-                    addLog(`[사이드 아웃] ${ball.lastTouchedTeam === 'A' ? 'B' : 'A'}팀의 킥인으로 재개됩니다.`);
                     deadBallType = 'KICK_IN'; deadBallTimer = 2.5; gameState = 'DEAD_BALL';
                 }
                 else if (ball.x <= 5 || ball.x >= canvas.width - 5) {
@@ -843,11 +998,9 @@
                         matchStats[outTeam === 'A' ? 'B' : 'A'].corners++;
                         ball.x = ball.x <= 5 ? 15 : canvas.width - 15;
                         ball.y = ball.y < canvas.height/2 ? 15 : canvas.height - 15;
-                        addLog(`[코너킥] ${outTeam === 'A' ? 'B' : 'A'}팀 코너킥 세트피스!`);
                         deadBallType = 'KICK_IN'; 
                     } else {
                         ball.x = ball.x <= 5 ? 25 : canvas.width - 25; ball.y = 190;
-                        addLog(`[골 클리어런스] 골키퍼가 공을 던지며 재개합니다.`);
                         deadBallType = 'GOAL_CLEARANCE';
                     }
                     deadBallTimer = 2.5; gameState = 'DEAD_BALL';
@@ -882,7 +1035,8 @@
                 ball.owner = null; ball.vx = 0; ball.vy = 0; ball.isShot = false; ball.lastPasser = null;
                 ball.x = canvas.width/2; ball.y = canvas.height/2; ball.lastTouchedTeam = teamName; 
                 deadBallType = 'KICK_OFF'; deadBallTimer = 3; gameState = 'DEAD_BALL'; 
-                addLog(`[킥오프] 실점한 ${teamName === 'A' ? 'B' : 'A'}팀의 킥오프로 재개됩니다.`);
+                
+                teamTactics.A.currentPattern = 'NONE'; teamTactics.B.currentPattern = 'NONE';
             }, 3000);
         }
 
@@ -899,6 +1053,8 @@
                 A: { posTicks: 1, shots: 0, sot: 0, passSucc: 0, passFail: 0, fouls: 0, saves: 0, corners: 0 },
                 B: { posTicks: 1, shots: 0, sot: 0, passSucc: 0, passFail: 0, fouls: 0, saves: 0, corners: 0 }
             };
+            teamTactics = { A: { currentPattern: 'NONE', timer: 0, mainTarget: null, defMode: 'NORMAL', offMode: 'NORMAL' }, B: { currentPattern: 'NONE', timer: 0, mainTarget: null, defMode: 'NORMAL', offMode: 'NORMAL' } };
+            
             document.getElementById('scoreA').innerText = 0; document.getElementById('scoreB').innerText = 0;
             document.getElementById('match-log').innerHTML = '';
             
@@ -921,7 +1077,6 @@
                 const role = document.getElementById(`role-${team}-${name}`).value;
                 const home = getHomePos(team, pos, pCountObj[pos]++, pTotalObj[pos]);
                 const rec = { goals: 0, assists: 0, shots: 0, sot: 0, passSucc: 0, passFail: 0, saves: 0, tackles: 0, mistakes: 0, tackled: 0 };
-                // 💡 heading 속성과 stunTimer 속성 초기화
                 activePlayers.push({ name, team, stats: s, position: pos, role: role, x: home.x, y: home.y, homeX: home.x, homeY: home.y, rec, curStaminaFactor: 1.0, isSetPiece: false, isLineBreaking: false, heading: (team==='A'? 0 : Math.PI), stunTimer: 0, justIntercepted: false });
             };
 
