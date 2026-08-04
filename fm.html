@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>풋고추FC 매치 엔진 V21.1 (버그 픽스 & 토털 풋살)</title>
+    <title>풋고추FC 매치 엔진 V21.2 (프리징 버그 픽스)</title>
     <style>
         body { background-color: #1a252f; color: white; font-family: 'Malgun Gothic', sans-serif; margin: 0; padding: 20px; min-width: 1240px; }
         h1 { margin-top: 0; color: #f1c40f; margin-bottom: 10px; text-align: center; }
@@ -71,7 +71,7 @@
     </style>
 </head>
 <body>
-    <h1>풋고추FC 실시간 시뮬레이터 V21.1 (오류 수정판)</h1>
+    <h1>풋고추FC 실시간 시뮬레이터 V21.2 (프리징 완벽 해결)</h1>
     
     <div id="main-container">
         <div id="left-panel">
@@ -661,6 +661,7 @@
                 });
             }
 
+            // 💡 [핵심] teamWithBall 정의
             const teamWithBall = ball.owner ? ball.owner.team : null;
 
             activePlayers.forEach(p => {
@@ -685,7 +686,6 @@
                 p.isLineBreaking = false; 
                 p.isIsolating = false; 
                 let tState = teamTactics[p.team];
-                
                 let isPatternWaiting = false;
 
                 if (p === ball.owner) {
@@ -693,7 +693,6 @@
                     let shootProb = ((p.team === 'A' && p.x < canvas.width/2) || (p.team === 'B' && p.x > canvas.width/2)) ? 0.005 : (distToGoal < 120 ? 0.35 : 0.05 + ((canvas.width/2 - distToGoal) / (canvas.width/2)) * 0.1);
                     if (tState.offMode === 'POSSESSION') shootProb *= 0.5; 
 
-                    // 💡 [버그 픽스] 누락된 수비수 거리 체크 로직 복구
                     let nearestDefDistFront = 9999;
                     let pressureDist = 9999;
                     activePlayers.forEach(def => {
@@ -834,7 +833,6 @@
                             ball.vz = 4 + Math.random() * 3; 
                         }
                     } 
-                    // 💡 [핵심] 반대 전환 오버랩 킬패스
                     else if (ballUnderPressure && Math.random() < 0.1 && !isPatternWaiting) {
                         let overLappingAla = activePlayers.find(m => m.team === p.team && m.position === '아라' && m.isLineBreaking);
                         if(overLappingAla) {
@@ -963,7 +961,8 @@
                                 let isTopAla = (myAlas.indexOf(p) === 0);
                                 let baseWingY = isTopAla ? 40 : 340; 
                                 
-                                if (myFixo && myFixo.x * dir > p.x * dir + 20 && p.team === ball.owner.team) {
+                                // 💡 [핵심 버그 수정부] isOff 상태일 때 안전하게 커버/오버랩 판단
+                                if (myFixo && myFixo.x * dir > p.x * dir + 20) {
                                     targetX = myFixo.homeX + dir * 20; 
                                     targetY = 190; 
                                     if(Math.random() < 0.01) addLog(`🔄 [커버 플레이] 전진한 픽소를 대신해 아라 ${p.name} 선수가 후방을 커버합니다!`);
