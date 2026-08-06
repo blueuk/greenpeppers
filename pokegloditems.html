@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>포켓몬스터 골드·실버 도구 및 기술머신 도감</title>
+    <title>포켓몬스터 골드·실버 기술머신 & 도구 전체 도감</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap');
         
@@ -21,7 +21,7 @@
             -webkit-text-fill-color: transparent;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
             margin-bottom: 40px;
-            font-size: 2.5em;
+            font-size: 2.2em;
         }
         h2 {
             color: #444;
@@ -37,13 +37,14 @@
             border-radius: 12px;
             box-shadow: 0 5px 20px rgba(0,0,0,0.08);
             background-color: #fff;
+            margin-bottom: 30px;
         }
         table {
             width: 100%;
             border-collapse: collapse;
         }
         th, td {
-            padding: 16px 12px;
+            padding: 12px 10px;
             text-align: center;
             border-bottom: 1px solid #e0e0e0;
             font-size: 0.95em;
@@ -53,20 +54,20 @@
             color: white;
             font-weight: 700;
             white-space: nowrap;
+            position: sticky;
+            top: 0;
         }
-        .tm-table th {
-            background: linear-gradient(135deg, #d3d3d3, #a9a9a9);
-        }
+        /* 각 테이블별 헤더 색상 구분 */
+        .ball-table th { background: linear-gradient(135deg, #e57373, #f44336); }
+        .potion-table th { background: linear-gradient(135deg, #81c784, #4caf50); }
+        .tm-table th { background: linear-gradient(135deg, #64b5f6, #2196f3); }
+        
         tr:nth-child(even) {
             background-color: #fbfbfb;
         }
         tr:hover {
             background-color: #f1f8ff;
-            transition: background-color 0.3s ease;
-        }
-        .highlight {
-            font-weight: bold;
-            color: #d32f2f;
+            transition: background-color 0.2s ease;
         }
         .version {
             display: inline-block;
@@ -81,14 +82,15 @@
             background: linear-gradient(to right, #fff7d6, #f0f0f0);
             border: 1px solid #ccc;
         }
+        .tm-no { font-weight: bold; color: #555; }
     </style>
 </head>
 <body>
 
-    <h1>✨ 포켓몬스터 2세대 골드·실버 가이드 ✨</h1>
+    <h1>✨ 포켓몬스터 2세대 아이템 & 기술머신 컴플리트 가이드 ✨</h1>
     
-    <h2>🎒 주요 도구 (Items)</h2>
-    <div class="table-container">
+    <h2>🔴 포획용 도구 (몬스터볼)</h2>
+    <div class="table-container ball-table">
         <table>
             <thead>
                 <tr>
@@ -100,75 +102,145 @@
             </thead>
             <tbody>
                 <tr>
-                    <td><strong>마스터볼</strong></td>
-                    <td>어떤 야생 포켓몬이든 반드시 잡을 수 있다.</td>
-                    <td>모든 배지(8개) 획득 후 연두마을 공박사에게 수령</td>
+                    <td><strong>몬스터볼</strong></td>
+                    <td>야생 포켓몬을 잡는 기본 볼</td>
+                    <td>각 마을 상점 (200원)</td>
                     <td><span class="version gold-silver">공통</span></td>
                 </tr>
                 <tr>
-                    <td><strong>먹다남은음식</strong></td>
-                    <td>매 턴 최대 체력의 1/16을 회복한다.</td>
-                    <td>무지개시티 식당 쓰레기통, 야생 잠만보 소지</td>
+                    <td><strong>슈퍼볼</strong></td>
+                    <td>몬스터볼보다 포획률이 1.5배 높다.</td>
+                    <td>각 마을 상점 (600원)</td>
                     <td><span class="version gold-silver">공통</span></td>
                 </tr>
                 <tr>
-                    <td><strong>금속코트</strong></td>
-                    <td>강철타입 위력 1.1배 상승 / 롱스톤, 스라크 통신진화</td>
-                    <td>고속선 아쿠아호 이벤트 클리어 후 할아버지에게 수령</td>
+                    <td><strong>하이퍼볼</strong></td>
+                    <td>몬스터볼보다 포획률이 2배 높다.</td>
+                    <td>후반부 마을 상점 (1200원)</td>
                     <td><span class="version gold-silver">공통</span></td>
                 </tr>
                 <tr>
-                    <td><strong>왕의징표석</strong></td>
-                    <td>공격 시 10% 확률로 풀죽음 / 슈륙챙이, 야돈 통신진화</td>
-                    <td>야돈의 우물 지하, 야생 야돈 계열 소지</td>
+                    <td><strong>루어볼</strong></td>
+                    <td>낚싯대로 낚은 포켓몬 포획률 상승</td>
+                    <td>고동마을 강집에게 '파란규토리' 전달</td>
                     <td><span class="version gold-silver">공통</span></td>
                 </tr>
                 <tr>
-                    <td><strong>용의비늘</strong></td>
-                    <td>시드라에게 지니게 한 후 통신교환 시 킹드라로 진화</td>
-                    <td>절구산, 야생 쏘드라/미뇽 계열 소지</td>
+                    <td><strong>레벨볼</strong></td>
+                    <td>내 포켓몬보다 레벨이 낮을수록 포획률 상승</td>
+                    <td>고동마을 강집에게 '빨간규토리' 전달</td>
                     <td><span class="version gold-silver">공통</span></td>
                 </tr>
                 <tr>
-                    <td><strong>태양의돌</strong></td>
-                    <td>냄새꼬를 아르코로, 해너츠를 해루미로 진화시킨다.</td>
-                    <td>곤충채집대회 1등 상품</td>
+                    <td><strong>문볼</strong></td>
+                    <td>달의돌로 진화하는 포켓몬 포획률 상승</td>
+                    <td>고동마을 강집에게 '노란규토리' 전달</td>
                     <td><span class="version gold-silver">공통</span></td>
                 </tr>
                 <tr>
-                    <td><strong>학습장치</strong></td>
-                    <td>배틀에 나가지 않아도 경험치를 나누어 받는다.</td>
-                    <td>분노의 호수 붉은 갸라도스 비늘을 포켓몬 할아버지와 교환</td>
+                    <td><strong>헤비볼</strong></td>
+                    <td>체중이 무거운 포켓몬일수록 포획률 상승</td>
+                    <td>고동마을 강집에게 '검은규토리' 전달</td>
                     <td><span class="version gold-silver">공통</span></td>
                 </tr>
                 <tr>
-                    <td><strong>선제공격손톱</strong></td>
-                    <td>20% 확률로 스피드에 상관없이 먼저 공격한다.</td>
-                    <td>자연공원 벤치에 앉아있는 여성 NPC에게 수령</td>
+                    <td><strong>스피드볼</strong></td>
+                    <td>잘 도망가는 포켓몬(전설의 개 등) 포획률 상승</td>
+                    <td>고동마을 강집에게 '하얀규토리' 전달</td>
                     <td><span class="version gold-silver">공통</span></td>
                 </tr>
                 <tr>
-                    <td><strong>무지개빛날개</strong></td>
-                    <td>방울탑에서 전설의 포켓몬 칠색조를 만날 수 있다.</td>
-                    <td>금빛시티 라디오탑 국장 구출 (골드) / 회색시티 NPC (실버)</td>
-                    <td><span class="version gold-silver">공통 (시기 다름)</span></td>
+                    <td><strong>프렌드볼</strong></td>
+                    <td>잡은 포켓몬의 친밀도가 200이 된다.</td>
+                    <td>고동마을 강집에게 '초록규토리' 전달</td>
+                    <td><span class="version gold-silver">공통</span></td>
                 </tr>
                 <tr>
-                    <td><strong>은빛날개</strong></td>
-                    <td>소용돌이섬에서 전설의 포켓몬 루기아를 만날 수 있다.</td>
-                    <td>라디오탑 국장 구출 (실버) / 회색시티 NPC (골드)</td>
-                    <td><span class="version gold-silver">공통 (시기 다름)</span></td>
+                    <td><strong>러브러브볼</strong></td>
+                    <td>자신의 포켓몬과 성별이 다르고 같은 종류일 때 포획률 상승</td>
+                    <td>고동마을 강집에게 '분홍규토리' 전달</td>
+                    <td><span class="version gold-silver">공통</span></td>
                 </tr>
             </tbody>
         </table>
     </div>
 
-    <h2>💿 필수 기술머신 & 비전머신 전체</h2>
+    <h2>💊 회복용 도구 (물약/치료제)</h2>
+    <div class="table-container potion-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>도구명</th>
+                    <th>도구 효과</th>
+                    <th>획득 방법</th>
+                    <th>획득 가능 버전</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>상처약</strong></td>
+                    <td>포켓몬의 HP를 20 회복한다.</td>
+                    <td>초반 마을 상점 (300원)</td>
+                    <td><span class="version gold-silver">공통</span></td>
+                </tr>
+                <tr>
+                    <td><strong>좋은상처약</strong></td>
+                    <td>포켓몬의 HP를 50 회복한다.</td>
+                    <td>상점 (700원)</td>
+                    <td><span class="version gold-silver">공통</span></td>
+                </tr>
+                <tr>
+                    <td><strong>고급상처약</strong></td>
+                    <td>포켓몬의 HP를 200 회복한다.</td>
+                    <td>상점 (1200원)</td>
+                    <td><span class="version gold-silver">공통</span></td>
+                </tr>
+                <tr>
+                    <td><strong>풀회복약</strong></td>
+                    <td>포켓몬의 HP를 모두 회복한다.</td>
+                    <td>후반부 상점 (2500원)</td>
+                    <td><span class="version gold-silver">공통</span></td>
+                </tr>
+                <tr>
+                    <td><strong>회복약</strong></td>
+                    <td>HP 및 모든 상태이상을 완전히 회복한다.</td>
+                    <td>포켓몬리그 등 후반부 상점 (3000원)</td>
+                    <td><span class="version gold-silver">공통</span></td>
+                </tr>
+                <tr>
+                    <td><strong>만병통치제</strong></td>
+                    <td>포켓몬의 모든 상태이상을 회복한다.</td>
+                    <td>상점 (600원)</td>
+                    <td><span class="version gold-silver">공통</span></td>
+                </tr>
+                <tr>
+                    <td><strong>기력의조각</strong></td>
+                    <td>기절한 포켓몬을 부활시키고 HP를 절반 회복한다.</td>
+                    <td>상점 (1500원)</td>
+                    <td><span class="version gold-silver">공통</span></td>
+                </tr>
+                <tr>
+                    <td><strong>기력의덩어리</strong></td>
+                    <td>기절한 포켓몬을 부활시키고 HP를 모두 회복한다.</td>
+                    <td>필드 획득 (비매품)</td>
+                    <td><span class="version gold-silver">공통</span></td>
+                </tr>
+                <tr>
+                    <td><strong>튼튼밀크</strong></td>
+                    <td>포켓몬의 HP를 100 회복한다.</td>
+                    <td>39번 도로 틈새의동굴 농장 (500원)</td>
+                    <td><span class="version gold-silver">공통</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h2>💿 기술머신 (TM) 01 ~ 50 전체 리스트</h2>
     <div class="table-container tm-table">
         <table>
             <thead>
                 <tr>
-                    <th>분류 / 번호</th>
+                    <th>번호</th>
                     <th>기술명</th>
                     <th>위력</th>
                     <th>PP</th>
@@ -177,121 +249,56 @@
                 </tr>
             </thead>
             <tbody>
-                <!-- 비전머신 (HM) -->
-                <tr>
-                    <td><strong>비전머신 01</strong></td>
-                    <td>풀베기</td>
-                    <td>50</td>
-                    <td>30</td>
-                    <td>너도밤나무숲 파오리 찾기 이벤트 보상</td>
-                    <td><span class="version gold-silver">공통</span></td>
-                </tr>
-                <tr>
-                    <td><strong>비전머신 02</strong></td>
-                    <td>공중날기</td>
-                    <td>70</td>
-                    <td>15</td>
-                    <td>진청시티 체육관 격파 후 체육관 관장 부인에게 획득</td>
-                    <td><span class="version gold-silver">공통</span></td>
-                </tr>
-                <tr>
-                    <td><strong>비전머신 03</strong></td>
-                    <td>파도타기</td>
-                    <td>95</td>
-                    <td>15</td>
-                    <td>인주시티 전통무용수 5명 격파 보상</td>
-                    <td><span class="version gold-silver">공통</span></td>
-                </tr>
-                <tr>
-                    <td><strong>비전머신 04</strong></td>
-                    <td>괴력</td>
-                    <td>80</td>
-                    <td>15</td>
-                    <td>담청시티 선원에게 수령</td>
-                    <td><span class="version gold-silver">공통</span></td>
-                </tr>
-                <tr>
-                    <td><strong>비전머신 05</strong></td>
-                    <td>플래시</td>
-                    <td>-</td>
-                    <td>20</td>
-                    <td>도라지시티 모다피의 탑 장로 격파 보상</td>
-                    <td><span class="version gold-silver">공통</span></td>
-                </tr>
-                <tr>
-                    <td><strong>비전머신 06</strong></td>
-                    <td>바다회오리</td>
-                    <td>15</td>
-                    <td>15</td>
-                    <td>로켓단 아지트 클리어 후 목호에게 수령</td>
-                    <td><span class="version gold-silver">공통</span></td>
-                </tr>
-                <tr>
-                    <td><strong>비전머신 07</strong></td>
-                    <td>폭포오르기</td>
-                    <td>80</td>
-                    <td>15</td>
-                    <td>얼음샛길 내부에서 획득</td>
-                    <td><span class="version gold-silver">공통</span></td>
-                </tr>
-                
-                <!-- 기술머신 (TM) -->
-                <tr>
-                    <td><strong>기술머신 01</strong></td>
-                    <td>폭발펀치</td>
-                    <td>100</td>
-                    <td>5</td>
-                    <td>진청시티 체육관 관장 사도 격파</td>
-                    <td><span class="version gold-silver">공통</span></td>
-                </tr>
-                <tr>
-                    <td><strong>기술머신 02</strong></td>
-                    <td>박치기</td>
-                    <td>70</td>
-                    <td>15</td>
-                    <td>너도밤나무숲 NPC에게 수령 (이후 백화점 구매 가능)</td>
-                    <td><span class="version gold-silver">공통</span></td>
-                </tr>
-                <tr>
-                    <td><strong>기술머신 08</strong></td>
-                    <td>바위깨기</td>
-                    <td>20</td>
-                    <td>15</td>
-                    <td>36번 도로 (꼬지모 해결 후 획득)</td>
-                    <td><span class="version gold-silver">공통</span></td>
-                </tr>
-                <tr>
-                    <td><strong>기술머신 26</strong></td>
-                    <td>지진</td>
-                    <td>100</td>
-                    <td>10</td>
-                    <td>챔피언로드 내부 획득</td>
-                    <td><span class="version gold-silver">공통</span></td>
-                </tr>
-                <tr>
-                    <td><strong>기술머신 28</strong></td>
-                    <td>구멍파기</td>
-                    <td>60</td>
-                    <td>10</td>
-                    <td>자연공원 내부 획득</td>
-                    <td><span class="version gold-silver">공통</span></td>
-                </tr>
-                <tr>
-                    <td><strong>기술머신 30</strong></td>
-                    <td>섀도볼</td>
-                    <td>80</td>
-                    <td>15</td>
-                    <td>인주시티 체육관 관장 유빈 격파</td>
-                    <td><span class="version gold-silver">공통</span></td>
-                </tr>
-                <tr>
-                    <td><strong>기술머신 44</strong></td>
-                    <td>잠자기</td>
-                    <td>-</td>
-                    <td>10</td>
-                    <td>얼음샛길 내부 획득</td>
-                    <td><span class="version gold-silver">공통</span></td>
-                </tr>
+                <tr><td class="tm-no">TM 01</td><td>폭발펀치</td><td>100</td><td>5</td><td>진청시티 체육관 관장 사도 격파</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 02</td><td>박치기</td><td>70</td><td>15</td><td>너도밤나무숲 (이후 금빛백화점 구매)</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 03</td><td>저주</td><td>-</td><td>10</td><td>무지개시티 맨션 (밤에 방문)</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 04</td><td>구르기</td><td>30</td><td>20</td><td>35번 도로</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 05</td><td>울부짖기</td><td>-</td><td>20</td><td>32번 도로</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 06</td><td>맹독</td><td>-</td><td>10</td><td>연분홍시티 체육관 관장 도희 격파</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 07</td><td>전자포</td><td>120</td><td>5</td><td>발전소 부품 이벤트 해결 후 획득</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 08</td><td>바위깨기</td><td>20</td><td>15</td><td>36번 도로 (꼬지모 이벤트 후 획득)</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 09</td><td>자기암시</td><td>-</td><td>10</td><td>통신 교환, 포켓몬스터 스타디움 2 연동 등</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 10</td><td>잠재파워</td><td>-</td><td>15</td><td>분노의 호수 민가</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 11</td><td>쾌청</td><td>-</td><td>5</td><td>금빛시티 라디오탑 로켓단 격파 후 획득</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 12</td><td>달콤한향기</td><td>-</td><td>20</td><td>너도밤나무숲 게이트 NPC</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 13</td><td>코골기</td><td>50</td><td>15</td><td>어두운 동굴</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 14</td><td>눈보라</td><td>120</td><td>5</td><td>금빛시티 게임코너 (5500 코인)</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 15</td><td>파괴광선</td><td>150</td><td>5</td><td>무지개시티 백화점 구매 (7500원)</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 16</td><td>얼다바람</td><td>55</td><td>15</td><td>황토마을 체육관 관장 류옹 격파</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 17</td><td>방어</td><td>-</td><td>10</td><td>무지개시티 백화점 구매 (3000원)</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 18</td><td>비바라기</td><td>-</td><td>5</td><td>야돈의 우물</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 19</td><td>기가드레인</td><td>60</td><td>5</td><td>무지개시티 체육관 관장 민화 격파</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 20</td><td>버티기</td><td>-</td><td>10</td><td>불탄탑</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 21</td><td>화풀이</td><td>-</td><td>20</td><td>금빛백화점 5층 일요일 (친밀도가 낮을 때)</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 22</td><td>솔라빔</td><td>120</td><td>10</td><td>27번 도로</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 23</td><td>아이언테일</td><td>100</td><td>15</td><td>담청시티 체육관 관장 규리 격파</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 24</td><td>용의숨결</td><td>60</td><td>20</td><td>검은먹시티 체육관 관장 이향 격파</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 25</td><td>번개</td><td>120</td><td>10</td><td>금빛시티 게임코너 (5500 코인)</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 26</td><td>지진</td><td>100</td><td>10</td><td>챔피언로드 내부</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 27</td><td>은혜갚기</td><td>-</td><td>20</td><td>금빛백화점 5층 일요일 (친밀도가 높을 때)</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 28</td><td>구멍파기</td><td>60</td><td>10</td><td>자연공원 내부</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 29</td><td>사이코키네시스</td><td>90</td><td>10</td><td>노랑시티 민가 (에스퍼 아저씨)</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 30</td><td>섀도볼</td><td>80</td><td>15</td><td>인주시티 체육관 관장 유빈 격파</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 31</td><td>진흙뿌리기</td><td>20</td><td>10</td><td>도라지시티 체육관 관장 비상 격파</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 32</td><td>그림자분신</td><td>-</td><td>15</td><td>무지개시티 백화점 구매 (1500원)</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 33</td><td>냉동펀치</td><td>75</td><td>15</td><td>금빛시티 백화점 구매 (3000원)</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 34</td><td>뽐내기</td><td>-</td><td>15</td><td>담청시티 등대</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 35</td><td>잠꼬대</td><td>-</td><td>10</td><td>금빛시티 지하통로</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 36</td><td>오물폭탄</td><td>90</td><td>10</td><td>43번 도로 게이트 (로켓단 아지트 클리어 후)</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 37</td><td>모래바람</td><td>-</td><td>10</td><td>토게피가 알에서 깨어난 후 공박사에게 수령, 27번 도로</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 38</td><td>불대문자</td><td>120</td><td>5</td><td>금빛시티 게임코너 (5500 코인)</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 39</td><td>스피드스타</td><td>60</td><td>20</td><td>연결동굴</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 40</td><td>웅크리기</td><td>-</td><td>40</td><td>절구산</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 41</td><td>번개펀치</td><td>75</td><td>15</td><td>금빛시티 백화점 구매 (3000원)</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 42</td><td>꿈먹기</td><td>100</td><td>15</td><td>상록시티 민가 (잠자고 있는 NPC 앞)</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 43</td><td>선방어</td><td>-</td><td>5</td><td>분노의 호수</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 44</td><td>잠자기</td><td>-</td><td>10</td><td>얼음샛길 내부 지하</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 45</td><td>헤롱헤롱</td><td>-</td><td>15</td><td>금빛시티 체육관 관장 꼭두 격파</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 46</td><td>도둑질</td><td>40</td><td>10</td><td>황토마을 로켓단 아지트</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 47</td><td>강철날개</td><td>70</td><td>25</td><td>28번 도로, 돌산터널 등</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 48</td><td>불꽃펀치</td><td>75</td><td>15</td><td>금빛시티 백화점 구매 (3000원)</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 49</td><td>연속자르기</td><td>10</td><td>20</td><td>고동마을 체육관 관장 호일 격파</td><td><span class="version gold-silver">공통</span></td></tr>
+                <tr><td class="tm-no">TM 50</td><td>악몽</td><td>-</td><td>15</td><td>35번 도로 게이트 NPC (깨비참 편지 전달 보상)</td><td><span class="version gold-silver">공통</span></td></tr>
             </tbody>
         </table>
     </div>
