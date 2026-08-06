@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>포켓몬스터 골드버전 전국도감 (1~251)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #fcf9f2;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #d4af37;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+        .table-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            overflow-x: auto;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #fff;
+        }
+        th, td {
+            padding: 15px 10px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+            font-size: 0.95em;
+        }
+        th {
+            background-color: #d4af37;
+            color: white;
+            position: sticky;
+            top: 0;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+        tr:hover {
+            background-color: #f0f7ff;
+            transition: background-color 0.2s;
+        }
+        
+        /* 타입별 색상 강조 */
+        .type-grass { color: #4caf50; font-weight: bold; }
+        .type-fire { color: #f44336; font-weight: bold; }
+        .type-water { color: #2196f3; font-weight: bold; }
+        .type-poison { color: #9c27b0; font-weight: bold; }
+        .type-flying { color: #8aacc8; font-weight: bold; }
+        .type-normal { color: #795548; font-weight: bold; }
+        
+        .no { font-weight: bold; color: #666; }
+    </style>
+</head>
+<body>
+
+    <h1>🌟 포켓몬스터 골드버전 전국도감 가이드 🌟</h1>
+    
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>No.</th>
+                    <th>포켓몬명</th>
+                    <th>타입</th>
+                    <th>획득방법 및 출현장소</th>
+                    <th>출현확률</th>
+                    <th>소지아이템 (확률)</th>
+                    <th>진화방법 (레벨/조건)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- 관동 지방 스타터 -->
+                <tr>
+                    <td class="no">001</td>
+                    <td>이상해씨</td>
+                    <td><span class="type-grass">풀</span> / <span class="type-poison">독</span></td>
+                    <td>적/녹/청/피카츄 버전에서 통신 교환</td>
+                    <td>-</td>
+                    <td>없음</td>
+                    <td>Lv.16 (이상해풀)</td>
+                </tr>
+                <tr>
+                    <td class="no">002</td>
+                    <td>이상해풀</td>
+                    <td><span class="type-grass">풀</span> / <span class="type-poison">독</span></td>
+                    <td>이상해씨에서 진화</td>
+                    <td>-</td>
+                    <td>없음</td>
+                    <td>Lv.32 (이상해꽃)</td>
+                </tr>
+                <tr>
+                    <td class="no">003</td>
+                    <td>이상해꽃</td>
+                    <td><span class="type-grass">풀</span> / <span class="type-poison">독</span></td>
+                    <td>이상해풀에서 진화</td>
+                    <td>-</td>
+                    <td>없음</td>
+                    <td>최종 진화</td>
+                </tr>
+                <tr>
+                    <td class="no">004</td>
+                    <td>파이리</td>
+                    <td><span class="type-fire">불꽃</span></td>
+                    <td>적/녹/청/피카츄 버전에서 통신 교환</td>
+                    <td>-</td>
+                    <td>없음</td>
+                    <td>Lv.16 (리자드)</td>
+                </tr>
+                <tr>
+                    <td class="no">005</td>
+                    <td>리자드</td>
+                    <td><span class="type-fire">불꽃</span></td>
+                    <td>파이리에서 진화</td>
+                    <td>-</td>
+                    <td>없음</td>
+                    <td>Lv.36 (리자몽)</td>
+                </tr>
+                <tr>
+                    <td class="no">006</td>
+                    <td>리자몽</td>
+                    <td><span class="type-fire">불꽃</span> / <span class="type-flying">비행</span></td>
+                    <td>리자드에서 진화</td>
+                    <td>-</td>
+                    <td>없음</td>
+                    <td>최종 진화</td>
+                </tr>
+                <tr>
+                    <td class="no">007</td>
+                    <td>꼬부기</td>
+                    <td><span class="type-water">물</span></td>
+                    <td>적/녹/청/피카츄 버전에서 통신 교환</td>
+                    <td>-</td>
+                    <td>없음</td>
+                    <td>Lv.16 (어니부기)</td>
+                </tr>
+                <tr>
+                    <td class="no">008</td>
+                    <td>어니부기</td>
+                    <td><span class="type-water">물</span></td>
+                    <td>꼬부기에서 진화</td>
+                    <td>-</td>
+                    <td>없음</td>
+                    <td>Lv.36 (거북왕)</td>
+                </tr>
+                <tr>
+                    <td class="no">009</td>
+                    <td>거북왕</td>
+                    <td><span class="type-water">물</span></td>
+                    <td>어니부기에서 진화</td>
+                    <td>-</td>
+                    <td>없음</td>
+                    <td>최종 진화</td>
+                </tr>
+
+                <!-- 2세대 주요 포켓몬 예시 -->
+                <tr>
+                    <td class="no">016</td>
+                    <td>구구</td>
+                    <td><span class="type-normal">노말</span> / <span class="type-flying">비행</span></td>
+                    <td>29번 도로, 30번 도로 등</td>
+                    <td>아침/낮: 약 40~50%</td>
+                    <td>없음</td>
+                    <td>Lv.18 (피죤)</td>
+                </tr>
+
+                <!-- 성도 지방 스타터 -->
+                <tr>
+                    <td class="no">152</td>
+                    <td>치코리타</td>
+                    <td><span class="type-grass">풀</span></td>
+                    <td>연두마을 공박사 연구소 (스타팅)</td>
+                    <td>1회 확정</td>
+                    <td>없음</td>
+                    <td>Lv.16 (베이리프)</td>
+                </tr>
+                <tr>
+                    <td class="no">153</td>
+                    <td>베이리프</td>
+                    <td><span class="type-grass">풀</span></td>
+                    <td>치코리타에서 진화</td>
+                    <td>-</td>
+                    <td>없음</td>
+                    <td>Lv.32 (메가니움)</td>
+                </tr>
+                <tr>
+                    <td class="no">154</td>
+                    <td>메가니움</td>
+                    <td><span class="type-grass">풀</span></td>
+                    <td>베이리프에서 진화</td>
+                    <td>-</td>
+                    <td>없음</td>
+                    <td>최종 진화</td>
+                </tr>
+                <tr>
+                    <td class="no">155</td>
+                    <td>브케인</td>
+                    <td><span class="type-fire">불꽃</span></td>
+                    <td>연두마을 공박사 연구소 (스타팅)</td>
+                    <td>1회 확정</td>
+                    <td>없음</td>
+                    <td>Lv.14 (마그케인)</td>
+                </tr>
+                <tr>
+                    <td class="no">156</td>
+                    <td>마그케인</td>
+                    <td><span class="type-fire">불꽃</span></td>
+                    <td>브케인에서 진화</td>
+                    <td>-</td>
+                    <td>없음</td>
+                    <td>Lv.36 (블레이범)</td>
+                </tr>
+                <tr>
+                    <td class="no">157</td>
+                    <td>블레이범</td>
+                    <td><span class="type-fire">불꽃</span></td>
+                    <td>마그케인에서 진화</td>
+                    <td>-</td>
+                    <td>없음</td>
+                    <td>최종 진화</td>
+                </tr>
+                <tr>
+                    <td class="no">158</td>
+                    <td>리아코</td>
+                    <td><span class="type-water">물</span></td>
+                    <td>연두마을 공박사 연구소 (스타팅)</td>
+                    <td>1회 확정</td>
+                    <td>없음</td>
+                    <td>Lv.18 (엘리게이)</td>
+                </tr>
+                <tr>
+                    <td class="no">159</td>
+                    <td>엘리게이</td>
+                    <td><span class="type-water">물</span></td>
+                    <td>리아코에서 진화</td>
+                    <td>-</td>
+                    <td>없음</td>
+                    <td>Lv.30 (장크로다일)</td>
+                </tr>
+                <tr>
+                    <td class="no">160</td>
+                    <td>장크로다일</td>
+                    <td><span class="type-water">물</span></td>
+                    <td>엘리게이에서 진화</td>
+                    <td>-</td>
+                    <td>없음</td>
+                    <td>최종 진화</td>
+                </tr>
+                <tr>
+                    <td class="no">161</td>
+                    <td>꼬리선</td>
+                    <td><span class="type-normal">노말</span></td>
+                    <td>29번 도로</td>
+                    <td>아침/낮: 약 40%</td>
+                    <td>나무열매 (8%)</td>
+                    <td>Lv.15 (다꼬리)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+</body>
+</html>
