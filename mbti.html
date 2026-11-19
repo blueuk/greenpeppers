@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>풋살 포지션 유형 테스트</title>
+<title>풋살 포지션 유형 테스트 v0.2</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
 <style>
   :root{
@@ -39,7 +39,7 @@
   .count{color:var(--muted);font-size:13px;min-width:44px;text-align:right}
   .tag{display:inline-block;font-size:12px;font-weight:700;color:var(--accent);background:rgba(198,244,50,.1);padding:5px 10px;border-radius:20px;margin-bottom:14px}
   .q{font-size:22px;font-weight:700;line-height:1.45;min-height:96px;letter-spacing:-0.3px}
-  .scale{margin-top:30px;display:grid;gap:9px}
+  .scale{margin-top:24px;display:grid;gap:9px}
   .opt{background:var(--card);color:var(--text);border:1.5px solid var(--line);border-radius:12px;padding:15px 16px;font-size:16px;text-align:left;display:flex;align-items:center;gap:12px}
   .opt .n{width:28px;height:28px;border-radius:50%;background:var(--line);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
   .opt.sel{border-color:var(--accent)}
@@ -117,6 +117,7 @@
     </div>
     <span class="tag" id="qtag"></span>
     <p class="q" id="qtext"></p>
+    <p class="sub hidden" id="qhint" style="margin-top:4px;font-size:13px">최근 경기들을 떠올리며, 실제로 얼마나 자주 그렇게 하는지로 답해 주세요.</p>
     <div class="scale" id="scale"></div>
   </section>
 
@@ -194,22 +195,22 @@ const FIELD_Q = [
   {ax:'SL',t:'승부처에서 공을 달라고 먼저 외친다'}
 ];
 const GK_Q = [
-  {ax:'PT',t:'슈팅을 몸으로 막아내는 데 자신 있다'},
-  {ax:'PT',t:'반사신경이 내 가장 큰 무기다'},
-  {ax:'PT',t:'발로 빌드업하는 것보다 막는 게 편하다'},
-  {ax:'PT',t:'가까운 거리 슈팅도 겁나지 않는다'},
-  {ax:'PT',t:'강한 슈팅이 와도 끝까지 몸을 대 본다'},
-  {ax:'PT',t:'다이빙 세이브에 자신 있다'},
-  {ax:'PT',t:'발로 패스를 정확히 연결하는 게 내 장점이다',r:1},
-  {ax:'PT',t:'몸을 날려서라도 막는 게 내 스타일이다'},
-  {ax:'SL',t:'상대가 침투하면 먼저 튀어나간다'},
-  {ax:'SL',t:'경기 중 지시보다 내 플레이에 집중한다'},
-  {ax:'SL',t:'1:1 상황을 내가 끝내고 싶다'},
-  {ax:'SL',t:'공을 잡으면 빠르게 직접 처리한다'},
-  {ax:'SL',t:'골문을 비우더라도 과감하게 나가는 편이다'},
-  {ax:'SL',t:'상대 공격수와의 1:1 승부를 즐긴다'},
-  {ax:'SL',t:'경기 내내 동료들에게 위치를 지시한다',r:1},
-  {ax:'SL',t:'스루패스가 오면 먼저 끊으러 나간다'}
+  {ax:'PT',t:'슈팅을 잡아내기보다 쳐내거나 몸으로 막아낸다'},
+  {ax:'PT',t:'가까운 거리 슈팅에 다이빙하거나 몸을 던진다'},
+  {ax:'PT',t:'공을 잡으면 발보다 손으로 던져서 배급한다'},
+  {ax:'PT',t:'백패스를 받으면 패스로 연결하기보다 바로 걷어낸다'},
+  {ax:'PT',t:'경기 중 넘어지거나 몸을 날리는 장면이 나온다'},
+  {ax:'PT',t:'골킥이나 배급을 발로 짧게 연결한다',r:1},
+  {ax:'PT',t:'빌드업을 위해 박스 밖으로 나와 동료와 패스를 주고받는다',r:1},
+  {ax:'PT',t:'상대가 압박해 와도 발로 제치거나 패스로 풀어낸다',r:1},
+  {ax:'SL',t:'상대가 뒷공간으로 침투하면 박스 밖까지 나가서 끊는다'},
+  {ax:'SL',t:'1:1 상황에서 기다리지 않고 먼저 달려나가 각을 좁힌다'},
+  {ax:'SL',t:'스루패스가 오면 수비수보다 먼저 공으로 달려간다'},
+  {ax:'SL',t:'공을 잡자마자 바로 역습 패스나 던지기를 한다'},
+  {ax:'SL',t:'경기 중 수비수에게 마크나 위치를 말로 지시한다',r:1},
+  {ax:'SL',t:'세트피스 때 벽 위치나 마크를 내가 정해 준다',r:1},
+  {ax:'SL',t:'공을 잡으면 동료들이 자리 잡을 때까지 기다렸다가 배급한다',r:1},
+  {ax:'SL',t:'상대가 공격해 오면 나가기보다 골문 앞에서 자리를 지킨다',r:1}
 ];
 // 같은 축 문항이 연달아 나오지 않도록 축별로 번갈아 배치
 function interleave(list){
@@ -220,6 +221,7 @@ function interleave(list){
 }
 const TAG = {FB:'공격 vs 수비',CW:'중앙 vs 측면',PT:'파워 vs 테크닉',SL:'해결 vs 연결'};
 const SCALE = ['전혀 아니다','아닌 편이다','보통이다','그런 편이다','매우 그렇다'];
+const SCALE_FREQ = ['거의 없다','가끔 있다','반반이다','자주 있다','거의 항상'];
 
 const TYPES = {
   // 피보
@@ -267,7 +269,8 @@ function render(){
   document.getElementById('qtag').textContent=(mode==='gk'?'골레이 · ':'')+TAG[q.ax];
   document.getElementById('qtext').textContent=q.t;
   const sc=document.getElementById('scale'); sc.innerHTML='';
-  SCALE.forEach((label,i)=>{
+  document.getElementById('qhint').classList.toggle('hidden',mode!=='gk');
+  (mode==='gk'?SCALE_FREQ:SCALE).forEach((label,i)=>{
     const b=document.createElement('button');
     b.className='opt'+(ans[idx]===i+1?' sel':'');
     b.innerHTML='<span class="n">'+(i+1)+'</span>'+label;
